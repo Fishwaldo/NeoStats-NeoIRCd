@@ -25,7 +25,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: m_tburst.c,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
+ *  $Id: m_tburst.c,v 1.1 2002/09/23 03:14:21 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -42,21 +42,10 @@
 #include "s_conf.h"
 
 
-/* TBURST_PROPAGATE
- *
- * If this is defined, when we receive a TBURST thats successful
- * (ie: our topic changes), the TBURST will be propagated to other
- * servers that support TBURST
- */
-#define TBURST_PROPAGATE
-
-
 
 static void ms_tburst(struct Client *, struct Client *, int, char **);
 static void set_topic(struct Client *, struct Channel *, 
 		      time_t, char *, char *);
-static void set_tburst_capab();
-static void unset_tburst_capab();
 int send_tburst(struct hook_burst_channel *);
 
 struct Message tburst_msgtab = {
@@ -70,7 +59,6 @@ _modinit(void)
 {
   mod_add_cmd(&tburst_msgtab);
   hook_add_hook("burst_channel", (hookfn *)send_tburst);
-  set_tburst_capab();
 }
 
 void
@@ -78,10 +66,9 @@ _moddeinit(void)
 {
   mod_del_cmd(&tburst_msgtab);
   hook_del_hook("burst_channel", (hookfn *)send_tburst);
-  unset_tburst_capab();
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.1 $";
 #endif
 
 /* ms_tburst()
@@ -130,29 +117,17 @@ static void set_topic(struct Client *source_p, struct Channel *chptr,
 		       ConfigServerHide.hide_servers ? me.name : source_p->name,
 		       chptr->chname, chptr->topic == NULL ? "" : chptr->topic);
 
-#ifdef TBURST_PROPAGATE
-  sendto_server(source_p, NULL, chptr, CAP_TBURST, NOCAPS, NOFLAGS,
+  sendto_server(source_p, NULL, chptr, NOCAPS, NOCAPS, NOFLAGS,
 		":%s TBURST %ld %s %ld %s :%s",
 		source_p->name, chptr->channelts, chptr->chname,
 		chptr->topic_time, 
                 chptr->topic_info == NULL ? "" : chptr->topic_info,
                 chptr->topic == NULL ? "" : chptr->topic);
-#endif
-}
-
-static void set_tburst_capab()
-{
-  default_server_capabs |= CAP_TBURST;
-}
-
-static void unset_tburst_capab()
-{
-  default_server_capabs &= ~CAP_TBURST;
 }
 
 int send_tburst(struct hook_burst_channel *data)
 {
-  if(data->chptr->topic != NULL && IsCapable(data->client, CAP_TBURST))
+  if(data->chptr->topic != NULL)
     sendto_one(data->client, ":%s TBURST %ld %s %ld %s :%s",
                me.name, data->chptr->channelts, data->chptr->chname,
 	       data->chptr->topic_time, data->chptr->topic_info, 

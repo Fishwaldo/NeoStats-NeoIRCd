@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.h,v 1.4 2002/09/13 09:17:13 fishwaldo Exp $
+ *  $Id: s_serv.h,v 1.5 2002/09/23 03:14:20 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_serv_h
@@ -72,7 +72,6 @@ struct Capability
 #define CAP_ZIP         0x00008000   /* Can do ZIPlinks */
 #define CAP_ENC         0x00010000   /* Can do ENCrypted links */
 
-#define CAP_TBURST	0x00040000   /* supports TBURST */
 #define CAP_PARA	0x00080000   /* supports invite broadcasting for +p */
 
 #define CAP_MASK        (CAP_QS  | CAP_EOB  | \

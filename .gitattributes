@@ -48,7 +48,6 @@ contrib/m_flags.c -text
 contrib/m_jupe.c -text
 contrib/m_ltrace.c -text
 contrib/m_mkpasswd.c -text
-contrib/m_tburst.c -text
 contrib/spy_admin_notice.c -text
 contrib/spy_info_notice.c -text
 contrib/spy_links_notice.c -text
@@ -369,6 +368,7 @@ modules/m_stats.c -text
 modules/m_svinfo.c -text
 modules/m_svscmds.c -text
 modules/m_swhois.c -text
+modules/m_tburst.c -text
 modules/m_testline.c -text
 modules/m_time.c -text
 modules/m_topic.c -text

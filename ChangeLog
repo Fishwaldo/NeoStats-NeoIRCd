@@ -14,6 +14,7 @@ Symbols are:
 (HP)	- Hybrid Team Patches. (RC6, RC7, RC8) Woo0oo.. Wonder what they broke this time.
 (F)	- Fix a Umode Problem
 (HP)	- Hybrid Team Patches (RC9)
+(F)	- Fixed a few compile issues reported by IEF with regards to SSL disabled at compile time.
 (F)	- Changed UserMode handling stuff again, as it wasn't very good last change.
 (F)	- Can not kill services clients, or any client on a U lined server anymore
 (F)	- Stats p showed opers real hosts... Fixed

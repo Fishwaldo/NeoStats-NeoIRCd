@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.45 2003/03/13 08:01:53 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.46 2003/03/31 09:03:16 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -478,11 +478,12 @@ register_local_user(struct Client *client_p, struct Client *source_p,
     }
 
   SetClient(source_p);
+#ifdef USE_SSL
   if (source_p->localClient->ssl) {
   	SetSSL(source_p);
   	source_p->umodes |= FLAGS_SSL;
   }
-
+#endif
   /* XXX source_p->servptr is &me, since local client */
   source_p->servptr = find_server(user->server);
   add_client_to_llist(&(source_p->servptr->serv->users), source_p);

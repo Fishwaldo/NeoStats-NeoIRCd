@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: linebuf.c,v 1.8 2003/03/04 13:03:55 fishwaldo Exp $
+ *  $Id: linebuf.c,v 1.9 2003/03/31 09:03:15 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -638,7 +638,9 @@ linebuf_flush(int fd, buf_head_t *bufhead)
 #endif
 {
   buf_line_t *bufline;
+#ifdef USE_SSL
   struct Client *client_p = data;
+#endif
   int retval;
   
   /* Check we actually have a first buffer */

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_invite.c,v 1.6 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: m_invite.c,v 1.7 2002/11/21 13:23:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -61,7 +61,7 @@ _moddeinit(void)
   mod_del_cmd(&invite_msgtab);
 }
 
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 
 /*
@@ -166,10 +166,6 @@ m_invite(struct Client *client_p,
       return;
     }
   }
-  else
-    if (!(vchan->mode.mode & MODE_OPERSONLY))
-    /* Don't save invite even if from an op otherwise... */
-    chop = 0;
 
   if (MyConnect(source_p))
   {
@@ -194,8 +190,7 @@ m_invite(struct Client *client_p,
 
   if (MyConnect(target_p))
   {
-    if (chop)
-      add_invite(vchan, target_p);
+    add_invite(vchan, target_p);
     sendto_one(target_p, ":%s!%s@%s INVITE %s :%s", source_p->name,
                source_p->username, source_p->vhost, target_p->name,
                chptr->chname);

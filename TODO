@@ -1,9 +1,8 @@
-$Id: TODO,v 1.13 2002/11/20 14:13:56 fishwaldo Exp $
+$Id: TODO,v 1.14 2002/11/21 13:23:37 fishwaldo Exp $
 
 
 /stats g should report when a G line will expire
 SSL client support modes and channel related stuff
-Can't invite non-SSL clients into +S channel
 /accept by hostmask
 rip out servlink and make ssl/ziplinks built in... 
 *Umode +a (Services Root) and +N (Network Admin)

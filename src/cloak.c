@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: cloak.c,v 1.6 2002/10/19 02:33:11 fishwaldo Exp $
+ *  $Id: cloak.c,v 1.7 2002/10/20 03:57:03 fishwaldo Exp $
  */
 /*
 **
@@ -217,7 +217,6 @@ make_virthost (char *curr, char *host, char *new)
   parc2 = str2arr (parv2, s2, ".");
 
 
-  ilog(L_NOTICE, "curr: %s host: %s new: %s", curr, host, new);
 
   /* crc32 and hashing using our 3 keys */
   hash[0] = ((crc32 (parv[3], strlen (parv[3])) + KEY2) ^ KEY) ^ KEY3;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.40 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.41 2002/11/20 14:13:57 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -94,6 +94,7 @@ static struct flag_item user_modes[] =
   {FLAGS_OPERWALL, 'z'},
   {FLAGS_HIDDEN, 'x'},
   {FLAGS_REGNICK, 'r'},
+  {FLAGS_SSL, 'Z'},
   {0, 0}
 };
 
@@ -131,7 +132,7 @@ int user_modes_from_c_to_bitmask[] =
   0,            /* W */
   FLAGS_EXTERNAL,            /* X */
   0,            /* Y */
-  0,            /* Z 0x5A */
+  FLAGS_SSL,    /* Z 0x5A */
   0, 0, 0, 0, 0, /* 0x5F */ 
   /* 0x60 */       0,
   0,  		/* a */
@@ -475,6 +476,10 @@ register_local_user(struct Client *client_p, struct Client *source_p,
     }
 
   SetClient(source_p);
+  if (source_p->localClient->ssl) {
+  	SetSSL(source_p);
+  	source_p->umodes |= FLAGS_SSL;
+  }
 
   /* XXX source_p->servptr is &me, since local client */
   source_p->servptr = find_server(user->server);
@@ -1063,9 +1068,16 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 		}
 		break;
 
+
+	case 'Z' :
+		if (MyClient(source_p)) 
+			sendto_one(source_p, "%s NOTICE %s :You can not Un-Set this Mode (%c)", me.name, source_p->name, *m);
+		break;
+
           /* we may not get these,
            * but they shouldnt be in default
            */
+
         case ' ' :
         case '\n' :
         case '\r' :

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h,v 1.11 2002/11/04 08:14:00 fishwaldo Exp $
+ *  $Id: client.h,v 1.12 2002/11/20 14:13:56 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_client_h
@@ -408,7 +408,6 @@ struct LocalUser
 #define FLAGS_SERVLINK     0x10000 /* servlink has servlink process */
 #define FLAGS_MARK	   0x20000 /* marked client */
 #define FLAGS_CANFLOOD	   0x40000 /* client has the ability to flood */
-#define FLAGS_SSL	   0x80000 /* client is connected via SSL */
 /* umodes, settable flags */
 
 #define FLAGS_SERVNOTICE   0x0001 /* server notices such as kill */
@@ -436,6 +435,7 @@ struct LocalUser
 #define FLAGS_SERVICES	   0x200000 /* Is Services */
 #define FLAGS_ULINED	   0x400000 /* is a ulined server? */
 #define FLAGS_REMOTE	   0x800000 /* sendto_realops_flags flag to send message to remote servers */
+#define FLAGS_SSL	   0x1000000 /* client is connected via SSL */
 #define FLAGS_ALL	   FLAGS_SERVNOTICE
 
 
@@ -478,7 +478,7 @@ struct LocalUser
                       FLAGS_REJ | FLAGS_SKILL | FLAGS_FULL | FLAGS_SPY | \
                       FLAGS_NCHANGE | FLAGS_OPERWALL | FLAGS_DEBUG | \
                       FLAGS_BOTS | FLAGS_EXTERNAL | FLAGS_LOCOPS | \
- 		      FLAGS_UNAUTH | FLAGS_CALLERID | FLAGS_SERVICES | FLAGS_REGNICK)
+ 		      FLAGS_UNAUTH | FLAGS_CALLERID | FLAGS_SERVICES | FLAGS_REGNICK | FLAGS_SSL)
 
 #define FLAGS_ID     (FLAGS_NEEDID | FLAGS_GOTID)
 

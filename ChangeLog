@@ -4,9 +4,11 @@ Symbols are:
 (F)	- Fish (fish@dynam.ac)
 (S)	- Shmad (shmad@neostats.net)
 (HP)	- Hybrid Team Patches to Hybrid Source
+
 * NeoIRCd Version 0.9.6 - 31st Oct (Halloween!), 2002 - Fish
 (HP)	- Hybrid Team Halloween Special :) (No suprises this time!) (RC5 Merge)
 (F)	- Initial Support for SSL connections started (and now it works!)
+(F)	- Added Z umode to identify SSL clients, and added whois reply for SSL clients
 
 * NeoIRCd Version 0.9.5 - 12th Oct, 2002 - Fish
 (S)     - Fixed up event.c for a possible serious bug reported by Dianora from hybrid team

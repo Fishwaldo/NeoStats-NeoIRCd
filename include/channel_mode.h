@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.h,v 1.9 2002/09/23 10:47:29 fishwaldo Exp $
+ *  $Id: channel_mode.h,v 1.10 2002/11/20 14:13:56 fishwaldo Exp $
  */
 
 
@@ -88,6 +88,7 @@ extern void set_channel_mode_flags( char flags_ptr[4][2],
 #define MODE_HIDEOPS    0x4000
 #define MODE_OPERSONLY  0x8000
 #define MODE_REGCHAN	0x10000
+#define MODE_SSLONLY	0x40000
 
 /*
  * mode flags which take another parameter (With PARAmeterS)

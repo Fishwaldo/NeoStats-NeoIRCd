@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.14 2002/10/31 13:01:57 fishwaldo Exp $
+ *  $Id: channel.c,v 1.15 2002/11/20 14:13:57 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -980,9 +980,31 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
       }
       if (ptr == NULL)
         return (ERR_INVITEONLYCHAN);
-    }
+    } 
   }
-
+  if ((chptr->mode.mode & MODE_SSLONLY) && !IsSSL(source_p)) {
+    for (lp = source_p->user->invited.head; lp; lp = lp->next) {
+      if (lp->data == chptr)
+        break;
+    }
+    if (!lp)
+    {
+      for (ptr = chptr->invexlist.head; ptr; ptr = ptr->next)
+      {
+        invex = ptr->data;
+        if (match(invex->banstr, src_host) || match(invex->banstr, src_iphost) || match(invex->banstr, src_vhost))
+          break;
+      }
+      if (ptr == NULL) {
+       return (ERR_SSLONLY);
+      } else {
+       return 0;
+      }
+    } else {
+      return 0;
+    }
+    return (ERR_SSLONLY);
+  }
   if (*chptr->mode.key && (BadPtr(key) || irccmp(chptr->mode.key, key)))
     return (ERR_BADCHANNELKEY);
 

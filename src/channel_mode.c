@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.19 2002/09/26 12:34:45 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.20 2002/11/20 14:13:57 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -470,6 +470,8 @@ channel_modes(struct Channel *chptr, struct Client *client_p,
     *mbuf++ = 'A';
   if (chptr->mode.mode & MODE_REGCHAN)
     *mbuf++ = 'r';
+  if (chptr->mode.mode & MODE_SSLONLY)
+    *mbuf++ = 'S';
     
   if (chptr->mode.limit)
   {
@@ -1676,7 +1678,7 @@ static struct ChannelMode ModeTable[255] =
   {chm_nosuch, NULL},                             /* P */
   {chm_nosuch, NULL},                             /* Q */
   {chm_nosuch, NULL},                             /* R */
-  {chm_nosuch, NULL},                             /* S */
+  {chm_simple, (void *) MODE_SSLONLY},            /* S */
   {chm_nosuch, NULL},                             /* T */
   {chm_nosuch, NULL},                             /* U */
   {chm_nosuch, NULL},                             /* V */

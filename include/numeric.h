@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: numeric.h,v 1.9 2002/09/21 06:26:12 fishwaldo Exp $
+ *  $Id: numeric.h,v 1.10 2002/11/20 14:13:56 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_numeric_h
@@ -159,6 +159,7 @@ extern const char* form_str(int);
 #define RPL_LOCALUSERS       265
 #define RPL_GLOBALUSERS      266
 
+#define RPL_USINGSSL	     275
 #define RPL_VCHANEXIST       276
 #define RPL_VCHANLIST        277
 #define RPL_VCHANHELP        278
@@ -403,6 +404,7 @@ extern const char* form_str(int);
 /*	ERR_RESTRICTED	     484	   IRCnet extension */
 /*      ERR_UNIQOPRIVSNEEDED 485           IRCnet extension */
 /*	ERR_KILLDENY         485	   unreal */
+#define ERR_SSLONLY	     486
 #define	ERR_CHANAPRIVSNEEDED 499	   
 /*	ERR_HTMDISABLED      486	   unreal */
 /*      ERR_CHANTOORECENT    487           IRCnet extension (?) */

@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_sethost.c,v 1.4 2002/10/16 05:21:07 fishwaldo Exp $
+ *   $Id: m_sethost.c,v 1.5 2002/10/16 05:33:22 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -79,7 +79,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 
 /*
@@ -98,20 +98,16 @@ static void ms_sethost(struct Client *client_p, struct Client *source_p,
 	target_p = find_person(parv[1]);
 	/* first find the target that we want to change */
 	if (target_p != NULL) {
-		ilog(L_WARN, "Found Target %s", target_p->name);
 		
 		if (IsServer(source_p)) {
 			
 			/* client is changing his own hostname */
-			ilog(L_WARN, "Target is source");
 			
 			/* check its not a client on my server, because this is a error then */
 			/* use svshost instead. */
 			if (MyClient(target_p)) {
-				ilog(L_WARN, "Target is my client?");
 				return;
 			}
-			ilog(L_WARN, "Setting his own hostname %s", target_p->name);
 
 			SetHidden(target_p);		
 			strncpy(target_p->vhost, parv[2], HOSTLEN);
@@ -125,11 +121,9 @@ static void ms_sethost(struct Client *client_p, struct Client *source_p,
 			/* can't change someone else's host. (services use svshost) */
 			sendto_one(source_p, form_str(ERR_NOPRIVILEGES), me.name, parv[0]);
 			return;
-		} else 
-		ilog(L_WARN, "shouldn't be here");
+		}
 	} else {
-		ilog(L_WARN, "Couldn't find target %s", parv[1]);
-		/* we couldn't find the target. Just exit */
+		/* we couldn't find the target, jsut return */
 		return;
 	}
 }    

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_stats.c,v 1.7 2002/10/15 07:30:08 fishwaldo Exp $
+ *  $Id: m_stats.c,v 1.8 2003/03/13 08:49:24 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -80,7 +80,7 @@ _moddeinit(void)
   mod_del_cmd(&stats_msgtab);
 }
 
-const char *_version = "$Revision: 1.7 $";
+const char *_version = "$Revision: 1.8 $";
 #endif
 
 const char* Lformat = ":%s %d %s %s %u %u %u %u %u :%u %u %s";
@@ -614,7 +614,7 @@ stats_operedup(struct Client *source_p)
       sendto_one(source_p, ":%s %d %s :[%c] %s (%s@%s) Idle: %d",
                  me.name, RPL_STATSDEBUG, source_p->name,
                  IsOperAdmin(target_p) ? 'A' : 'O',
-		 target_p->name, target_p->username, target_p->host,
+		 target_p->name, target_p->username, target_p->vhost,
 		 (int)(CurrentTime - target_p->user->last));
     }
   }

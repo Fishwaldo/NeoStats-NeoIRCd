@@ -15,6 +15,8 @@ Symbols are:
 (F)	- Fix a Umode Problem
 (HP)	- Hybrid Team Patches (RC9)
 (F)	- Changed UserMode handling stuff again, as it wasn't very good last change.
+(F)	- Can not kill services clients, or any client on a U lined server anymore
+(F)	- Stats p showed opers real hosts... Fixed
  
 * NeoIRCd Version 0.9.5 - 12th Oct, 2002 - Fish
 (S)     - Fixed up event.c for a possible serious bug reported by Dianora from hybrid team

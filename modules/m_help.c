@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_help.c,v 1.5 2003/01/29 09:28:48 fishwaldo Exp $
+ *  $Id: m_help.c,v 1.6 2003/03/13 08:49:24 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -43,12 +43,12 @@ static void dohelp(struct Client *, char *, char *, char *);
 static void sendhelpfile(struct Client *, char *, char *, char *);
 
 struct Message help_msgtab = {
-  "HELP", 0, 0, 0, 0, MFLG_SLOW, 0,
+  "IRCDHELP", 0, 0, 0, 0, MFLG_SLOW, 0,
   {m_unregistered, m_help, m_ignore, mo_help}
 };
 
 struct Message uhelp_msgtab = {
-  "UHELP", 0, 0, 0, 0, MFLG_SLOW, 0,
+  "IRCDUHELP", 0, 0, 0, 0, MFLG_SLOW, 0,
   {m_unregistered, m_help, m_ignore, mo_uhelp}
 };
 #ifndef STATIC_MODULES
@@ -67,7 +67,7 @@ _moddeinit(void)
   mod_del_cmd(&uhelp_msgtab);
 }
 
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 /*
  * m_help - HELP message handler

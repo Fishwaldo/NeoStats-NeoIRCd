@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kill.c,v 1.6 2003/03/06 14:01:47 fishwaldo Exp $
+ *  $Id: m_kill.c,v 1.7 2003/03/13 08:49:24 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -64,7 +64,7 @@ _moddeinit(void)
   mod_del_cmd(&kill_msgtab);
 }
 
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 /*
 ** mo_kill
@@ -127,6 +127,12 @@ mo_kill(struct Client *client_p, struct Client *source_p,
                  me.name, parv[0], target_p->name);
       return;
     }
+
+  if (IsServices(target_p) || IsUlined(target_p->servptr)) {
+      sendto_one(source_p, ":%s NOTICE %s :Cannot kill Services Client", me.name, parv[0]);
+      return;
+  }
+
 
   if(MyConnect(target_p))
     sendto_one(target_p, ":%s!%s@%s KILL %s :%s", 
@@ -239,6 +245,10 @@ ms_kill(struct Client *client_p, struct Client *source_p,
                  me.name, parv[0]);
       return;
     }
+  if (IsServices(target_p) || IsUlined(target_p->servptr)) {
+      sendto_one(source_p, ":%s NOTICE %s :Cannot kill Services Client", me.name, parv[0]);
+      return;
+  }
 
   if(MyConnect(target_p))
   {

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c,v 1.13 2003/03/06 14:01:50 fishwaldo Exp $
+ *  $Id: client.c,v 1.14 2003/03/13 08:49:24 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -1174,6 +1174,11 @@ dead_link_on_write(struct Client *client_p, int ierrno)
   else
     notice = "Write error: connection closed";
     	
+  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(client_p, HIDE_IP), notice));
+  assert(dlinkFind(&abort_list, client_p) == NULL);
+  m = make_dlink_node();
+  dlinkAdd(client_p, m, &abort_list);
+  SetDead(client_p); /* You are dead my friend */
   if (!IsPerson(client_p) && !IsUnknown(client_p) && !IsClosing(client_p))
   {
     sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
@@ -1183,11 +1188,6 @@ dead_link_on_write(struct Client *client_p, int ierrno)
 		         "Closing link to %s: %s",
                          get_client_name(client_p, MASK_IP), notice);
   }
-  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(client_p, HIDE_IP), notice));
-  assert(dlinkFind(&abort_list, client_p) == NULL);
-  m = make_dlink_node();
-  dlinkAdd(client_p, m, &abort_list);
-  SetDead(client_p); /* You are dead my friend */
 }
 
 /*

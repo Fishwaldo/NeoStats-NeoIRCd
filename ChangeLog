@@ -12,6 +12,7 @@ Symbols are:
 (F)	- ./configure updated with --enable-debug and compile flags updated.
 (F)	- Moved m_opme m_ojoin and m_clearchan to standard modules (and fixed them up)
 (F)	- added svsjoin and svspart (based on m_force.c contrib module)
+(F)	- Maybe fixed a segfault when a server gets disconnected
 
 * NeoIRCd Version 0.9.1 - 12th August, 2002 - Fish
 (F)	- Added +S UserMode. For Services. Allow them to override anything

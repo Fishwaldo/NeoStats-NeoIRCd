@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.5 2002/09/02 07:41:15 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.6 2002/09/02 09:17:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -970,12 +970,11 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
        return 0;
     }
 
-  if (source_p != target_p || target_p->from != source_p->from)
+  if ((source_p != target_p || target_p->from != source_p->from) && !IsServices(source_p))
     {
        sendto_one(source_p, form_str(ERR_USERSDONTMATCH), me.name, parv[0]);
        return 0;
     }
-
 
   if (parc < 3)
     {
@@ -991,7 +990,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
     }
 
   /* find flags already set for user */
-  setflags = source_p->umodes;
+  setflags = target_p->umodes;
   
   /*
    * parse mode change string(s)
@@ -1010,10 +1009,10 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
         case 'o' :
           if(what == MODE_ADD)
             {
-              if(IsServer(client_p) && !IsOper(source_p))
+              if(IsServer(client_p) && !IsOper(target_p))
                 {
                   ++Count.oper;
-                  SetOper(source_p);
+                  SetOper(target_p);
                 }
             }
           else
@@ -1022,20 +1021,20 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
                * found by Pat Szuta, Perly , perly@xnet.com 
                */
 
-              if(!IsOper(source_p))
+              if(!IsOper(target_p))
                 break;
 
               ClearOper(source_p);
-	      source_p->umodes &= ~ConfigFileEntry.oper_only_umodes;
+	      target_p->umodes &= ~ConfigFileEntry.oper_only_umodes;
 			  
               Count.oper--;
 
-              if (MyConnect(source_p))
+              if (MyConnect(target_p))
                 {
                   dlink_node *dm;
 
-		  source_p->flags2 &= ~FLAGS2_OPER_FLAGS;
-		  dm = dlinkFind(&oper_list,source_p);
+		  target_p->flags2 &= ~FLAGS2_OPER_FLAGS;
+		  dm = dlinkFind(&oper_list,target_p);
 		  if(dm != NULL)
 		    {
 		      dlinkDelete(dm,&oper_list);
@@ -1051,19 +1050,19 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 			/* if they are already hidden, don't hide them again 
 			 * of they are not a local client 
 			 */
-			SetHidden(source_p);
-			if (!MyClient(source_p)) {
+			SetHidden(target_p);
+			if (!MyClient(target_p)) {
 				ilog(L_WARN, "set exit");
 				break;
 			}
-			make_virthost(source_p->host, source_p->vhost, 0);
+			make_virthost(target_p->host, target_p->vhost, 0);
 		} else {
-			ClearHidden(source_p);
-			if (!MyClient(source_p)) {
+			ClearHidden(target_p);
+			if (!MyClient(target_p)) {
 				ilog(L_WARN, "exit");
 				break;
 			}
-			strncpy(source_p->vhost, source_p->host, HOSTLEN);
+			strncpy(target_p->vhost, target_p->host, HOSTLEN);
 		}
 	break;
 
@@ -1082,7 +1081,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
         default :
           if( (flag = user_modes_from_c_to_bitmask[(unsigned char)*m]))
             {
-              if (MyConnect(source_p) && !IsOper(source_p) &&
+              if (MyConnect(target_p) && !IsOper(target_p) &&
                  (ConfigFileEntry.oper_only_umodes & flag))
                 {
                   badflag = YES;
@@ -1090,64 +1089,66 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
               else
                 {
                   if (what == MODE_ADD)
-                    source_p->umodes |= flag;
+                    target_p->umodes |= flag;
                   else
-                    source_p->umodes &= ~flag;  
+                    target_p->umodes &= ~flag;  
                 }
             }
           else
             {
-              if (MyConnect(source_p))
+              if (MyConnect(target_p))
                 badflag = YES;
             }
           break;
         }
 
   if(badflag)
-    sendto_one(source_p, form_str(ERR_UMODEUNKNOWNFLAG), me.name, parv[0]);
+    sendto_one(target_p, form_str(ERR_UMODEUNKNOWNFLAG), me.name, parv[0]);
 
-  if ((source_p->umodes & FLAGS_NCHANGE) && !IsOperN(source_p))
+  if ((target_p->umodes & FLAGS_NCHANGE) && !IsOperN(target_p))
     {
       sendto_one(source_p,":%s NOTICE %s :*** You need oper and N flag for +n",
                  me.name,parv[0]);
-      source_p->umodes &= ~FLAGS_NCHANGE; /* only tcm's really need this */
+      target_p->umodes &= ~FLAGS_NCHANGE; /* only tcm's really need this */
     }
 
-  if (MyConnect(source_p) && (source_p->umodes & FLAGS_ADMIN) && !IsOperAdmin(source_p))
+  if (MyConnect(target_p) && (target_p->umodes & FLAGS_ADMIN) && !IsOperAdmin(target_p))
     {
       sendto_one(source_p,":%s NOTICE %s :*** You need oper and A flag for +a",
                  me.name, parv[0]);
-      source_p->umodes &= ~FLAGS_ADMIN;
+      target_p->umodes &= ~FLAGS_ADMIN;
     }
-  if (!IsUlined(source_p->from) && (source_p->umodes & FLAGS_SERVICES))
+  if (!IsUlined(target_p->from) && (target_p->umodes & FLAGS_SERVICES))
     { 
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +S", 
       		me.name, parv[0]);
-      source_p->umodes &= ~FLAGS_SERVICES;
+      target_p->umodes &= ~FLAGS_SERVICES;
     }
-  if ((!IsServer(client_p) || !IsUlined(client_p)) && source_p->umodes & FLAGS_REGNICK)
+  if ((!IsServer(client_p) || !IsUlined(client_p)) && ((target_p->umodes & FLAGS_REGNICK) || setflags & FLAGS_REGNICK))
     {
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +r",
       		me.name, parv[0]);
-      source_p->umodes &= ~FLAGS_REGNICK;
+      if (target_p->umodes & FLAGS_REGNICK)
+      	target_p->umodes &= ~FLAGS_REGNICK;
+      else
+      	target_p->umodes |= FLAGS_REGNICK;
     }
-
-  if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(source_p))
+  if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(target_p))
     ++Count.invisi;
-  if ((setflags & FLAGS_INVISIBLE) && !IsInvisible(source_p))
+  if ((setflags & FLAGS_INVISIBLE) && !IsInvisible(target_p))
     --Count.invisi;
   /*
    * compare new flags with old flags and send string which
    * will cause servers to update correctly.
    */
-  send_umode_out(client_p, source_p, setflags);
+  send_umode_out(client_p, target_p, setflags);
 
   /* 
    * only send out a sethost if +x mode was added
    */
-  if (!(setflags & FLAGS_HIDDEN) && IsHidden(source_p)) {
-  	sendto_server(NULL, source_p, NULL, CAP_MODEX, 0, LL_ICLIENT, ":%s SETHOST %s :%s", source_p->name, source_p->name, source_p->vhost);					
-  	ilog(L_WARN, "Sending sethost for %s", source_p->name);
+  if (!(setflags & FLAGS_HIDDEN) && IsHidden(target_p)) {
+  	sendto_server(NULL, target_p, NULL, CAP_MODEX, 0, LL_ICLIENT, ":%s SETHOST %s :%s", target_p->name, target_p->name, target_p->vhost);					
+  	ilog(L_WARN, "Sending sethost for %s", target_p->name);
   }	
 
   return 0;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.7 2002/09/02 07:41:15 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.8 2002/09/02 09:17:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -462,6 +462,9 @@ channel_modes(struct Channel *chptr, struct Client *client_p,
     *mbuf++ = 'O';
   if (chptr->mode.mode & MODE_HIDEOPS)
     *mbuf++ = 'A';
+  if (chptr->mode.mode & MODE_REGCHAN)
+    *mbuf++ = 'r';
+    
   if (chptr->mode.limit)
   {
     *mbuf++ = 'l';
@@ -692,6 +695,10 @@ chm_simple(struct Client *client_p, struct Client *source_p,
     *errors |= SM_ERR_NOOPS;
     return;
   }
+
+  /* don't allow users to set +r */
+  if ((!IsServices(source_p) || !IsUlined(source_p->from)) && (mode_type == MODE_REGCHAN))
+    return;
   
   
   /* setting + */
@@ -1664,7 +1671,7 @@ static struct ChannelMode ModeTable[255] =
   {chm_op, NULL},                                 /* o */
   {chm_simple, (void *) MODE_PRIVATE},            /* p */
   {chm_nosuch, NULL},                             /* q */
-  {chm_nosuch, NULL},                             /* r */
+  {chm_simple, (void *) MODE_REGCHAN},            /* r */
   {chm_simple, (void *) MODE_SECRET},             /* s */
   {chm_simple, (void *) MODE_TOPICLIMIT},         /* t */
   {chm_nosuch, NULL},                             /* u */

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: cloak.c,v 1.4 2002/10/16 05:01:53 fishwaldo Exp $
+ *  $Id: cloak.c,v 1.5 2002/10/18 04:28:18 fishwaldo Exp $
  */
 /*
 **
@@ -53,6 +53,7 @@
 #include "send.h"
 #include "s_conf.h"
 #include "memory.h"
+#include "s_log.h"
 
 #define KEY 23857
 #define KEY2 38447
@@ -214,6 +215,9 @@ make_virthost (char *curr, char *host, char *new)
 
   parc = str2arr (parv, s, ".");
   parc2 = str2arr (parv2, s2, ".");
+
+
+  ilog(L_NOTICE, "curr: %s host: %s new: %s", curr, host, new);
 
   /* crc32 and hashing using our 3 keys */
   hash[0] = ((crc32 (parv[3], strlen (parv[3])) + KEY2) ^ KEY) ^ KEY3;

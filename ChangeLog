@@ -12,6 +12,7 @@ Symbols are:
 (F)	- fixed up m_message.so so that opers/services can send to anyhost with /msg $$* (For operserv global compat)
 (F)	- Fixed up Hidden Servers to work correctly... (/map /links /whois etc)
 (F)	- Fixed Usermode problems.
+(F)	- Fixed a problem with userhost cloaking (Hopefully)
 
 * NeoIRCd Version 0.9.4 - 24th Sept, 2002 - Fish
 (F)	- Changed HiddenHost System to Use Ultimates version instead... 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.16 2002/09/24 12:57:05 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.17 2002/09/24 13:25:29 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.16 $";
+const char *_version = "$Revision: 1.17 $";
 #endif
 
 /*
@@ -736,7 +736,7 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
 	 }
 
 	 /* we only allow Ulined Servers to set +s */
-	 if ((flag & FLAGS_SERVICES) && (!IsUlined(find_server(parv[7])))) {
+	 if ((flag & FLAGS_SERVICES) && (!IsUlined(find_server(parv[8])))) {
 		sendto_one(source_p, ":%s NOTICE %s :*** Only Ulined Services can set +S", me.name, source_p->name);
 		sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Warning, Non-Ulined Server %s tried to set %s as +S", source_p->from->name, source_p->name);
 		/* we don't allow them to get +S, so do a continue */
@@ -748,7 +748,7 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
       }
 
       return do_remote_user(nick, client_p, source_p, parv[5], parv[6],
-                            parv[9], parv[11], NULL, atol(parv[10]));
+                            parv[8], parv[10], NULL, atol(parv[9]));
     }
   }
   else if(source_p->name[0])
@@ -834,7 +834,7 @@ client_from_server(struct Client *client_p, struct Client *source_p, int parc,
 	 }
 
     /* we only allow Ulined Servers to set +s */
-    if ((flag & FLAGS_SERVICES) && (!IsUlined(find_server(parv[7])))) {
+    if ((flag & FLAGS_SERVICES) && (!IsUlined(find_server(parv[8])))) {
 	sendto_one(source_p, ":%s NOTICE %s :*** Only Ulined Services can set +S", me.name, source_p->name);
 	sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Warning, Non-Ulined Server %s tried to set %s as +S", source_p->from->name, source_p->name);
 	/* we don't allow them to get +S, so do a continue */

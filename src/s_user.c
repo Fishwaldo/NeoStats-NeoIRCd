@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.20 2002/09/24 12:41:40 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.21 2002/09/24 13:25:29 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1106,7 +1106,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
       		me.name, parv[0]);
       target_p->umodes &= ~FLAGS_SERVICES;
     }
-  if ((!IsServer(source_p) || !IsUlined(source_p)) && ((target_p->umodes & FLAGS_REGNICK) || setflags & FLAGS_REGNICK))
+  if ((!IsServer(source_p) || !IsUlined(source_p)) && (setflags & FLAGS_REGNICK))
     {
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +r",
       		me.name, parv[0]);

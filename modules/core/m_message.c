@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_message.c,v 1.8 2002/09/21 06:26:12 fishwaldo Exp $
+ *  $Id: m_message.c,v 1.9 2002/09/24 13:25:28 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -122,7 +122,7 @@ _moddeinit(void)
   mod_del_cmd(&notice_msgtab);
 }
 
-const char *_version = "$Revision: 1.8 $";
+const char *_version = "$Revision: 1.9 $";
 #endif
 
 /*
@@ -339,7 +339,7 @@ build_target_list(int p_or_n, char *command, struct Client *client_p,
     /*  allow %+@ if someone wants to do that */
     for (;;)
     {
-      if (*nick == '*')
+      if (*nick == '!')
         type |= MODE_ADMIN;
       if (*nick == '@')
         type |= MODE_CHANOP | MODE_ADMIN;
@@ -528,7 +528,7 @@ msg_channel_flags(int p_or_n, char *command, struct Client *client_p,
   else
   {
     type = ONLY_CHANADMIN;
-    c = '*';
+    c = '!';
   }
 
   chname = chptr->chname;
@@ -592,10 +592,10 @@ msg_client(int p_or_n, char *command,
   if (MyClient(target_p))
   {
     /* XXX Controversial? allow opers and services always to send through a +g */
-    if ((!IsServices(source_p) || !IsServer(source_p)) && IsSetCallerId(target_p))
+    if ((!IsServer(source_p)) && IsSetCallerId(target_p))
     {
       /* Here is the anti-flood bot/spambot code -db */
-      if (accept_message(source_p, target_p) || IsOper(source_p))
+      if (accept_message(source_p, target_p) || IsOper(source_p) || IsServices(source_p))
       {
         sendto_one(target_p, ":%s!%s@%s %s %s :%s",
                    source_p->name,

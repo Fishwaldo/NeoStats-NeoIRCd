@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.44 2003/03/06 14:01:51 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.45 2003/03/13 08:01:53 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1071,13 +1071,48 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 			strncpy(target_p->vhost, target_p->host, HOSTLEN);
 		}
 		break;
-
-
+	case 'S' :
+		if (!IsUlined(target_p->servptr)) {
+			badflag = YES;
+			break;
+		} else {
+			if (what == MODE_ADD) {
+				 target_p->umodes |= FLAGS_SERVICES;
+			} else {
+				 target_p->umodes &= ~FLAGS_SERVICES;
+			}
+			break;
+		}			
+	case 'r' :
+		if (!IsUlined(source_p) && (source_p != target_p->servptr)) {
+			sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +r", me.name, parv[0]);
+			break;
+		} else {
+			if (what == MODE_ADD) {
+				target_p->umodes |= FLAGS_REGNICK;
+			} else {
+				target_p->umodes &= ~FLAGS_REGNICK;
+			}
+			break;
+		}
 	case 'Z' :
 		if (MyClient(source_p)) 
 			sendto_one(source_p, "%s NOTICE %s :You can not Un-Set this Mode (%c)", me.name, source_p->name, *m);
 		break;
-
+	case 'A' :
+		if (MyConnect(target_p) && !IsOperAdmin(target_p) && !IsOper(target_p)) {
+      			sendto_one(source_p,":%s NOTICE %s :*** You need oper and A flag for +A", me.name, parv[0]);
+			break;
+    		} else {
+			if (what == MODE_ADD) {
+				target_p->umodes |= FLAGS_ADMIN;
+			} else {
+				target_p->umodes &= ~FLAGS_ADMIN;
+			}
+			break;
+		}
+    		
+    		
           /* we may not get these,
            * but they shouldnt be in default
            */
@@ -1119,28 +1154,6 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
       sendto_one(source_p,":%s NOTICE %s :*** You need oper and N flag for +n",
                  me.name,parv[0]);
       target_p->umodes &= ~FLAGS_NCHANGE; /* only tcm's really need this */
-    }
-
-  if (MyConnect(target_p) && (target_p->umodes & FLAGS_ADMIN) && !IsOperAdmin(target_p))
-    {
-      sendto_one(source_p,":%s NOTICE %s :*** You need oper and A flag for +a",
-                 me.name, parv[0]);
-      target_p->umodes &= ~FLAGS_ADMIN;
-    }
-  if (!IsUlined(target_p->servptr) && (target_p->umodes & FLAGS_SERVICES))
-    { 
-      sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +S", 
-      		me.name, parv[0]);
-      target_p->umodes &= ~FLAGS_SERVICES;
-    }
-  /* if the +r isn't from a U lined server, or from the clients server
-  ** then its a error
-  */
-  if ((!IsUlined(source_p) && (source_p != target_p->servptr)) && (target_p->umodes & FLAGS_REGNICK) )
-    {
-      sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +r",
-      		me.name, parv[0]);
-      	target_p->umodes &= ~FLAGS_REGNICK;
     }
 
   if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(target_p))
@@ -1206,9 +1219,10 @@ send_umode(struct Client *client_p, struct Client *source_p, int old,
         }
     }
   *m = '\0';
-  if (*umode_buf && client_p)
+  if ((*umode_buf) && client_p) {
     sendto_one(client_p, ":%s MODE %s :%s",
                source_p->name, source_p->name, umode_buf);
+  }
 }
 
 /*
@@ -1226,7 +1240,7 @@ send_umode_out(struct Client *source_p, struct Client *client_p,
   char buf[BUFSIZE];
 
   send_umode(target_p, target_p, old, ALL_UMODES, buf);
-  if (buf) sendto_server(IsServer(client_p) ? client_p : NULL, target_p, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s MODE %s :%s", IsUlined(source_p) ? source_p->name : target_p->servptr->name, target_p->name, buf);
+  if (strlen(buf) >1) sendto_server(IsServer(client_p) ? client_p : NULL, target_p, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s MODE %s :%s", IsUlined(source_p) ? source_p->name : target_p->servptr->name, target_p->name, buf);
 }
 
 /* 

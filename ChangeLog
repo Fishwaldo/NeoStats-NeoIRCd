@@ -14,6 +14,7 @@ Symbols are:
 (HP)	- Hybrid Team Patches. (RC6, RC7, RC8) Woo0oo.. Wonder what they broke this time.
 (F)	- Fix a Umode Problem
 (HP)	- Hybrid Team Patches (RC9)
+(F)	- Changed UserMode handling stuff again, as it wasn't very good last change.
  
 * NeoIRCd Version 0.9.5 - 12th Oct, 2002 - Fish
 (S)     - Fixed up event.c for a possible serious bug reported by Dianora from hybrid team

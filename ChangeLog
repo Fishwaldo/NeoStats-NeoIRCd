@@ -10,6 +10,7 @@ Symbols are:
 (F)	- Fixed up configure problem when it can't find msgfmt
 (F)	- Fixed up services problem 
 (F)	- Fixed up aliases
+(F)	- Fixed up a /who bug after the merge of HybirdRC4
 
 * NeoIRCd Version 0.9.2 - 17th Sept, 2002 - Fish
 (F)	- Fixed a problem with servers setting modes

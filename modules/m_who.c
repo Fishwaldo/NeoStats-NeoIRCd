@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_who.c,v 1.11 2002/09/19 05:41:10 fishwaldo Exp $
+ *  $Id: m_who.c,v 1.12 2002/09/20 14:49:36 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -60,7 +60,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&who_msgtab);
 }
-const char *_version = "$Revision: 1.11 $";
+const char *_version = "$Revision: 1.12 $";
 #endif
 static void do_who_on_channel(struct Client *source_p,
 			      struct Channel *chptr, char *real_name,
@@ -262,7 +262,7 @@ who_common_channel(struct Client *source_p,dlink_list chain,
 
     if ((mask == NULL) ||
 	match(mask, target_p->name) || match(mask, target_p->username) ||
-	match(mask, target_p->host) || 
+	match(mask, target_p->host) || match(mask, target_p->vhost) || 
 	(match(mask, target_p->user->server) && 
 	 (IsOper(source_p) || !ConfigServerHide.hide_servers)) ||
 	match(mask, target_p->info))
@@ -496,7 +496,7 @@ do_who(struct Client *source_p, struct Client *target_p,
       	sendto_one(source_p, form_str(RPL_WHOREPLY), me.name, source_p->name,
 			 (chname) ? (chname) : "*",
 			 target_p->username,
-			 IsOper(source_p) ? target_p->host : target_p->vhost, IsOper(source_p) ? target_p->user->server : "*",
+			 target_p->vhost, IsOper(source_p) ? target_p->user->server : "*",
 			 target_p->name,
 			 status, 0, target_p->info);
     }
@@ -505,7 +505,7 @@ do_who(struct Client *source_p, struct Client *target_p,
       sendto_one(source_p, form_str(RPL_WHOREPLY), me.name, source_p->name,
 		 (chname) ? (chname) : "*",
 		 target_p->username,
-		 IsOper(source_p) ? target_p->host : target_p->vhost,  target_p->user->server, target_p->name,
+		 target_p->vhost,  target_p->user->server, target_p->name,
 		 status, target_p->hopcount, target_p->info);
     }
 }

@@ -1,22 +1,67 @@
-If you don't read this first, we won't help you.
-:-)
+NeoIRCd IRC Server. Pre 1.0 Release (Check the include/version.h file)
+*******************************************************************************
+Thanks for Using NeoIRCd. Please MAKE sure you read this file and the 
+INSTALL file before asking for help on our IRC channel or the support 
+boards. 
 
-******************************* IMPORTANT *************************************
+NeoIRCd is a advanced IRCD based on the hybrid7 core. It contains many
+enhancements to making it more usefull to networks that are services based
+while retaining the stability and scaleablity of the Hybrid7 core. 
 
-  *********** Note for those who dont bother reading docs *****************
-  * - Reading INSTALL is now a must, as the old DPATH is now specified    *
-  *   when configure is run.                                              *
-  *   You now need to ./configure --prefix="/path/to/install/it"          *
-  * - The old config format WILL NOT WORK.  Please see doc/example.conf ! *
-  * - The old kline format WILL NOT WORK.  Please use convertklines which *
-  *   will be installed with your ircd!					  *
-  * - If you get errors compiling custom.mo, check if you are using the   *
-  *   most recent version of gettext.  Tested with GNU gettext 0.10.35.   *
-  *************************************************************************
+Some of the features of NeoIRCd are (in Addition to the Hybrid7 features
+listed below):
+* Full Services Support. This means that services (Like NeoStats and Epona) can
+  play nicely with NeoIRCd. Things like allowing services to
+  change nicks (instead of colliding) This includes currently, the following
+  support:
+	* SVSNICK - Services Can change the nickname
+	* SVSHOST - Change the hostname of the target
+	* SVSID	  - Set/change the services ID of the target 
+  More SVS* commands are planned, like SVSKILL, for services to kill a user
+* Full Server U-Line support. A U lined server can bounce and set modes on
+  any user or channel without following traditional IRC rules (Needed for
+  most services)
+* +S usermode. +S means Services Client. Service Clients can only
+  be set via a U lined server, and +S clients can override all modes (just
+  like a Ulined Server)
+* Dynamic U lines. Dynamic U lines are something new in NeoIRCd, where you
+  do not have to add a U line entry to every IRCD configuration. You
+  only add a entry on the server that the U Lined services connect to, and
+  when the U lined Server connects, its U line setting is propgated to the
+  rest of the network.
+* Channel Admin mode. (+a) Channel admins have the ability to set *some*
+  modes on a channel that a normal operator (+o) does not. Things
+  Like Anonops and paranoid settings. 
+* Channel Mode +O. Operator only channels. Only opers/server admins can
+  join these channels. Invites and Invite exceptions can be used
+  to allow non ops to join the channel. 
+* Chanmode +r and Usermode +r. To help identify Registered
+  Channels and users respecitivly
+* /nickserv, /chanserv, /identify aliases to send secured messages
+  to services.
+* Swhois support. This was something in Unreal
+  that I thought was cool, and just had to add it.
+  Allows a admin/oper/services to add a aditional line to the /whois reply
+  of a target user
+* Hidden Hosts/Vhosts and usermode +x. This cloaks the users
+  real hostname, to help protect them from attacks directed at their
+  IP address. 
+* Reserved Nicknames/Channels are network wide. 
 
-  ALSO, IF YOU ARE UPGRADING YOUR CURRENT SOURCE TREE, AND YOU TRY TO BUILD
-  IN IT WITHOUT PERFORMING AT LEAST 'make clean', THINGS _WILL_ BREAK.  IT IS
-  RECOMMENDED THAT YOU RUN 'make distclean' AND THEN RERUN './configure'!
+If you are know Hybrid7's features, The following are removed from NeoIRCd:
+* VChans. Vchans are great way to battle channel take overs but on a
+  services based network, are kinda reduntant, as services can usually
+  help you recover from a channel takeover.
+* OandV support. OandV support allowed a user to have both ops and voice
+  in a channel at the same time. This was redundant imho. 
+* Glines now no longer need 3 opers to agree on it. One oper sets a Gline,
+  and its network wide. 
+
+anyway, thats a short description of what NeoIRCd can do for
+you. I think the best way to see its capabilites is to just try it
+out. Installation and running instructions are in the INSTALL file, so
+read that for more info. 
+
 
 ******************************* REQUIREMENTS **********************************
 
@@ -53,35 +98,31 @@ Feature Specific Requirements:
 
 *******************************************************************************
 
-- To report bugs in hybrid, send the bug report to ircd-hybrid@the-project.org
+- To report bugs in NeoIRCd, visit http://www.neostats.net/boards/
+or visit us at irc://irc.irc-chat.org/#neostats
 
 - Known bugs are listed in the BUGS file
 
 - See the INSTALL document for info on configuring and compiling
-  ircd-hybrid.
+  NeoIRCd.
 
 - Please read doc/index.txt to get an overview of the current documentation.
 
-- Old Hybrid 5/6 configuration files are no longer supported.  All conf
-  files will have to be converted to the Hybrid 7 format.  A convertconf
-  utility is provided and installed into bin/.
+- If you run in to a problem you think may be specific to your platform,
+  check README.PLATFORMS for some hints. Hybrid7 worked on a lot
+  of platforms, and although I don't have access to a lot of these
+  platforms, I see no reason why it wont work on them.
 
-- If you are wondering why config.h is practically empty, its because many 
-  things that were once in config.h are now specified in the 'general'
-  block of ircd.conf.  Look at example.conf for more information about
-  these options.
+- Please read doc/whats-new.txt for information about what is in this release
+
+- Other files recommended for reading: BUGS, INSTALL, TODO, ChangeLog
+
+The following notes are from the Hybird source:
 
 - The files, /etc/services, /etc/protocols, and /etc/resolv.conf, MUST be
   readable by the user running the server in order for ircd to start.
   Errors from adns causing the ircd to refuse to start up are often related
   to permission problems on these files.
-
-- There is now a mailing list for general discussion of Hybrid.  To subscribe
-  to the Hybrid List, send email to listmanager@the-project.org with
-  the subject "subscribe hybrid".
-
-- If you run in to a problem you think may be specific to your platform,
-  check README.PLATFORMS for some hints.
 
 - SOLARIS USERS: this code appears to tickle a bug in older gcc and 
   egcs ONLY on 64-bit Solaris7.  gcc-2.95 and SunPro C on 64bit should
@@ -107,9 +148,6 @@ Feature Specific Requirements:
   Cygwin 1.3+ (static modules, no servlink)
   OpenVMS/Alpha 7.2 (static modules, no servlink)
 
-- Please read doc/whats-new.txt for information about what is in this release
-
-- Other files recommended for reading: BUGS, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: README.FIRST,v 1.2 2002/08/13 14:44:59 fishwaldo Exp $
+$Id: README.FIRST,v 1.3 2002/09/14 04:40:49 fishwaldo Exp $

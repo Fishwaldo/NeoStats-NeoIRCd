@@ -10,7 +10,6 @@
 /README.FIRST -text
 /README.PLATFORMS -text
 /README.VMS -text
-/RELNOTES -text
 /TODO -text
 adns/.cvsignore -text
 adns/COPYING -text
@@ -68,10 +67,8 @@ doc/LazyLinks.txt -text
 doc/Makefile.in -text
 doc/Tao-of-IRC.940110 -text
 doc/challenge.txt -text
-doc/convertconf-example.conf -text
 doc/dline.conf -text
 doc/example.conf -text
-doc/example.efnet.conf -text
 doc/guidelines.txt -text
 doc/index.txt -text
 doc/ircd.8 -text
@@ -86,19 +83,12 @@ doc/old/ChangeLog-Hybrid7Rc1 -text
 doc/old/Etiquette -text
 doc/old/Hybrid-team -text
 doc/old/README -text
-doc/old/US-Admin/Networking -text
-doc/old/US-Admin/Operators -text
-doc/old/US-Admin/README -text
-doc/old/example.conf.trillian -text
-doc/old/example_old.conf -text
 doc/old/ircd.8 -text
-doc/old/simple.conf -text
 doc/operguide.txt -text
 doc/opermyth.txt -text
 doc/resv.txt -text
 doc/server-version-info -text
 doc/serverhide.txt -text
-doc/simple.conf -text
 doc/technical/Persistent_Clients.txt -text
 doc/technical/README.TSora -text
 doc/technical/README.openssl -text
@@ -117,7 +107,6 @@ doc/technical/rfc1459.txt -text
 doc/technical/send.txt -text
 doc/technical/ts5.txt -text
 doc/technical/whats-new-code.txt -text
-doc/vchans.txt -text
 doc/whats-new.txt -text
 help/.cvsignore -text
 help/Makefile.in -text

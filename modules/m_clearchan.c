@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_clearchan.c,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
+ *   $Id: m_clearchan.c,v 1.1 2002/09/17 11:03:21 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -35,7 +35,6 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-#include "vchannel.h"
 #include "list.h"
 
 
@@ -77,7 +76,7 @@ _moddeinit(void)
   mod_del_cmd(&clearchan_msgtab);
 }
 
-char *_version = "$Revision: 1.2 $";
+char *_version = "$Revision: 1.1 $";
 
 /*
 ** mo_clearchan
@@ -88,7 +87,6 @@ static void mo_clearchan(struct Client *client_p, struct Client *source_p,
                         int parc, char *parv[])
 {
   struct Channel *chptr, *root_chptr;
-  int on_vchan = 0;
 
   /* admins only */
   if (!IsOperAdmin(source_p))
@@ -102,14 +100,6 @@ static void mo_clearchan(struct Client *client_p, struct Client *source_p,
   chptr= hash_find_channel(parv[1]);
   root_chptr = chptr;
 
-#ifdef VCHANS
-  if (chptr && parc > 2 && parv[2][0] == '!')
-    {
-      chptr = find_vchan(chptr, parv[2]);
-      if (root_chptr != chptr)
-        on_vchan++;
-    }
-#endif
 
   if( chptr == NULL )
     {
@@ -125,31 +115,15 @@ static void mo_clearchan(struct Client *client_p, struct Client *source_p,
       return;
     }
 
-  if (!on_vchan)
-    {
-     sendto_wallops_flags(FLAGS_WALLOP, &me, 
-              "CLEARCHAN called for [%s] by %s!%s@%s",
-              parv[1], source_p->name, source_p->username, source_p->host);
-     sendto_server(NULL, source_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
-                   ":%s WALLOPS :CLEARCHAN called for [%s] by %s!%s@%s",
-                   me.name, parv[1], source_p->name, source_p->username,
-                   source_p->host);
-     ilog(L_NOTICE, "CLEARCHAN called for [%s] by %s!%s@%s",
-         parv[1], source_p->name, source_p->username, source_p->host);
-    }
-  else
-    {
-     sendto_wallops_flags(FLAGS_WALLOP, &me,
-              "CLEARCHAN called for [%s %s] by %s!%s@%s",
-              parv[1], parv[2], source_p->name, source_p->username,
-              source_p->host);
-     sendto_server(NULL, source_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
-                   ":%s WALLOPS :CLEARCHAN called for [%s %s] by %s!%s@%s",
-                   me.name, parv[1], parv[2], source_p->name,
-                   source_p->username, source_p->host);
-     ilog(L_NOTICE, "CLEARCHAN called for [%s %s] by %s!%s@%s",
-         parv[1], parv[2], source_p->name, source_p->username, source_p->host);
-    }
+   sendto_wallops_flags(FLAGS_WALLOP, &me, 
+            "CLEARCHAN called for [%s] by %s!%s@%s",
+            parv[1], source_p->name, source_p->username, source_p->host);
+   sendto_server(NULL, source_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
+                 ":%s WALLOPS :CLEARCHAN called for [%s] by %s!%s@%s",
+                 me.name, parv[1], source_p->name, source_p->username,
+                 source_p->host);
+   ilog(L_NOTICE, "CLEARCHAN called for [%s] by %s!%s@%s",
+       parv[1], source_p->name, source_p->username, source_p->host);
 
   /* Kill all the modes we have about the channel.. making everyone a peon */  
   remove_our_modes(0, chptr, root_chptr, source_p);
@@ -157,7 +131,7 @@ static void mo_clearchan(struct Client *client_p, struct Client *source_p,
   /* SJOIN the user to give them ops, and lock the channel */
 
   sendto_server(client_p, source_p, chptr, NOCAPS, NOCAPS,
-                LL_ICLIENT, ":%s SJOIN %lu %s +ntsi :@%s",
+                LL_ICLIENT, ":%s SJOIN %lu %s +ntsi :¤%s",
                 me.name, (unsigned long) (chptr->channelts - 1),
                 chptr->chname, source_p->name);
   sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN %s",
@@ -165,20 +139,16 @@ static void mo_clearchan(struct Client *client_p, struct Client *source_p,
                        source_p->username,
                        source_p->host,
                        root_chptr->chname);
-  sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s +o %s",
+  sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s +a %s",
                        me.name, chptr->chname, source_p->name);
 
-  add_user_to_channel(chptr, source_p, CHFL_CHANOP);
+  add_user_to_channel(chptr, source_p, CHFL_ADMIN);
 
   /* Take the TS down by 1, so we don't see the channel taken over
    * again. */
   if (chptr->channelts)
     chptr->channelts--;
   
-#ifdef VCHANS
-  if (on_vchan)
-    add_vchan_to_client_cache(source_p,root_chptr,chptr);
-#endif
 
   chptr->mode.mode =
     MODE_SECRET | MODE_TOPICLIMIT | MODE_INVITEONLY | MODE_NOPRIVMSGS;
@@ -238,35 +208,20 @@ static void remove_our_modes( int hide_or_not,
                               struct Channel *chptr, struct Channel *top_chptr,
                               struct Client *source_p)
 {
+  remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanadmins, 'a');
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanops, 'o');
-#ifdef REQUIRE_OANDV
-  remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanops_voiced, 'o');
-#endif
-#ifdef HALFOPS
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->halfops, 'h');
-#endif
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->voiced, 'v');
-#ifdef REQUIRE_OANDV
-  remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanops_voiced, 'v');
-#endif
 
   /* Move all voice/ops etc. to non opped list */
+  dlinkMoveList(&chptr->chanadmins, &chptr->peons);
   dlinkMoveList(&chptr->chanops, &chptr->peons);
-#ifdef HALFOPS
   dlinkMoveList(&chptr->halfops, &chptr->peons);
-#endif
   dlinkMoveList(&chptr->voiced, &chptr->peons);
-#ifdef REQUIRE_OANDV
-  dlinkMoveList(&chptr->chanops_voiced, &chptr->peons);
-#endif
+  dlinkMoveList(&chptr->locchanadmins, &chptr->locchanadmins);
   dlinkMoveList(&chptr->locchanops, &chptr->locpeons);
-#ifdef HALFOPS
   dlinkMoveList(&chptr->lochalfops, &chptr->locpeons);
-#endif
   dlinkMoveList(&chptr->locvoiced, &chptr->locpeons);
-#ifdef REQUIRE_OANDV
-  dlinkMoveList(&chptr->locchanops_voiced, &chptr->locpeons);
-#endif
 
   /* Clear all +beI modes */
   free_channel_list(&chptr->banlist);

@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/modules
 #
-# $Id: Makefile.in,v 1.9 2002/09/13 16:30:03 fishwaldo Exp $
+# $Id: Makefile.in,v 1.10 2002/09/17 11:03:21 fishwaldo Exp $
 #
 CC		= @CC@
 AR		= @AR@
@@ -56,6 +56,7 @@ SRCS =                          \
   m_capab.c \
   m_cburst.c \
   m_challenge.c \
+  m_clearchan.c \
   m_close.c \
   m_connect.c \
   m_cryptlink.c \
@@ -82,6 +83,8 @@ SRCS =                          \
   m_nburst.c \
   m_oper.c \
   m_operwall.c \
+  m_opme.c \
+  m_ojoin.c \
   m_pass.c \
   m_ping.c \
   m_pong.c \

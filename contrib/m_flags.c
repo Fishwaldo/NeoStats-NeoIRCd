@@ -27,7 +27,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: m_flags.c,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
+ *  $Id: m_flags.c,v 1.3 2002/09/17 11:03:21 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -77,7 +77,7 @@ _moddeinit(void)
   mod_del_cmd(&test_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 /* FLAGS requires it's own mini parser, since the last parameter in it can
@@ -97,50 +97,41 @@ struct FlagTable
 static struct FlagTable flag_table[] =
 {
   /* name		mode it represents	oper only? */
-  { "OWALLOPS",		FLAGS_OPERWALL,		1 },
-  { "SWALLOPS",		FLAGS_WALLOP,		0 },
+  { "OPERWALLOPS",	FLAGS_OPERWALL,		1 },
+  { "SERVERWALLOPS",	FLAGS_WALLOP,		0 },
   { "STATSNOTICES",	FLAGS_SPY,		1 },
-    /* We don't have a separate OKILL and SKILL modes */
-  { "OKILLS",		FLAGS_SKILL,		0 },
-  { "SKILLS",		FLAGS_SKILL,		0 },
-  { "SNOTICES",		FLAGS_SERVNOTICE,	0 },
-    /* We don't have separate client connect and disconnect modes */
-  { "CLICONNECTS",	FLAGS_CCONN,		1 },
-  { "CLIDISCONNECTS",	FLAGS_CCONN,		1 },
-    /* I'm taking a wild guess here... */
+  { "OPERKILLS",	FLAGS_SKILL,		0 },
+  { "SERVERKILLS",	FLAGS_SKILL,		0 },
+  { "SERVERNOTICES",	FLAGS_SERVNOTICE,	0 },
+  { "CLIENTCONNECTS",	FLAGS_CCONN,		1 },
+  { "CLIIENTDISCONNECTS",	FLAGS_CCONN,		1 },
   { "THROTTLES",	FLAGS_REJ,		1 },
-#if 0
-    /* This one is special...controlled via an oper block option */
-  { "NICKCHANGES",	FLAGS_NCHANGE,		1 },
-    /* NICKCHANGES must be checked for separately */
-#endif
-    /* I'm assuming this is correct... */
   { "IPMISMATCHES",	FLAGS_UNAUTH,		1 },
-  { "LWALLOPS",		FLAGS_LOCOPS,		1 },
-    /* These aren't separate on Hybrid */
+  { "LOCOPS",		FLAGS_LOCOPS,		1 },
   { "CONNECTS",		FLAGS_EXTERNAL,		1 },
   { "SQUITS",		FLAGS_EXTERNAL,		1 },
-    /* Now we have our Hybrid specific flags */
   { "FULL",		FLAGS_FULL,		1 },
-    /* Not in CS, but we might as well put it here */
   { "INVISIBLE",	FLAGS_INVISIBLE,	0 },
   { "BOTS",		FLAGS_BOTS,		1 },
   { "CALLERID",		FLAGS_CALLERID,		0 },
   { "UNAUTH",		FLAGS_UNAUTH,		1 },
   { "DEBUG",		FLAGS_DEBUG,		1 },
+  { "REGNICK",		FLAGS_REGNICK,		0 },
+  { "SERVICES",		FLAGS_SERVICES,		1 },
+  { "VHOST",		FLAGS_HIDDEN,		0 },
   { NULL,		0,			0 }
 };
 
 /* We won't control CALLERID or INVISIBLE in here */
 
-#define FL_ALL_USER_FLAGS (FLAGS_WALLOP | FLAGS_SKILL | FLAGS_SERVNOTICE )
+#define FL_ALL_USER_FLAGS (FLAGS_WALLOP | FLAGS_SKILL | FLAGS_SERVNOTICE | FLAGS_HIDDEN)
 
 /* and we don't control NCHANGES here either */
 
 #define FL_ALL_OPER_FLAGS (FL_ALL_USER_FLAGS | FLAGS_CCONN | FLAGS_REJ |\
                            FLAGS_FULL | FLAGS_SPY | FLAGS_DEBUG |\
                            FLAGS_OPERWALL | FLAGS_BOTS | FLAGS_EXTERNAL |\
-                           FLAGS_UNAUTH | FLAGS_LOCOPS )
+                           FLAGS_UNAUTH | FLAGS_LOCOPS)
 
 /*
 ** m_flags

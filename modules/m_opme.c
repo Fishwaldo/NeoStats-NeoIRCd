@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_opme.c,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
+ *   $Id: m_opme.c,v 1.1 2002/09/17 11:03:21 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -33,7 +33,6 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-#include "vchannel.h"
 
 
 static void mo_opme(struct Client *client_p, struct Client *source_p,
@@ -57,7 +56,7 @@ _moddeinit(void)
   mod_del_cmd(&opme_msgtab);
 }
 
-char *_version = "$Revision: 1.2 $";
+char *_version = "$Revision: 1.1 $";
 
 static int chan_is_opless(struct Channel *chptr)
 {
@@ -76,7 +75,6 @@ static void mo_opme(struct Client *client_p, struct Client *source_p,
                     int parc, char *parv[])
 {
   struct Channel *chptr, *root_chptr;
-  int on_vchan = 0;
   dlink_node *ptr;
   dlink_node *locptr;
   
@@ -93,15 +91,6 @@ static void mo_opme(struct Client *client_p, struct Client *source_p,
   chptr= hash_find_channel(parv[1]);
   root_chptr = chptr;
 
-#ifdef VCHANS
-  if (chptr && parc > 2 && parv[2][0] == '!')
-    {
-      chptr = find_vchan(chptr, parv[2]);
-      if (root_chptr != chptr)
-		  on_vchan++;
-    }
-#endif
-  
   if( chptr == NULL )
     {
       sendto_one(source_p, form_str(ERR_NOSUCHCHANNEL),
@@ -118,18 +107,14 @@ static void mo_opme(struct Client *client_p, struct Client *source_p,
 
   if ((ptr = find_user_link(&chptr->peons, source_p)))
 	  dlinkDelete(ptr, &chptr->peons);
+  else if ((ptr = find_user_link(&chptr->chanadmins, source_p)))
+  	  dlinkDelete(ptr, &chptr->chanadmins);
   else if ((ptr = find_user_link(&chptr->voiced, source_p)))
 	  dlinkDelete(ptr, &chptr->voiced);
-#ifdef HALFOPS
   else if ((ptr = find_user_link(&chptr->halfops, source_p)))
 	  dlinkDelete(ptr, &chptr->halfops);
-#endif
   else if ((ptr = find_user_link(&chptr->chanops, source_p)))
 	  dlinkDelete(ptr, &chptr->chanops);
-#ifdef REQUIRE_OANDV
-  else if((ptr = find_user_link(&chptr->chanops_voiced, source_p)))
-    dlinkDelete(ptr, &chptr->chanops_voiced);
-#endif
   else
     {
        /* Theyre not even on the channel, bail. */
@@ -138,69 +123,47 @@ static void mo_opme(struct Client *client_p, struct Client *source_p,
 
   if((locptr = find_user_link(&chptr->locpeons, source_p)))
     dlinkDelete(locptr, &chptr->locpeons);
+  else if((locptr = find_user_link(&chptr->locchanadmins, source_p)))
+    dlinkDelete(locptr, &chptr->locchanadmins);
   else if((locptr = find_user_link(&chptr->locvoiced, source_p)))
     dlinkDelete(locptr, &chptr->locvoiced);
-#ifdef HALFOPS
   else if((locptr = find_user_link(&chptr->lochalfops, source_p)))
     dlinkDelete(locptr, &chptr->lochalfops);
-#endif
   else if((locptr = find_user_link(&chptr->locchanops, source_p)))
     dlinkDelete(locptr, &chptr->locchanops);
   
-#ifdef REQUIRE_OANDV
-  else if((locptr = find_user_link(&chptr->locchanops_voiced, source_p)))
-    dlinkDelete(locptr, &chptr->locchanops_voiced);
-#endif
-
   else
     return;
 
-  dlinkAdd(source_p, ptr, &chptr->chanops);
-  dlinkAdd(source_p, locptr, &chptr->locchanops);
+  dlinkAdd(source_p, ptr, &chptr->chanadmins);
+  dlinkAdd(source_p, locptr, &chptr->locchanadmins);
 
-  if (!on_vchan)
-    {
-     sendto_wallops_flags(FLAGS_WALLOP, &me,
-                          "OPME called for [%s] by %s!%s@%s",
-                          parv[1], source_p->name, source_p->username,
-                          source_p->host);
-     sendto_server(NULL, source_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
-                   ":%s WALLOPS :OPME called for [%s] by %s!%s@%s",
-                   me.name, parv[1], source_p->name, source_p->username,
-                   source_p->host);
-     ilog(L_NOTICE, "OPME called for [%s] by %s!%s@%s",
-                   parv[1], source_p->name, source_p->username,
-                   source_p->host);
-    }
-  else
-    {
-     sendto_wallops_flags(FLAGS_WALLOP, &me,
-                          "OPME called for [%s %s] by %s!%s@%s",
-                          parv[1], parv[2], source_p->name,
-                          source_p->username, source_p->host);
-     sendto_server(NULL, source_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
-                   ":%s WALLOPS :OPME called for [%s %s] by %s!%s@%s",
-                   me.name, parv[1], parv[2], source_p->name,
-                   source_p->username, source_p->host);
-     ilog(L_NOTICE, "OPME called for [%s %s] by %s!%s@%s",
-                   parv[1], parv[2], source_p->name, source_p->username,
-                   source_p->host);
-    }
+  sendto_wallops_flags(FLAGS_WALLOP, &me,
+                       "OPME called for [%s] by %s!%s@%s",
+                       parv[1], source_p->name, source_p->username,
+                       source_p->host);
+  sendto_server(NULL, source_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
+                ":%s WALLOPS :OPME called for [%s] by %s!%s@%s",
+                me.name, parv[1], source_p->name, source_p->username,
+                source_p->host);
+  ilog(L_NOTICE, "OPME called for [%s] by %s!%s@%s",
+                parv[1], source_p->name, source_p->username,
+                source_p->host);
 
   sendto_server(NULL, source_p, chptr, CAP_UID, NOCAPS, NOFLAGS,
                  ":%s PART %s", ID(source_p), parv[1]);
   sendto_server(NULL, source_p, chptr, NOCAPS, CAP_UID, NOFLAGS,
                 ":%s PART %s", source_p->name, parv[1]);
   sendto_server(NULL, source_p, chptr, CAP_UID, NOCAPS, NOFLAGS,
-                ":%s SJOIN %ld %s + :@%s",
+                ":%s SJOIN %ld %s + :¤%s",
                 me.name, (signed long) chptr->channelts,
                 parv[1],
                 source_p->name /* XXX ID(source_p) */ );
   sendto_server(NULL, source_p, chptr, NOCAPS, CAP_UID, NOFLAGS,
-                ":%s SJOIN %ld %s + :@%s",
+                ":%s SJOIN %ld %s + :¤%s",
                 me.name, (signed long) chptr->channelts,
                 parv[1], source_p->name);
   sendto_channel_local(ALL_MEMBERS, chptr,
-                       ":%s MODE %s +o %s",
+                       ":%s MODE %s +a %s",
                        me.name, parv[1], source_p->name);
 }

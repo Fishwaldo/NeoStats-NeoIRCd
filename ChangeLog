@@ -10,7 +10,8 @@ Symbols are:
 (F)	- Fixed a problem with sethost I think (wasn't setting on other servers correctly)
 (F)	- OperAutoJoin is now a new option when you /oper up, you will be autojoined to a channel.
 (F)	- ./configure updated with --enable-debug and compile flags updated.
-
+(F)	- Moved m_opme m_ojoin and m_clearchan to standard modules (and fixed them up)
+(F)	- added svsjoin and svspart (based on m_force.c contrib module)
 
 * NeoIRCd Version 0.9.1 - 12th August, 2002 - Fish
 (F)	- Added +S UserMode. For Services. Allow them to override anything

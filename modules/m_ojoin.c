@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_ojoin.c,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
+ *   $Id: m_ojoin.c,v 1.1 2002/09/17 11:03:21 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -34,7 +34,6 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-#include "vchannel.h"
 #include "list.h"
 #include "channel_mode.h"
 
@@ -58,7 +57,7 @@ _moddeinit(void)
   mod_del_cmd(&ojoin_msgtab);
 }
 
-char *_version = "$Revision: 1.2 $";
+char *_version = "$Revision: 1.1 $";
 
 /*
 ** mo_ojoin
@@ -70,9 +69,6 @@ static void mo_ojoin(struct Client *client_p, struct Client *source_p,
 {
   struct Channel *chptr, *root_chptr;
   int move_me = 0;
-#ifdef VCHANS
-  int on_vchan = 0;
-#endif
 
   /* admins only */
   if (!IsOperAdmin(source_p))
@@ -83,7 +79,7 @@ static void mo_ojoin(struct Client *client_p, struct Client *source_p,
 
   /* XXX - we might not have CBURSTed this channel if we are a lazylink
    * yet. */
-  if (*parv[1] == '@' || *parv[1] == '%' || *parv[1] == '+')
+  if (*parv[1] == '@' || *parv[1] == '%' || *parv[1] == '+' || *parv[1] == '¤')
     {
       parv[1]++;
       move_me = 1;
@@ -92,14 +88,6 @@ static void mo_ojoin(struct Client *client_p, struct Client *source_p,
   chptr= hash_find_channel(parv[1]);
   root_chptr = chptr;
 
-#ifdef VCHANS
-  if (chptr && parc > 2 && parv[2][0] == '!')
-    {
-      chptr = find_vchan(chptr, parv[2]);
-      if (root_chptr != chptr)
-        on_vchan++;
-    }
-#endif
 
   if( chptr == NULL )
     {
@@ -118,7 +106,23 @@ static void mo_ojoin(struct Client *client_p, struct Client *source_p,
   if (move_me == 1)
     parv[1]--;
 
-  if (*parv[1] == '@') 
+  if (*parv[1] == '¤') 
+    {
+       add_user_to_channel(chptr, source_p, CHFL_ADMIN);
+       if (chptr->chname[0] != '&')
+         sendto_server(client_p, source_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT, 
+                 ":%s SJOIN %lu %s + :¤%s", me.name, chptr->channelts,
+                 chptr->chname, source_p->name);
+       sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN %s",
+                       source_p->name,
+                       source_p->username,
+                       source_p->host,
+                       root_chptr->chname);
+       sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s +a %s",
+                       me.name, chptr->chname, source_p->name);
+
+    } 
+  else if (*parv[1] == '@') 
     {
        add_user_to_channel(chptr, source_p, CHFL_CHANOP);
        if (chptr->chname[0] != '&')
@@ -134,7 +138,6 @@ static void mo_ojoin(struct Client *client_p, struct Client *source_p,
                        me.name, chptr->chname, source_p->name);
 
     }
-#ifdef HALFOPS
   else if (*parv[1] == '%')
     {
        add_user_to_channel(chptr, source_p, CHFL_HALFOP);
@@ -150,7 +153,6 @@ static void mo_ojoin(struct Client *client_p, struct Client *source_p,
        sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s +h %s",
                        me.name, chptr->chname, source_p->name);
     }
-#endif
   else if (*parv[1] == '+')
     {
        add_user_to_channel(chptr, source_p, CHFL_VOICE);
@@ -191,11 +193,6 @@ static void mo_ojoin(struct Client *client_p, struct Client *source_p,
 	       chptr->topic_time);
   }
 
-  /* XXX - check this isn't too big above... */
-#ifdef VCHANS
-  if (on_vchan)
-    add_vchan_to_client_cache(source_p,root_chptr,chptr);
-#endif
 
   source_p->localClient->last_join_time = CurrentTime;
   channel_member_names(source_p, chptr, chptr->chname, 1);

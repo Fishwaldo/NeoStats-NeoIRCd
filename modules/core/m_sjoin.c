@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c,v 1.14 2002/10/15 08:39:40 fishwaldo Exp $
+ *  $Id: m_sjoin.c,v 1.15 2002/10/16 03:31:33 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -43,7 +43,7 @@
 
 
 static void ms_sjoin(struct Client*, struct Client*, int, char**);
-static void move_user(dlink_list *list);
+static void move_user(dlink_list *list, dlink_list *);
 
 struct Message sjoin_msgtab = {
   "SJOIN", 0, 0, 0, 0, MFLG_SLOW, 0,
@@ -63,7 +63,7 @@ _moddeinit(void)
   mod_del_cmd(&sjoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.14 $";
+const char *_version = "$Revision: 1.15 $";
 #endif
 /*
  * ms_sjoin
@@ -392,63 +392,14 @@ static void ms_sjoin(struct Client *client_p,
 			}
 	}
 	if (fl > 0) {
-printf("hrm %c\n", *s);
 	*hops++ = *s;
 	s++;
 	}
-printf("nick %s\n", s);
 
-#if 0		
-	 if (*s == '!')
-	    {
-	      fl |= MODE_ADMIN;
-	      if (keep_new_modes)
-              {
-        	*hops++ = *s;
-		num_prefix++;
-   	      }
-	      
-	      s++;
-	    }
-	  if (*s == '@')
-	    {
-	      fl |= MODE_CHANOP;
-	      if (keep_new_modes)
-	      {
-	        *hops++ = *s;
-		num_prefix++;
-              }
-	      
-	      s++;
-	    }
-	  else if (*s == '+')
-	    {
-	      fl |= MODE_VOICE;
-	      if (keep_new_modes)
-	      {
-	        *hops++ = *s;
-		num_prefix++;
-	      }
-	      
-	      s++;
-	    }
-	  else if (*s == '%')
-	    {
-	      fl |= MODE_HALFOP;
-	      if (keep_new_modes || IsOper(find_client(s)))
-	      {
-	        *hops++ = *s;
-		num_prefix++;
-	      }
-	      
-	      s++;
-	    }
-#endif
       /* if the client doesnt exist, backtrack over the prefix (*@%+) that we
        * just added and skip to the next nick
        */
       /* also do this if its fake direction or a server */
-printf("%s - %d\n",hops, fl);
       if (!(target_p = find_client(s)) ||
          (target_p->from != client_p) || !IsPerson(target_p))
       {
@@ -463,7 +414,6 @@ printf("%s - %d\n",hops, fl);
 
       if (!keep_new_modes && !IsOper(target_p))
 	{
-printf("not keeping new modes\n");
 	  if ((fl & MODE_CHANOP) || (fl & MODE_HALFOP) || (fl & MODE_ADMIN) || (fl & MODE_VOICE))
 	    {
 	      fl = MODE_DEOPPED;
@@ -476,8 +426,6 @@ printf("not keeping new modes\n");
 	    }
 	}
 
-printf("%s - %d\n",hops, fl);
-printf("%d\n", MODE_ADMIN);
       /* copy the nick to the two buffers */
       hops += ircsprintf(hops, "%s ", s);
       assert((hops - sjbuf_hops) < sizeof(sjbuf_hops));
@@ -600,7 +548,6 @@ nextnick:
   if (!people)
     return;
 
-printf("sjoin %s %s\n", buf, sjbuf_hops);
 
   /* relay the SJOIN to other servers */
   for(m = serv_list.head; m; m = m->next)
@@ -753,14 +700,14 @@ static void remove_our_modes( int hide_or_not,
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->halfops, 'h');
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanadmins, 'a');
 
-  move_user(&chptr->chanops);
-  move_user(&chptr->locchanops);
-  move_user(&chptr->voiced);
-  move_user(&chptr->locvoiced);
-  move_user(&chptr->chanadmins);
-  move_user(&chptr->locchanadmins);
-  move_user(&chptr->halfops);
-  move_user(&chptr->lochalfops);
+  move_user(&chptr->chanops, &chptr->peons);
+  move_user(&chptr->locchanops, &chptr->peons);
+  move_user(&chptr->voiced, &chptr->peons);
+  move_user(&chptr->locvoiced, &chptr->peons);
+  move_user(&chptr->chanadmins, &chptr->peons);
+  move_user(&chptr->locchanadmins, &chptr->peons);
+  move_user(&chptr->halfops, &chptr->peons);
+  move_user(&chptr->lochalfops, &chptr->peons);
 }
 
 
@@ -771,7 +718,7 @@ static void remove_our_modes( int hide_or_not,
  * side effects	- Moves uses to the peons list if they are not services
  *
  */
-static void move_user(dlink_list *list)
+static void move_user(dlink_list *list, dlink_list *tolist)
 {
   dlink_node *ptr;
   dlink_node *ptr_next;
@@ -782,12 +729,13 @@ static void move_user(dlink_list *list)
   DLINK_FOREACH_SAFE(ptr, ptr_next, list->head)
   {
 	target_p = ptr->data;
+	ptr_next = ptr->next;
 	/* services never loose the TS battle */
 	if (IsOper(target_p))
 		continue;
 	
 	dlinkDelete(ptr, list);
-	dlinkAdd(target_p, ptr, list);
+	dlinkAdd(target_p, ptr, tolist);
   }
 }
 

@@ -20,13 +20,15 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ssl.h,v 1.2 2003/01/27 04:20:36 fishwaldo Exp $
+ *  $Id: ssl.h,v 1.3 2003/05/09 12:30:19 fishwaldo Exp $
  */
 
 #ifndef SSL_H
 #define SSL_H
 
 #ifdef USE_SSL
+/* we dont need/want kerberos support */
+#define OPENSSL_NO_KRB5 1
 #include <stdio.h>
 #include <sys/types.h>
 #include <stddef.h>

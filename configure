@@ -7690,12 +7690,10 @@ fi
 
 
 	if test x"$nlist_h" = "x"; then
-		{ echo "$as_me:$LINENO: WARNING: ** cannot locate an nlist.h **" >&5
-echo "$as_me: WARNING: ** cannot locate an nlist.h **" >&2;}
-		{ echo "$as_me:$LINENO: WARNING: ** cannot check for extra underscores prepended to symbol names - nlist.h is missing **" >&5
-echo "$as_me: WARNING: ** cannot check for extra underscores prepended to symbol names - nlist.h is missing **" >&2;}
-		{ echo "$as_me:$LINENO: WARNING: ** assuming no underscores prepend symbol names **" >&5
-echo "$as_me: WARNING: ** assuming no underscores prepend symbol names **" >&2;}
+		echo "$as_me:$LINENO: checking Symbol Prefix" >&5
+echo $ECHO_N "checking Symbol Prefix... $ECHO_C" >&6
+		echo "$as_me:$LINENO: result: nlist.h not found" >&5
+echo "${ECHO_T}nlist.h not found" >&6
 		cat >>confdefs.h <<_ACEOF
 #define SYMBOL_PREFIX ""
 _ACEOF

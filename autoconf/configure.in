@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.9 2003/04/03 13:08:58 fishwaldo Exp $
+dnl $Id: configure.in,v 1.10 2003/05/09 12:30:19 fishwaldo Exp $
 dnl Process this file with autoconf to produce a configure script.
 dnl AC_INIT(include/class.h) <- what is this ? -TimeMr14C
 
@@ -890,9 +890,8 @@ else
 	AC_CHECK_HEADER(elf/nlist.h, [ nlist_h="elf/nlist.h" ], )
 	AC_CHECK_HEADER(nlist.h, [ nlist_h="nlist.h" ], )
 	if test x"$nlist_h" = "x"; then
-		AC_MSG_WARN(** cannot locate an nlist.h **)
-		AC_MSG_WARN(** cannot check for extra underscores prepended to symbol names - nlist.h is missing **)
-		AC_MSG_WARN(** assuming no underscores prepend symbol names **)
+		AC_MSG_CHECKING(Symbol Prefix)
+		AC_MSG_RESULT(nlist.h not found, assuming none)
 		AC_DEFINE_UNQUOTED(SYMBOL_PREFIX, "")
 	else
 		AC_MSG_CHECKING(for extra underscores prepended to symbol names)

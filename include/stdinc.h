@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- * $Id: stdinc.h,v 1.4 2002/11/04 08:14:00 fishwaldo Exp $
+ * $Id: stdinc.h,v 1.5 2003/05/09 12:30:19 fishwaldo Exp $
  *
  */
  
@@ -101,5 +101,7 @@ extern int errno;
 #endif
 
 #ifdef USE_SSL
+/* we dont need/want kerberos support */
+#define OPENSSL_NO_KRB5 1
 #include <openssl/ssl.h>
 #endif

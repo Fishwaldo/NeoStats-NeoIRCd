@@ -1,0 +1,8 @@
+IDENTIFY :<#channel password> / <nickserv password>
+     
+This command sends the password for a channel to Chanserv, or the password
+for a nickname to NickServ. Examples are:
+IDENTIFY :#neostats mypass
+would be the equivilent of sending /msg chanserv identify #neostats mypass
+IDENTIFY :mypass
+would be the equivilent of sending /msg nickserv identify mypass

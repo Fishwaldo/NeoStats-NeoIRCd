@@ -1,0 +1,5 @@
+MAP
+     
+Provides a graphical representation of the network structure, and user
+load on each server. Disabled to normal users if the user is on a server
+that is hidden, or if flatten links is enabled

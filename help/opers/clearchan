@@ -1,0 +1,5 @@
+CLEARCHAN <#channel>
+    
+Clearchan will remove all users and modes on a channel and join the
+operator with Channel Admin flags. Can be used to help close
+down abusive channels on a network. Admin privledges are required

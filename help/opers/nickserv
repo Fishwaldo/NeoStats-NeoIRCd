@@ -1,0 +1,4 @@
+NICKSERV :<message>
+     
+This command sends a secured message to NickName Services, if they are
+online or sends a error message to the client if services are not online.

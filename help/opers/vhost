@@ -1,0 +1,6 @@
+VHOST <NICK> <PASSWORD>
+  
+VHOST is a alias for HostServ (part of the
+NeoStats Software. http://www.neostats.net/) that allows
+normal users get a fake hostname assigned on hostserv. This allows network
+wide vhost support. 

@@ -7,7 +7,8 @@ KICK            KNOCK           LINKS           LIST
 LUSERS          MOTD            NAMES           NICK
 OPER            PART            PASS            PING
 PONG            QUIT            TIME            TOPIC
-USER            USERHOST        USERS           INDEX
-INFO            NOTICE          PRIVMSG         STATS
-UMODE           VERSION         WHO             WHOIS
-WHOWAS
+USER            USERHOST        USERS           CHANSERV
+IDENTIFY        INDEX           INFO            NICKSERV
+NOTICE          PRIVMSG         STATS           STATSERV
+UMODE           VHOST           VERSION         WHO
+WHOIS           WHOWAS

@@ -1,0 +1,5 @@
+SWHOIS <nick> :<string>
+  
+swhois adds a optional string to a users whois. It can be used
+to add additional information to a users information, such as SWHOIS
+fish :Is a Network Coder

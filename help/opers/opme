@@ -1,0 +1,4 @@
+OPME <#channel>
+  
+If a channel is opless, this command can be used to give
+yourself channel ops on the channel.

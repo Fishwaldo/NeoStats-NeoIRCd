@@ -1,0 +1,11 @@
+OJOIN <FLAG><channel>
+     
+The OJOIN command will join you to a channel and give you the optional
+flag on the channel regardless of channel modes. You can use the OJOIN
+command to bypass Bans or Invite only channels.
+    
+Valid Flags are:
+     ! - Channel Admin
+     @ - Channel Operator
+     % - Channel Halfops
+     + - Channel Voice

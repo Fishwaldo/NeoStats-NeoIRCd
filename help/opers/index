@@ -1,24 +1,28 @@
 Help topics available to opers:
 
-accept     admin       away     capab       cburst
-challenge  chanserv    cjoin    clearchan   client
-close      cmode       connect  credits     cryptlink
-die        dline       dmem     drop        eob
-error      gline       help     identify    index
-info       invite      ison     join        kick
-kill       kline       knock    knockll     links
-list       lljoin      llnick   locops      lusers
-map        modlist     modload  modrestart  modunload
-motd       names       nburst   nick        nickserv
-notice     ojoin       oper     operserv    operwall
-opme       part        pass     ping        pong
-post       privmsg     quit     rehash      restart
-resv       server      set      sethost     sjoin
-smo        squit       stats    statserv    svinfo
-svshost    svsid       svsjoin  svsmode     svsnick
-svspart    swhois      tburst   testline    time
-topic      trace       uhelp    umode       undline
-ungline    unkline     unresv   user        userhost
-users      version     vhost    wallops     who
-whois      whowas
- 
+ACCEPT          ADMIN           AWAY            CAPAB
+CBURST          CHALLENGE       CHANSERV        CJOIN
+CLEARCHAN       CLIENT          CLOSE           CMODE
+CONNECT         CREDITS         CRYPTLINK       DIE
+DLINE           DMEM            DROP            EOB
+ERROR           GLINE           HELP            IDENTIFY
+INDEX           INFO            INVITE          ISON
+JOIN            KICK            KILL            KLINE
+KNOCK           KNOCKLL         LINKS           LIST
+LLJOIN          LLNICK          LOCOPS          LUSERS
+MAP             MODLIST         MODLOAD         MODRESTART
+MODUNLOAD       MOTD            NAMES           NBURST
+NICK            NICKSERV        NOTICE          OJOIN
+OPER            OPERSERV        OPERWALL        OPME
+PART            PASS            PING            PONG
+POST            PRIVMSG         QUIT            REHASH
+RESTART         RESV            SERVER          SET
+SETHOST         SJOIN           SMO             SQUIT
+STATS           STATSERV        SVINFO          SVSHOST
+SVSID           SVSJOIN         SVSMODE         SVSNICK
+SVSPART         SWHOIS          TBURST          TESTLINE
+TIME            TOPIC           TRACE           UHELP
+UMODE           UNDLINE         UNGLINE         UNKLINE
+UNRESV          USER            USERHOST        USERS
+VERSION         VHOST           WALLOPS         WHO
+WHOIS           WHOWAS

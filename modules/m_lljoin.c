@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_lljoin.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
+ *  $Id: m_lljoin.c,v 1.4 2002/09/02 07:41:15 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ _moddeinit(void)
   mod_del_cmd(&lljoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
  * m_lljoin
@@ -134,7 +134,7 @@ static void ms_lljoin(struct Client *client_p,
   {
     {
       chptr = vchan_chptr = get_or_create_channel(target_p, chname, NULL);
-      flags = CHFL_CHANOP;
+      flags = CHFL_ADMIN;
     }
    
       root_vchan = chptr;
@@ -143,7 +143,7 @@ static void ms_lljoin(struct Client *client_p,
       return;
 
     if (chptr->users == 0)
-      flags = CHFL_CHANOP;
+      flags = CHFL_ADMIN;
     else
       flags = 0;
 
@@ -180,19 +180,12 @@ static void ms_lljoin(struct Client *client_p,
       return; 
     }
   
-  if(flags == CHFL_CHANOP)
+  if(flags == CHFL_ADMIN)
     {
       chptr->channelts = CurrentTime;
-      /*
-       * XXX - this is a rather ugly hack.
-       *
-       * Unfortunately, there's no way to pass
-       * the fact that it is a vchan through SJOIN...
-       */
-      /* Prevent users creating a fake vchan */
 
       sendto_one(uplink,
-		 ":%s SJOIN %lu %s + :@%s",
+		 ":%s SJOIN %lu %s + :*%s",
 		 me.name,
 		 (unsigned long) chptr->channelts,
 		 chptr->chname,
@@ -200,17 +193,6 @@ static void ms_lljoin(struct Client *client_p,
     }
 
   /* a user can create a channel with halfops..? */
-#if 0
-  else if ((flags == CHFL_HALFOP) && (IsCapable(uplink, CAP_HOPS)))
-    {
-      sendto_one(uplink,
-		 ":%s SJOIN %lu %s + :%%%s",
-		 me.name,
-		 (unsigned long) chptr->channelts,
-		 chptr->chname,
-		 nick);
-    }
-#endif
   else
     {
       sendto_one(uplink,
@@ -230,7 +212,7 @@ static void ms_lljoin(struct Client *client_p,
 		       target_p->vhost,
 		       root_vchan->chname);
   
-  if( flags & CHFL_CHANOP )
+  if( flags & CHFL_ADMIN )
   {
     chptr->mode.mode |= MODE_TOPICLIMIT;
     chptr->mode.mode |= MODE_NOPRIVMSGS;

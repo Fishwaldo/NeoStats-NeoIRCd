@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_message.c,v 1.3 2002/09/02 04:11:00 fishwaldo Exp $
+ *  $Id: m_message.c,v 1.4 2002/09/02 07:41:15 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -122,7 +122,7 @@ _moddeinit(void)
   mod_del_cmd(&notice_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 
 /*
@@ -339,12 +339,14 @@ build_target_list(int p_or_n, char *command, struct Client *client_p,
     /*  allow %+@ if someone wants to do that */
     for (;;)
     {
+      if (*nick == '*')
+        type |= MODE_ADMIN;
       if (*nick == '@')
-        type |= MODE_CHANOP;
+        type |= MODE_CHANOP | MODE_ADMIN;
       else if (*nick == '%')
-        type |= MODE_CHANOP | MODE_HALFOP;
+        type |= MODE_CHANOP | MODE_HALFOP | MODE_ADMIN;
       else if (*nick == '+')
-        type |= MODE_CHANOP | MODE_HALFOP | MODE_VOICE;
+        type |= MODE_CHANOP | MODE_HALFOP | MODE_VOICE | MODE_ADMIN;
       else
         break;
       nick++;
@@ -518,10 +520,15 @@ msg_channel_flags(int p_or_n, char *command, struct Client *client_p,
     type = ONLY_CHANOPS_HALFOPS;
     c = '%';
   }
-  else
+  else if (flags & MODE_CHANOP)
   {
     type = ONLY_CHANOPS;
     c = '@';
+  } 
+  else
+  {
+    type = ONLY_CHANADMIN;
+    c = '*';
   }
 
   chname = chptr->chname;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.4 2002/08/16 12:05:37 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.5 2002/09/02 07:41:15 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -93,6 +93,7 @@ static struct flag_item user_modes[] =
   {FLAGS_SPY, 'y'},
   {FLAGS_OPERWALL, 'z'},
   {FLAGS_HIDDEN, 'x'},
+  {FLAGS_REGNICK, 'r'},
   {0, 0}
 };
 
@@ -150,7 +151,7 @@ int user_modes_from_c_to_bitmask[] =
   FLAGS_OPER,   /* o */
   0,               /* p */
   0,            /* q */
-  0,    /* r */
+  FLAGS_REGNICK,    /* r */
   FLAGS_SERVNOTICE, /* s */
   0,            /* t */
   FLAGS_UNAUTH, /* u */
@@ -1123,6 +1124,12 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +S", 
       		me.name, parv[0]);
       source_p->umodes &= ~FLAGS_SERVICES;
+    }
+  if ((!IsServer(client_p) || !IsUlined(client_p)) && source_p->umodes & FLAGS_REGNICK)
+    {
+      sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +r",
+      		me.name, parv[0]);
+      source_p->umodes &= ~FLAGS_REGNICK;
     }
 
   if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(source_p))

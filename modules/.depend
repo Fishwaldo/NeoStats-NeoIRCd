@@ -11,13 +11,13 @@ m_die.o: core/m_die.c ../include/stdinc.h ../include/config.h \
 m_kick.o: core/m_kick.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/handlers.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/channel_mode.h ../include/vchannel.h ../include/client.h \
-  ../include/ircd_handler.h ../include/linebuf.h ../include/res.h \
-  ../include/fileio.h ../adns/adns.h ../include/ircd.h \
-  ../include/memory.h ../include/balloc.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/numeric.h ../include/send.h \
-  ../include/msg.h ../include/modules.h ../include/parse.h \
-  ../include/hash.h
+  ../include/channel_mode.h ../include/client.h ../include/ircd_handler.h \
+  ../include/linebuf.h ../include/res.h ../include/fileio.h \
+  ../adns/adns.h ../include/ircd.h ../include/memory.h \
+  ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/numeric.h ../include/send.h ../include/msg.h \
+  ../include/modules.h ../include/parse.h ../include/hash.h \
+  ../include/packet.h ../include/fdlist.h
 m_kill.o: core/m_kill.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/handlers.h \
   ../include/client.h ../include/ircd_defs.h ../include/ircd_handler.h \
@@ -39,20 +39,19 @@ m_message.o: core/m_message.c ../include/stdinc.h ../include/config.h \
   ../include/s_conf.h ../include/motd.h ../include/class.h \
   ../include/s_serv.h ../include/send.h ../include/msg.h \
   ../include/parse.h ../include/modules.h ../include/channel_mode.h \
-  ../include/vchannel.h ../include/hash.h ../include/packet.h \
-  ../include/fdlist.h
+  ../include/hash.h ../include/packet.h ../include/fdlist.h
 m_mode.o: core/m_mode.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/handlers.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/channel_mode.h ../include/vchannel.h ../include/client.h \
-  ../include/ircd_handler.h ../include/linebuf.h ../include/res.h \
-  ../include/fileio.h ../adns/adns.h ../include/ircd.h \
-  ../include/memory.h ../include/balloc.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/hash.h ../include/numeric.h \
-  ../include/s_user.h ../include/s_conf.h ../include/motd.h \
-  ../include/class.h ../include/s_serv.h ../include/send.h \
-  ../include/msg.h ../include/parse.h ../include/modules.h \
-  ../include/packet.h ../include/fdlist.h
+  ../include/channel_mode.h ../include/client.h ../include/ircd_handler.h \
+  ../include/linebuf.h ../include/res.h ../include/fileio.h \
+  ../adns/adns.h ../include/ircd.h ../include/memory.h \
+  ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/hash.h ../include/numeric.h ../include/s_user.h \
+  ../include/s_conf.h ../include/motd.h ../include/class.h \
+  ../include/s_serv.h ../include/send.h ../include/msg.h \
+  ../include/parse.h ../include/modules.h ../include/packet.h \
+  ../include/fdlist.h
 m_nick.o: core/m_nick.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/handlers.h \
   ../include/client.h ../include/ircd_defs.h ../include/ircd_handler.h \
@@ -69,15 +68,14 @@ m_nick.o: core/m_nick.c ../include/stdinc.h ../include/config.h \
 m_part.o: core/m_part.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/handlers.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/vchannel.h ../include/client.h ../include/ircd_handler.h \
-  ../include/linebuf.h ../include/res.h ../include/fileio.h \
-  ../adns/adns.h ../include/ircd.h ../include/memory.h \
-  ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/common.h ../include/hash.h ../include/list.h \
-  ../include/numeric.h ../include/send.h ../include/s_serv.h \
-  ../include/msg.h ../include/parse.h ../include/modules.h \
-  ../include/s_conf.h ../include/motd.h ../include/class.h \
-  ../include/packet.h ../include/fdlist.h
+  ../include/client.h ../include/ircd_handler.h ../include/linebuf.h \
+  ../include/res.h ../include/fileio.h ../adns/adns.h ../include/ircd.h \
+  ../include/memory.h ../include/balloc.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/common.h ../include/hash.h \
+  ../include/list.h ../include/numeric.h ../include/send.h \
+  ../include/s_serv.h ../include/msg.h ../include/parse.h \
+  ../include/modules.h ../include/s_conf.h ../include/motd.h \
+  ../include/class.h ../include/packet.h ../include/fdlist.h
 m_quit.o: core/m_quit.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/handlers.h \
   ../include/client.h ../include/ircd_defs.h ../include/ircd_handler.h \
@@ -103,15 +101,14 @@ m_server.o: core/m_server.c ../include/stdinc.h ../include/config.h \
 m_sjoin.o: core/m_sjoin.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/handlers.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/channel_mode.h ../include/vchannel.h ../include/client.h \
-  ../include/ircd_handler.h ../include/linebuf.h ../include/res.h \
-  ../include/fileio.h ../adns/adns.h ../include/ircd.h \
-  ../include/memory.h ../include/balloc.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/hash.h ../include/list.h \
-  ../include/numeric.h ../include/send.h ../include/common.h \
-  ../include/msg.h ../include/parse.h ../include/modules.h \
-  ../include/s_serv.h ../include/s_conf.h ../include/motd.h \
-  ../include/class.h
+  ../include/channel_mode.h ../include/client.h ../include/ircd_handler.h \
+  ../include/linebuf.h ../include/res.h ../include/fileio.h \
+  ../adns/adns.h ../include/ircd.h ../include/memory.h \
+  ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/hash.h ../include/list.h ../include/numeric.h \
+  ../include/send.h ../include/common.h ../include/msg.h \
+  ../include/parse.h ../include/modules.h ../include/s_serv.h \
+  ../include/s_conf.h ../include/motd.h ../include/class.h
 m_squit.o: core/m_squit.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/handlers.h \
   ../include/client.h ../include/ircd_defs.h ../include/ircd_handler.h \
@@ -181,18 +178,6 @@ m_challenge.o: m_challenge.c ../include/stdinc.h ../include/config.h \
   ../include/msg.h ../include/numeric.h ../include/send.h \
   ../include/s_conf.h ../include/motd.h ../include/class.h \
   ../include/rsa.h ../include/s_log.h
-m_cjoin.o: m_cjoin.c ../include/stdinc.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/tools.h \
-  ../include/handlers.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/channel_mode.h ../include/vchannel.h ../include/client.h \
-  ../include/ircd_handler.h ../include/linebuf.h ../include/res.h \
-  ../include/fileio.h ../adns/adns.h ../include/ircd.h \
-  ../include/memory.h ../include/balloc.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/common.h ../include/hash.h \
-  ../include/list.h ../include/numeric.h ../include/send.h \
-  ../include/s_serv.h ../include/s_conf.h ../include/motd.h \
-  ../include/class.h ../include/msg.h ../include/parse.h \
-  ../include/modules.h
 m_close.o: m_close.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/handlers.h ../include/client.h ../include/ircd_defs.h \
@@ -264,12 +249,12 @@ m_gline.o: m_gline.c ../include/stdinc.h ../include/config.h \
   ../include/linebuf.h ../include/res.h ../include/fileio.h \
   ../adns/adns.h ../include/ircd.h ../include/memory.h \
   ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/common.h ../include/m_kline.h ../include/hostmask.h \
-  ../include/numeric.h ../include/fdlist.h ../include/s_bsd.h \
-  ../include/s_conf.h ../include/motd.h ../include/class.h \
-  ../include/s_misc.h ../include/scache.h ../include/send.h \
-  ../include/msg.h ../include/s_serv.h ../include/hash.h \
-  ../include/parse.h ../include/modules.h ../include/list.h
+  ../include/common.h ../include/hostmask.h ../include/numeric.h \
+  ../include/fdlist.h ../include/s_bsd.h ../include/s_conf.h \
+  ../include/motd.h ../include/class.h ../include/s_misc.h \
+  ../include/scache.h ../include/send.h ../include/msg.h \
+  ../include/s_serv.h ../include/hash.h ../include/parse.h \
+  ../include/modules.h ../include/list.h
 m_help.o: m_help.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/handlers.h \
   ../include/client.h ../include/ircd_defs.h ../include/ircd_handler.h \
@@ -278,7 +263,8 @@ m_help.o: m_help.c ../include/stdinc.h ../include/config.h \
   ../include/memory.h ../include/balloc.h ../include/irc_string.h \
   ../include/sprintf_irc.h ../include/motd.h ../include/msg.h \
   ../include/numeric.h ../include/send.h ../include/s_conf.h \
-  ../include/class.h ../include/parse.h ../include/modules.h
+  ../include/class.h ../include/s_log.h ../include/parse.h \
+  ../include/modules.h
 m_info.o: m_info.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/m_info.h ../include/channel.h ../include/ircd_defs.h \
@@ -294,9 +280,9 @@ m_invite.o: m_invite.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/handlers.h ../include/common.h ../include/channel.h \
   ../include/ircd_defs.h ../include/channel_mode.h ../include/list.h \
-  ../include/memory.h ../include/balloc.h ../include/vchannel.h \
-  ../include/client.h ../include/ircd_handler.h ../include/linebuf.h \
-  ../include/res.h ../include/fileio.h ../adns/adns.h ../include/ircd.h \
+  ../include/memory.h ../include/balloc.h ../include/client.h \
+  ../include/ircd_handler.h ../include/linebuf.h ../include/res.h \
+  ../include/fileio.h ../adns/adns.h ../include/ircd.h \
   ../include/irc_string.h ../include/sprintf_irc.h ../include/hash.h \
   ../include/numeric.h ../include/send.h ../include/s_conf.h \
   ../include/motd.h ../include/class.h ../include/s_serv.h \
@@ -314,15 +300,15 @@ m_ison.o: m_ison.c ../include/stdinc.h ../include/config.h \
 m_join.o: m_join.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/handlers.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/channel_mode.h ../include/vchannel.h ../include/client.h \
-  ../include/ircd_handler.h ../include/linebuf.h ../include/res.h \
-  ../include/fileio.h ../adns/adns.h ../include/ircd.h \
-  ../include/memory.h ../include/balloc.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/common.h ../include/resv.h \
-  ../include/hash.h ../include/list.h ../include/numeric.h \
-  ../include/send.h ../include/s_serv.h ../include/s_conf.h \
-  ../include/motd.h ../include/class.h ../include/msg.h \
-  ../include/parse.h ../include/modules.h
+  ../include/channel_mode.h ../include/client.h ../include/ircd_handler.h \
+  ../include/linebuf.h ../include/res.h ../include/fileio.h \
+  ../adns/adns.h ../include/ircd.h ../include/memory.h \
+  ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/common.h ../include/resv.h ../include/hash.h \
+  ../include/list.h ../include/numeric.h ../include/send.h \
+  ../include/s_serv.h ../include/s_conf.h ../include/motd.h \
+  ../include/class.h ../include/msg.h ../include/parse.h \
+  ../include/modules.h
 m_kline.o: m_kline.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/m_kline.h ../include/channel.h ../include/ircd_defs.h \
@@ -345,8 +331,8 @@ m_knock.o: m_knock.c ../include/stdinc.h ../include/config.h \
   ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
   ../include/hash.h ../include/numeric.h ../include/send.h \
   ../include/s_conf.h ../include/motd.h ../include/class.h \
-  ../include/vchannel.h ../include/msg.h ../include/parse.h \
-  ../include/modules.h ../include/s_serv.h
+  ../include/msg.h ../include/parse.h ../include/modules.h \
+  ../include/s_serv.h
 m_links.o: m_links.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/handlers.h \
   ../include/client.h ../include/ircd_defs.h ../include/ircd_handler.h \
@@ -366,20 +352,19 @@ m_list.o: m_list.c ../include/stdinc.h ../include/config.h \
   ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
   ../include/hash.h ../include/numeric.h ../include/s_conf.h \
   ../include/motd.h ../include/class.h ../include/s_serv.h \
-  ../include/send.h ../include/vchannel.h ../include/list.h \
-  ../include/msg.h ../include/parse.h ../include/modules.h
+  ../include/send.h ../include/list.h ../include/msg.h ../include/parse.h \
+  ../include/modules.h
 m_lljoin.o: m_lljoin.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/channel.h ../include/ircd_defs.h ../include/channel_mode.h \
-  ../include/vchannel.h ../include/client.h ../include/ircd_handler.h \
-  ../include/linebuf.h ../include/res.h ../include/fileio.h \
-  ../adns/adns.h ../include/ircd.h ../include/memory.h \
-  ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/hash.h ../include/common.h ../include/list.h \
-  ../include/numeric.h ../include/s_serv.h ../include/s_conf.h \
-  ../include/motd.h ../include/class.h ../include/send.h \
-  ../include/handlers.h ../include/msg.h ../include/parse.h \
-  ../include/modules.h
+  ../include/client.h ../include/ircd_handler.h ../include/linebuf.h \
+  ../include/res.h ../include/fileio.h ../adns/adns.h ../include/ircd.h \
+  ../include/memory.h ../include/balloc.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/hash.h ../include/common.h \
+  ../include/list.h ../include/numeric.h ../include/s_serv.h \
+  ../include/s_conf.h ../include/motd.h ../include/class.h \
+  ../include/send.h ../include/handlers.h ../include/msg.h \
+  ../include/parse.h ../include/modules.h
 m_llnick.o: m_llnick.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/client.h ../include/ircd_defs.h ../include/ircd_handler.h \
@@ -423,15 +408,14 @@ m_motd.o: m_motd.c ../include/stdinc.h ../include/config.h \
 m_names.o: m_names.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/handlers.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/channel_mode.h ../include/vchannel.h ../include/client.h \
-  ../include/ircd_handler.h ../include/linebuf.h ../include/res.h \
-  ../include/fileio.h ../adns/adns.h ../include/ircd.h \
-  ../include/memory.h ../include/balloc.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/common.h ../include/hash.h \
-  ../include/list.h ../include/numeric.h ../include/send.h \
-  ../include/s_serv.h ../include/s_conf.h ../include/motd.h \
-  ../include/class.h ../include/msg.h ../include/parse.h \
-  ../include/modules.h
+  ../include/channel_mode.h ../include/client.h ../include/ircd_handler.h \
+  ../include/linebuf.h ../include/res.h ../include/fileio.h \
+  ../adns/adns.h ../include/ircd.h ../include/memory.h \
+  ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/common.h ../include/hash.h ../include/list.h \
+  ../include/numeric.h ../include/send.h ../include/s_serv.h \
+  ../include/s_conf.h ../include/motd.h ../include/class.h \
+  ../include/msg.h ../include/parse.h ../include/modules.h
 m_nburst.o: m_nburst.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/channel.h ../include/ircd_defs.h ../include/client.h \
@@ -453,7 +437,8 @@ m_oper.o: m_oper.c ../include/stdinc.h ../include/config.h \
   ../include/numeric.h ../include/s_bsd.h ../include/s_conf.h \
   ../include/motd.h ../include/class.h ../include/s_log.h \
   ../include/s_user.h ../include/send.h ../include/list.h \
-  ../include/msg.h ../include/parse.h ../include/modules.h
+  ../include/msg.h ../include/parse.h ../include/modules.h \
+  ../include/packet.h
 m_operwall.o: m_operwall.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/handlers.h \
   ../include/client.h ../include/ircd_defs.h ../include/ircd_handler.h \
@@ -588,19 +573,19 @@ m_time.o: m_time.c ../include/stdinc.h ../include/config.h \
   ../include/sprintf_irc.h ../include/numeric.h ../include/s_misc.h \
   ../include/s_conf.h ../include/motd.h ../include/class.h \
   ../include/s_serv.h ../include/send.h ../include/msg.h \
-  ../include/parse.h ../include/modules.h
+  ../include/parse.h ../include/modules.h ../include/packet.h \
+  ../include/fdlist.h
 m_topic.o: m_topic.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/handlers.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/channel_mode.h ../include/vchannel.h ../include/client.h \
-  ../include/ircd_handler.h ../include/linebuf.h ../include/res.h \
-  ../include/fileio.h ../adns/adns.h ../include/ircd.h \
-  ../include/memory.h ../include/balloc.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/hash.h ../include/numeric.h \
-  ../include/send.h ../include/s_conf.h ../include/motd.h \
-  ../include/class.h ../include/s_serv.h ../include/msg.h \
-  ../include/parse.h ../include/modules.h ../include/packet.h \
-  ../include/fdlist.h
+  ../include/channel_mode.h ../include/client.h ../include/ircd_handler.h \
+  ../include/linebuf.h ../include/res.h ../include/fileio.h \
+  ../adns/adns.h ../include/ircd.h ../include/memory.h \
+  ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/hash.h ../include/numeric.h ../include/send.h \
+  ../include/s_conf.h ../include/motd.h ../include/class.h \
+  ../include/s_serv.h ../include/msg.h ../include/parse.h \
+  ../include/modules.h ../include/packet.h ../include/fdlist.h
 m_trace.o: m_trace.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/handlers.h \
   ../include/class.h ../include/hook.h ../include/tools.h \
@@ -679,11 +664,10 @@ m_who.o: m_who.c ../include/stdinc.h ../include/config.h \
   ../include/channel.h ../include/res.h ../include/fileio.h \
   ../adns/adns.h ../include/ircd.h ../include/memory.h \
   ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/channel_mode.h ../include/vchannel.h ../include/hash.h \
-  ../include/numeric.h ../include/s_serv.h ../include/send.h \
-  ../include/list.h ../include/s_conf.h ../include/motd.h \
-  ../include/class.h ../include/msg.h ../include/parse.h \
-  ../include/modules.h
+  ../include/channel_mode.h ../include/hash.h ../include/numeric.h \
+  ../include/s_serv.h ../include/send.h ../include/list.h \
+  ../include/s_conf.h ../include/motd.h ../include/class.h \
+  ../include/msg.h ../include/parse.h ../include/modules.h
 m_whois.o: m_whois.c ../include/stdinc.h ../include/config.h \
   ../include/setup.h ../include/defaults.h ../include/tools.h \
   ../include/common.h ../include/handlers.h ../include/client.h \
@@ -691,9 +675,9 @@ m_whois.o: m_whois.c ../include/stdinc.h ../include/config.h \
   ../include/channel.h ../include/res.h ../include/fileio.h \
   ../adns/adns.h ../include/ircd.h ../include/memory.h \
   ../include/balloc.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/hash.h ../include/channel_mode.h ../include/vchannel.h \
-  ../include/numeric.h ../include/s_conf.h ../include/motd.h \
-  ../include/class.h ../include/s_serv.h ../include/send.h \
+  ../include/hash.h ../include/channel_mode.h ../include/numeric.h \
+  ../include/s_conf.h ../include/motd.h ../include/class.h \
+  ../include/s_serv.h ../include/s_user.h ../include/send.h \
   ../include/list.h ../include/msg.h ../include/parse.h \
   ../include/modules.h ../include/hook.h
 m_whowas.o: m_whowas.c ../include/stdinc.h ../include/config.h \

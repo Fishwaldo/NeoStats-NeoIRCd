@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kick.c,v 1.5 2002/09/02 04:11:00 fishwaldo Exp $
+ *  $Id: m_kick.c,v 1.6 2002/09/02 07:41:15 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -59,7 +59,7 @@ _moddeinit(void)
   mod_del_cmd(&kick_msgtab);
 }
 
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 /*
 ** m_kick
@@ -185,10 +185,11 @@ static void m_kick(struct Client *client_p,
 	}
       }
       /* we must also check if its a op trying to kick a admin */
-      if (is_chan_op(chptr, source_p) && is_chan_admin(chptr, who))
+      if (is_chan_op(chptr, source_p) && is_chan_admin(chptr, who)) {
       	sendto_one(source_p, form_str(ERR_CHANAPRIVSNEEDED), 
                    me.name, parv[0], name);
-                   
+	return;
+        }                   
       /* jdc
        * - In the case of a server kicking a user (i.e. CLEARCHAN),
        *   the kick should show up as coming from the server which did

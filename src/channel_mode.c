@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.6 2002/09/02 04:11:00 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.7 2002/09/02 07:41:15 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -2206,6 +2206,8 @@ static void mode_get_status(struct Channel *chptr, struct Client *target_p,
   else {
     *t_op = 0;
     *t_hop = 0;
+    *t_voice = 0;
+    *t_admin = 0;
   }
 
   for (i = 0; i < mode_count; i++)
@@ -2219,8 +2221,16 @@ static void mode_get_status(struct Channel *chptr, struct Client *target_p,
         *t_hop = (mode_changes[i].dir == MODE_ADD) ? 1 : 0;
 	return;
       }
-      else if (mode_changes[i].letter == 'v')
+      else if (mode_changes[i].letter == 'v') 
+      {
         *t_voice = (mode_changes[i].dir == MODE_ADD) ? 1 : 0;
+        return;
+      }
+      else if (mode_changes[i].letter == 'a')
+      {
+        *t_admin = (mode_changes[i].dir == MODE_ADD) ? 1 : 0;
+        return;
+      }
     }
   }
 }

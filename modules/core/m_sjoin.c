@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c,v 1.4 2002/09/02 04:11:00 fishwaldo Exp $
+ *  $Id: m_sjoin.c,v 1.5 2002/09/02 07:41:15 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ _moddeinit(void)
   mod_del_cmd(&sjoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 /*
  * ms_sjoin
@@ -114,9 +114,8 @@ static void ms_sjoin(struct Client *client_p,
   int		 num_prefix=0;
   int            isnew;
   int		 buflen = 0;
-  register       char *s, *nhops;
+  register       char *s;
   static         char buf[2*BUFSIZE]; /* buffer for modes and prefix */
-  static         char sjbuf_nhops[BUFSIZE]; /* buffer with halfops as @ */
   char           *p; /* pointer used making sjbuf */
   int hide_or_not;
   int i;
@@ -126,7 +125,6 @@ static void ms_sjoin(struct Client *client_p,
 
   *buf = '\0';
   *sjbuf_hops = '\0';
-  *sjbuf_nhops = '\0';
 
   if (IsClient(source_p) || parc < 5)
     return;
@@ -170,9 +168,12 @@ static void ms_sjoin(struct Client *client_p,
       case 't':
         mode.mode |= MODE_TOPICLIMIT;
         break;
-      case 'a':
+      case 'A':
         mode.mode |= MODE_HIDEOPS;
         break;
+      case 'O':
+      	mode.mode |= MODE_OPERSONLY;
+      	break;
       case 'k':
         strlcpy(mode.key, parv[4 + args], KEYLEN);
         args++;
@@ -196,7 +197,7 @@ static void ms_sjoin(struct Client *client_p,
 
   oldts = chptr->channelts;
 
-  doesop = (parv[4+args][0] == '@' || parv[4+args][1] == '@');
+  doesop = (parv[4+args][0] == '*' || parv[4+args][1] == '*');
 
   oldmode = &chptr->mode;
 
@@ -224,11 +225,9 @@ static void ms_sjoin(struct Client *client_p,
   }
 #endif
 
-  /*
-   * XXX - this no doubt destroys vchans
-   */
   if (isnew)
     chptr->channelts = tstosend = newts;
+
   /* Remote is sending users to a permanent channel.. we need to drop our
    * version and use theirs, to keep compatibility -- fl */
   else if (chptr->users == 0 && parv[4+args][0])
@@ -327,7 +326,7 @@ static void ms_sjoin(struct Client *client_p,
 		      parv[2], modebuf, parabuf);
 
   /* check we can fit a nick on the end, as well as \r\n\0 and a prefix "
-   * @+".
+   * *@+".
    */
   if (buflen >= (BUFSIZE - 6 - NICKLEN))
     {
@@ -344,7 +343,6 @@ static void ms_sjoin(struct Client *client_p,
   *mbuf++ = '+';
 
   hops = sjbuf_hops;
-  nhops = sjbuf_nhops;
 
   s = parv[args+4];
 
@@ -370,13 +368,23 @@ static void ms_sjoin(struct Client *client_p,
 
       for (i = 0; i < 2; i++)
 	{
+	  if (*s == '*')
+	    {
+	      fl |= MODE_ADMIN;
+	      if (keep_new_modes)
+	      {
+	        *hops++ = *s;
+		num_prefix++;
+              }
+	      
+	      s++;
+	    }
 	  if (*s == '@')
 	    {
 	      fl |= MODE_CHANOP;
 	      if (keep_new_modes)
 	      {
 	        *hops++ = *s;
-		*nhops++ = *s;
 		num_prefix++;
               }
 	      
@@ -388,7 +396,6 @@ static void ms_sjoin(struct Client *client_p,
 	      if (keep_new_modes)
 	      {
 	        *hops++ = *s;
-		*nhops++ = *s;
 		num_prefix++;
 	      }
 	      
@@ -400,7 +407,6 @@ static void ms_sjoin(struct Client *client_p,
 	      if (keep_new_modes)
 	      {
 	        *hops++ = *s;
-		*nhops++ = '@';
 		num_prefix++;
 	      }
 	      
@@ -408,7 +414,7 @@ static void ms_sjoin(struct Client *client_p,
 	    }
 	}
 
-      /* if the client doesnt exist, backtrack over the prefix (@%+) that we
+      /* if the client doesnt exist, backtrack over the prefix (*@%+) that we
        * just added and skip to the next nick
        */
       /* also do this if its fake direction or a server */
@@ -421,9 +427,6 @@ static void ms_sjoin(struct Client *client_p,
         hops -= num_prefix;
 	*hops = '\0';
 
-	nhops -= num_prefix;
-	*nhops = '\0';
-
         goto nextnick;
       }
 
@@ -431,12 +434,9 @@ static void ms_sjoin(struct Client *client_p,
       hops += ircsprintf(hops, "%s ", s);
       assert((hops - sjbuf_hops) < sizeof(sjbuf_hops));
 
-      nhops += ircsprintf(nhops, "%s ", s);
-      assert((nhops-sjbuf_nhops) < sizeof(sjbuf_nhops));
-
       if (!keep_new_modes)
 	{
-	  if ((fl & MODE_CHANOP) || (fl & MODE_HALFOP))
+	  if ((fl & MODE_CHANOP) || (fl & MODE_HALFOP) || (fl & MODE_ADMIN))
 	    {
 	      fl = MODE_DEOPPED;
 	    }
@@ -509,7 +509,11 @@ static void ms_sjoin(struct Client *client_p,
           *mbuf++ = 'h';
           para[pargs++] = s;
         }
-
+      else if (fl & MODE_ADMIN)
+        {
+          *mbuf++ = 'a';
+          para[pargs++] = s;
+        }
       if (pargs >= MAXMODEPARAMS)
         {
           *mbuf = '\0';
@@ -580,10 +584,7 @@ nextnick:
       if (!parv[4+args][0])
           return;
 
-      if (IsCapable(target_p, CAP_HOPS))
         sendto_one(target_p, "%s%s", buf, sjbuf_hops);
-      else
-        sendto_one(target_p, "%s%s", buf, sjbuf_nhops);
    }
 }
 
@@ -608,7 +609,7 @@ struct mode_letter flags[] = {
   { MODE_MODERATED,  'm' },
   { MODE_INVITEONLY, 'i' },
   { MODE_PRIVATE,    'p' },
-  { MODE_HIDEOPS,    'a' },
+  { MODE_HIDEOPS,    'A' },
   { 0, 0 }
 };
 
@@ -708,13 +709,15 @@ static void remove_our_modes( int hide_or_not,
 {
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanops, 'o');
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->voiced, 'v');
-
+  remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanadmins, 'a');
   /* Move all voice/ops etc. to non opped list */
   dlinkMoveList(&chptr->chanops, &chptr->peons);
   dlinkMoveList(&chptr->voiced, &chptr->peons);
+  dlinkMoveList(&chptr->chanadmins, &chptr->peons);
   
   dlinkMoveList(&chptr->locchanops, &chptr->locpeons);
   dlinkMoveList(&chptr->locvoiced, &chptr->locpeons);
+  dlinkMoveList(&chptr->locchanadmins, &chptr->locpeons);
 
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->halfops, 'h');
   dlinkMoveList(&chptr->halfops, &chptr->peons);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whois.c,v 1.3 2002/09/02 04:11:00 fishwaldo Exp $
+ *  $Id: m_whois.c,v 1.4 2002/09/02 07:41:15 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -35,6 +35,7 @@
 #include "numeric.h"
 #include "s_conf.h"
 #include "s_serv.h"
+#include  "s_user.h"
 #include "send.h"
 #include "list.h"
 #include "irc_string.h"
@@ -75,7 +76,7 @@ _moddeinit(void)
   mod_del_cmd(&whois_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
 ** m_whois

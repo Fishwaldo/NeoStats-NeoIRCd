@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h,v 1.4 2002/09/02 04:10:59 fishwaldo Exp $
+ *  $Id: client.h,v 1.5 2002/09/02 07:41:15 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_client_h
@@ -410,10 +410,11 @@ struct LocalUser
 #define FLAGS_HIDDEN	   0x20000 /* +x hidden host */
 
 /* user information flags, only settable by remote mode or local oper */
-#define FLAGS_OPER         0x40000 /* Operator */
-#define FLAGS_ADMIN        0x80000 /* Admin on server */
-#define FLAGS_SERVICES	   0x100000 /* Is Services */
-#define FLAGS_ULINED	   0x200000 /* is a ulined server? */
+#define FLAGS_REGNICK	   0x40000 /* +r regnick */
+#define FLAGS_OPER         0x80000 /* Operator */
+#define FLAGS_ADMIN        0x100000 /* Admin on server */
+#define FLAGS_SERVICES	   0x200000 /* Is Services */
+#define FLAGS_ULINED	   0x400000 /* is a ulined server? */
 #define FLAGS_ALL	   FLAGS_SERVNOTICE
 
 
@@ -451,12 +452,12 @@ struct LocalUser
                                                * been ended. */
 
 #define SEND_UMODES  (FLAGS_INVISIBLE | FLAGS_OPER | FLAGS_WALLOP | \
-                      FLAGS_ADMIN | FLAGS_SERVICES | FLAGS_HIDDEN)
+                      FLAGS_ADMIN | FLAGS_SERVICES | FLAGS_HIDDEN | FLAGS_REGNICK)
 #define ALL_UMODES   (SEND_UMODES | FLAGS_SERVNOTICE | FLAGS_CCONN | \
                       FLAGS_REJ | FLAGS_SKILL | FLAGS_FULL | FLAGS_SPY | \
                       FLAGS_NCHANGE | FLAGS_OPERWALL | FLAGS_DEBUG | \
                       FLAGS_BOTS | FLAGS_EXTERNAL | FLAGS_LOCOPS | \
- 		      FLAGS_UNAUTH | FLAGS_CALLERID | FLAGS_SERVICES)
+ 		      FLAGS_UNAUTH | FLAGS_CALLERID | FLAGS_SERVICES | FLAGS_REGNICK)
 
 #define FLAGS_ID     (FLAGS_NEEDID | FLAGS_GOTID)
 
@@ -487,6 +488,10 @@ struct LocalUser
 #define IsMarked(x)		((x)->flags & FLAGS_MARK)
 #define IsUlined(x)		((x)->flags & FLAGS_ULINED)
 #define SetUlined(x)		((x)->flags |= FLAGS_ULINED)
+#define IsRegNick(x)		((x)->flags & FLAGS_REGNICK)
+#define SetRegNick(x)		((x)->flags |= FLAGS_REGNICK)
+#define ClearRegNick(x)		((x)->flags &= ~FLAGS_REGNICK)
+
 
 /* oper flags */
 #define MyOper(x)               (MyConnect(x) && IsOper(x))

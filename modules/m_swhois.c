@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_swhois.c,v 1.1 2002/09/14 16:00:20 fishwaldo Exp $
+ *  $Id: m_swhois.c,v 1.2 2002/09/17 06:09:35 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -70,14 +70,14 @@ _moddeinit(void)
   mod_del_cmd(&swhois_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 
 /* show a whois notice
    source_p does a /whois on client_p */
 int
 send_swhois(struct hook_mfunc_data *data)
 {
-  if (data->client_p->swhois)
+  if (strlen(data->client_p->swhois) > 1)
     sendto_one(data->source_p, form_str(RPL_SWHOIS), me.name, data->source_p->name, data->client_p->name, data->client_p->swhois);
   return 0;
 }

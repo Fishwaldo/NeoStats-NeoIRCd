@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.14 2002/09/16 09:31:20 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.15 2002/09/17 06:09:35 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1696,7 +1696,7 @@ get_channel_access(struct Client *source_p, struct Channel *chptr)
 {
   /* Let hacked servers in for now... */
 
-  if (IsUlined(source_p) || IsServices(source_p))
+  if (!MyClient(source_p) || IsServices(source_p))
     return CHACCESS_ADMIN;
 
   if (is_chan_admin(chptr, source_p))

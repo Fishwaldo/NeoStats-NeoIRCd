@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.5 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.6 2002/09/17 06:09:35 fishwaldo Exp $
  */
 
 %{
@@ -99,6 +99,7 @@ int   class_redirport_var;
 %token  ANTI_SPAM_EXIT_MESSAGE_TIME
 %token  AUTH
 %token  AUTOCONN
+%token  OPERAUTOJOIN
 %token  BYTES KBYTES MBYTES GBYTES TBYTES
 %token  CALLER_ID_WAIT
 %token  CHANNEL
@@ -889,7 +890,7 @@ class_entry:    CLASS
 
     add_class(class_name_var,class_ping_time_var,
               class_number_per_ip_var, class_max_number_var,
-              class_sendq_var );
+              class_sendq_var);
 
     MyFree(class_name_var);
     class_name_var = NULL;
@@ -1883,6 +1884,7 @@ general_item:       general_failed_oper_notice |
                     general_compression_level | general_client_flood |
                     general_throttle_time | general_havent_read_conf |
                     general_dot_in_ip6_addr | general_ping_cookie |
+		    general_oper_autojoin | 
                     error;
 
 general_failed_oper_notice:   FAILED_OPER_NOTICE '=' TYES ';'
@@ -1893,6 +1895,27 @@ general_failed_oper_notice:   FAILED_OPER_NOTICE '=' TYES ';'
                         FAILED_OPER_NOTICE '=' TNO ';'
   {
     ConfigFileEntry.failed_oper_notice = 0;
+  } ;
+
+general_oper_autojoin:	   OPERAUTOJOIN '=' QSTRING ';'
+  {
+    if (strlen(yylval.string) > CHANNELLEN) {
+	sendto_realops_flags(FLAGS_ALL, L_ALL, "Invalid autojoin Channel %s", yylval.string);
+	ilog(L_ERROR, "Invalid autojoin channel '%s'", yylval.string);
+	return;
+    }
+    if (!check_channel_name(yylval.string) || !IsChannelName(yylval.string)) {
+	sendto_realops_flags(FLAGS_ALL, L_ALL, "Invalid Autojoin Channelname %s", yylval.string);
+	ilog(L_ERROR, "Invalid autojoin Channelname %s", yylval.string);
+	return;
+    }
+    if (*yylval.string == '&') {
+	sendto_realops_flags(FLAGS_ALL, L_ALL, "Cannot set Autojoin Channel to a local channel");
+	ilog(L_ERROR, "Cannot set Autojoin Channel to a local channel");
+	return;
+    }
+    strlcpy(ConfigFileEntry.operautojoin, yylval.string,
+              CHANNELLEN);
   } ;
 
 general_anti_nick_flood:   ANTI_NICK_FLOOD '=' TYES ';'

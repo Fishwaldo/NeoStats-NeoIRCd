@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: class.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: class.h,v 1.4 2002/09/17 06:09:35 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_class_h
@@ -31,6 +31,7 @@ struct Client;
 struct Class {
   struct Class* next;     /* list node pointer */
   char*		className;
+  char*		autojoin;
   int           type;
   int           conFreq;
   int           pingFreq;
@@ -69,7 +70,7 @@ extern  int     get_client_ping (struct Client *);
 extern  void    check_class(void);
 extern  void    initclass(void);
 extern  void    free_class(struct Class* );
-extern  void    add_class (char *, int, int, int, long);
+extern  void    add_class(char *, int, int, int, long);
 extern  void    fix_class (struct ConfItem *, struct ConfItem *);
 extern  void    report_classes (struct Client *);
 

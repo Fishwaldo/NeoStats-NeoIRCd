@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: class.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: class.c,v 1.4 2002/09/17 06:09:35 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -169,6 +169,7 @@ int     get_con_freq(struct Class *clptr)
  *		- connection frequency
  * 		- maximum links
  *		- max sendq
+ 		- autojoin channel
  * output	- NONE
  * side effects -
  * When adding a class, check to see if it is already present first.

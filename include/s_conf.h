@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h,v 1.5 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: s_conf.h,v 1.6 2002/09/17 06:09:35 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -178,6 +178,8 @@ struct config_file_entry
   char* network_name;
   char* network_desc;
 
+  char operautojoin[CHANNELLEN+1];
+  
   char fname_operlog[MAXPATHLEN];
   char fname_userlog[MAXPATHLEN];
   char fname_foperlog[MAXPATHLEN];

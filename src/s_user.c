@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.12 2002/09/13 16:30:05 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.13 2002/09/17 06:09:35 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1055,10 +1055,8 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 			}
 			strncpy(target_p->vhost, target_p->host, HOSTLEN);
 		}
-	break;
-
-
-
+	  	sendto_server(NULL, target_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SETHOST %s :%s", me.name, target_p->name, target_p->vhost);					
+		break;
 
           /* we may not get these,
            * but they shouldnt be in default
@@ -1134,14 +1132,6 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
    * will cause servers to update correctly.
    */
   send_umode_out(client_p, target_p, setflags);
-
-  /* 
-   * only send out a sethost if +x mode was added
-   */
-  if (!(setflags & FLAGS_HIDDEN) && IsHidden(target_p)) {
-  	sendto_server(NULL, target_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SETHOST %s :%s", target_p->name, target_p->name, target_p->vhost);					
-  	ilog(L_WARN, "Sending sethost for %s", target_p->name);
-  }	
 
   return 0;
 }
@@ -1368,6 +1358,9 @@ oper_up( struct Client *source_p, struct ConfItem *aconf )
   dlink_node *ptr;
   struct ConfItem *found_aconf;
   dlink_node *m;
+  struct Channel *chptr = NULL;
+  int flags;
+
 
   SetOper(source_p);
   if((int)aconf->hold)
@@ -1422,6 +1415,66 @@ oper_up( struct Client *source_p, struct ConfItem *aconf )
   sendto_one(source_p, ":%s NOTICE %s :*** Oper privs are %s", me.name,
              source_p->name, operprivs);
   SendMessageFile(source_p, &ConfigFileEntry.opermotd);
+
+  /* autojoin them to a channel if its defined */
+  if (ConfigFileEntry.operautojoin) {
+	sendto_one(source_p, "%s NOTICE %s :Autojoining you to %s", me.name, source_p->name, ConfigFileEntry.operautojoin);
+	if ((chptr = hash_find_channel(ConfigFileEntry.operautojoin)) != NULL) {
+		if (IsMember(source_p, chptr))
+			return(1);
+		if (chptr->users = 0)
+			flags = CHFL_ADMIN;
+	} else {
+		flags = CHFL_ADMIN;
+		if (!ServerInfo.hub) {
+			/* lazy links */
+			if (uplink && IsCapable(uplink, CAP_LL)) {
+				sendto_one(uplink, ":%s CBURST %s %s %s", me.name, ConfigFileEntry.operautojoin, source_p->name, "");
+				/* and wait */
+				return 1;
+			}
+		}
+	}
+	/* no point doing it fi I already have it */
+	if (chptr == NULL)
+		chptr = get_or_create_channel(source_p, ConfigFileEntry.operautojoin, NULL);
+	
+	/* now add the user to the channel */
+	add_user_to_channel(chptr, source_p, flags);
+
+	/* propogate out to the other servers */
+
+	if (flags & CHFL_ADMIN)	{
+		chptr->channelts = CurrentTime;
+		sendto_server(NULL, source_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SJOIN %lu %s + :¤%s", me.name, (unsigned long) chptr->channelts, chptr->chname, source_p->name);
+	} else {
+		sendto_server(NULL, source_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SJOIN %lu %s + :%s", me.name, (unsigned long) chptr->channelts, chptr->chname, source_p->name);	
+	}
+	
+	/* notify all local clients */
+	sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN :%s", source_p->name, source_p->username, source_p->vhost, chptr->chname);
+	/* set the modes */
+	if (flags & CHFL_ADMIN) {
+		chptr->mode.mode |= MODE_TOPICLIMIT;
+		chptr->mode.mode |= MODE_NOPRIVMSGS;
+		chptr->mode.mode |= MODE_OPERSONLY;
+		sendto_channel_local(ONLY_CHANOPS_HALFOPS, chptr, ":%s MODE %s +ntO", me.name, chptr->chname);
+		sendto_server(NULL, source_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT, ":%s MODE %s +ntO", me.name, chptr->chname);
+	}
+	/* send the topic */	
+	if (chptr->topic != NULL) {
+  		sendto_one(source_p, form_str(RPL_TOPIC), me.name, source_p->name, chptr->chname, chptr->topic);
+  		/* hide who topic and time in hideops mode? */
+  		if (!(chptr->mode.mode & MODE_HIDEOPS) || (flags & CHFL_CHANOP) || (flags & CHFL_HALFOP) || (flags & CHFL_ADMIN)) {
+  			sendto_one(source_p, form_str(RPL_TOPICWHOTIME), me.name, source_p->name, chptr->chname, chptr->topic_info, chptr->topic_time);
+  		} else { /* hide from non ops */
+  			sendto_one(source_p, form_str(RPL_TOPICWHOTIME), me.name, source_p->name, chptr->chname, me.name, chptr->topic_time);
+  		}
+  	}
+  	channel_member_names(source_p, chptr, chptr->chname, 1);
+  	source_p->localClient->last_join_time = CurrentTime;
   
+  }
+  	
   return(1);
 }

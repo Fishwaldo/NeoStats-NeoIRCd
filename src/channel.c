@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.10 2002/09/16 07:36:01 fishwaldo Exp $
+ *  $Id: channel.c,v 1.11 2002/09/16 07:47:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -699,8 +699,8 @@ channel_member_names(struct Client *source_p,
     members_ptr[0] = chptr->chanops.head;
     members_ptr[1] = chptr->halfops.head;
     members_ptr[2] = chptr->voiced.head;
-    members_ptr[3] = chptr->peons.head;
-    members_ptr[4] = chptr->chanadmins.head;
+    members_ptr[3] = chptr->chanadmins.head;
+    members_ptr[4] = chptr->peons.head;
        
     is_member = IsMember(source_p, chptr);
 

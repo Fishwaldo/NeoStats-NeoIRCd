@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.9 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.10 2002/09/13 09:17:14 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -88,22 +88,13 @@ static SlinkRplHnd slink_zipstats;
 struct Capability captab[] = {
 /*  name     cap     */ 
   { "QS",    CAP_QS },
-  { "EX",    CAP_EX },
-  { "CHW",   CAP_CHW },
   { "LL",    CAP_LL },
-  { "IE",    CAP_IE },
   { "EOB",   CAP_EOB },
-  { "KLN",   CAP_KLN },
-  { "GLN",   CAP_GLN },
-  { "KNOCK", CAP_KNOCK },
-  { "HOPS",  CAP_HOPS },
   { "HUB",   CAP_HUB },
-  { "AOPS",  CAP_AOPS },
   { "UID",   CAP_UID },
   { "ZIP",   CAP_ZIP },
   { "TBURST", CAP_TBURST },
   { "PARA",  CAP_PARA },
-  { "MX",    CAP_MODEX},
   { 0,           0 }
 };
 
@@ -945,6 +936,7 @@ int server_estab(struct Client *client_p)
   char*             host;
   dlink_node        *m;
   dlink_node        *ptr;
+  unsigned int 		    srvopt;
 
   assert(NULL != client_p);
   if(client_p == NULL)
@@ -1008,9 +1000,12 @@ int server_estab(struct Client *client_p)
              | ((aconf->flags & CONF_FLAGS_COMPRESSED) ? CAP_ZIP_SUPPORTED : 0),
              0);
 
-      sendto_one(client_p, "SERVER %s 1 :%s%s",
+      srvopt = 0;
+      if (ConfigServerHide.hidden) srvopt = SERVER_HIDDEN;
+
+      sendto_one(client_p, "SERVER %s 1 %d :%s",
                  my_name_for_link(me.name, aconf), 
-		 ConfigServerHide.hidden ? "(H) " : "",
+		 srvopt,
                  (me.info[0]) ? (me.info) : "IRCers United");
     }
 
@@ -1151,10 +1146,14 @@ int server_estab(struct Client *client_p)
       if ((aconf = target_p->serv->sconf) &&
           match(my_name_for_link(me.name, aconf), client_p->name))
         continue;
-      sendto_one(target_p,":%s SERVER %s 2 :%s%s%s", 
+        
+      srvopt = 0;
+      if (IsUlined(client_p)) srvopt |= SERVER_ULINED;
+      if (client_p->hidden_server) srvopt |= SERVER_HIDDEN;
+        
+      sendto_one(target_p,":%s SERVER %s 2 %d :%s", 
                  me.name, client_p->name,
-		 client_p->hidden_server ? "(H) " : "",
-	 	 IsUlined(client_p) ? "(U) " : "",
+		 srvopt, 
                  client_p->info);
     }
 
@@ -1187,11 +1186,14 @@ int server_estab(struct Client *client_p)
         {
           if (match(my_name_for_link(me.name, aconf), target_p->name))
             continue;
-          sendto_one(client_p, ":%s SERVER %s %d :%s%s%s", 
+          srvopt = 0;
+          if (IsUlined(target_p)) srvopt |= SERVER_ULINED;
+          if (target_p->hidden_server) srvopt |= SERVER_HIDDEN;
+          
+          sendto_one(client_p, ":%s SERVER %s %d %d :%s", 
 	             target_p->serv->up,
                      target_p->name, target_p->hopcount+1, 
-		     target_p->hidden_server ? "(H) " : "",
-	     	     IsUlined(target_p) ? "(U) " : "",
+                     srvopt,
 		     target_p->info);
         }
     }
@@ -2104,6 +2106,7 @@ serv_connect_callback(int fd, int status, void *data)
 {
     struct Client *client_p = data;
     struct ConfItem *aconf;
+    unsigned int srvopt;
 
     /* First, make sure its a real client! */
     assert(client_p != NULL);
@@ -2176,9 +2179,11 @@ serv_connect_callback(int fd, int status, void *data)
              | (ServerInfo.hub ? CAP_HUB : 0),
              0);
 
-    sendto_one(client_p, "SERVER %s 1 :%s%s",
+    srvopt = 0;
+    if (ConfigServerHide.hidden) srvopt = SERVER_HIDDEN;
+    sendto_one(client_p, "SERVER %s 1 %d :%s",
                my_name_for_link(me.name, aconf), 
-	       ConfigServerHide.hidden ? "(H) " : "", 
+	       srvopt,
 	       me.info);
 
     /* 

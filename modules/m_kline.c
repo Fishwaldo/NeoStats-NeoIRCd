@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c,v 1.6 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: m_kline.c,v 1.7 2002/09/13 09:17:13 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -86,7 +86,7 @@ _moddeinit(void)
   mod_del_cmd(&dline_msgtab[0]);
   mod_del_cmd(&dline_msgtab[1]);
 }
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 
 /* Local function prototypes */
@@ -218,7 +218,7 @@ mo_kline(struct Client *client_p, struct Client *source_p,
 
   if (target_server != NULL)
     {
-      sendto_server(NULL, source_p, NULL, CAP_KLN, NOCAPS, LL_ICLIENT,
+      sendto_server(NULL, source_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
                     ":%s KLINE %s %lu %s %s :%s",
                     source_p->name,
                     target_server,
@@ -287,7 +287,7 @@ ms_kline(struct Client *client_p, struct Client *source_p,
 
   /* parv[0]  parv[1]        parv[2]      parv[3]  parv[4]  parv[5] */
   /* oper     target_server  tkline_time  user     host     reason */
-  sendto_server(client_p, source_p, NULL, CAP_KLN, NOCAPS, LL_ICLIENT,
+  sendto_server(client_p, source_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
                 ":%s KLINE %s %s %s %s :%s",
                 parv[0], parv[1], parv[2], parv[3], parv[4], parv[5]);
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c,v 1.4 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_server.c,v 1.5 2002/09/13 09:17:14 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -51,7 +51,7 @@ static void ms_server(struct Client*, struct Client*, int, char **);
 static int set_server_gecos(struct Client *, char *);
 
 struct Message server_msgtab = {
-  "SERVER", 0, 0, 4, 0, MFLG_SLOW | MFLG_UNREG, 0,
+  "SERVER", 0, 0, 5, 0, MFLG_SLOW | MFLG_UNREG, 0,
   {mr_server, m_registered, ms_server, m_registered}
 };
 
@@ -67,7 +67,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&server_msgtab);
 }
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 
 int bogus_host(char *host);
@@ -77,8 +77,9 @@ struct Client *server_exists(char *);
  * mr_server - SERVER message handler
  *      parv[0] = sender prefix
  *      parv[1] = servername
- *      parv[2] = serverinfo/hopcount
- *      parv[3] = serverinfo
+ *      parv[2] = hopcount
+ *	parv[3] = server flags
+ *      parv[4] = serverinfo
  */
 static void mr_server(struct Client *client_p, struct Client *source_p,
                       int parc, char *parv[])
@@ -87,6 +88,7 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
   char             *name;
   struct Client    *target_p;
   int hop;
+  unsigned int srvopt;
 
   if (parc < 4)
     {
@@ -97,7 +99,8 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
 
   name = parv[1];
   hop = atoi(parv[2]);
-  strlcpy(info, parv[3], REALLEN);
+  srvopt = atoi(parv[3]);
+  strlcpy(info, parv[4], REALLEN);
 
   /* 
    * Reject a direct nonTS server connection if we're TS_ONLY -orabidoo
@@ -246,12 +249,14 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
 
   strlcpy(client_p->name, name, HOSTLEN+1);
   
-  /* clear the Ulined flag before looking into the info field for (U) (dynamic Uline) */
+  /* clear the Ulined flag */
+
   client_p->flags &= ~FLAGS_ULINED;
+  if (srvopt && SERVER_HIDDEN) client_p->hidden_server = 1;
   set_server_gecos(client_p, info);
   
   /* if this server is trying to set itself Ulined, its Not allowed, so exit it */
-  if (IsUlined(client_p)) {
+  if (srvopt && SERVER_ULINED) {
   	sendto_realops_flags(FLAGS_ALL, L_ALL, "Server %s trying to U line itself. No Way, Nadda, I dun think so", client_p->name);
   	exit_client(client_p, client_p, client_p, "Got a Gline Instead");
   	return;
@@ -266,8 +271,9 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
  * ms_server - SERVER message handler
  *      parv[0] = sender prefix
  *      parv[1] = servername
- *      parv[2] = serverinfo/hopcount
- *      parv[3] = serverinfo
+ *      parv[2] = hopcount
+ *	parv[3] = server flags
+ *      parv[4] = serverinfo
  */
 static void ms_server(struct Client *client_p, struct Client *source_p,
                       int parc, char *parv[])
@@ -282,6 +288,7 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
   int              hlined = 0;
   int              llined = 0;
   dlink_node	   *ptr;
+  unsigned int	   srvopt;
 
   /* Just to be sure -A1kmm. */
   if (!IsServer(source_p))
@@ -295,7 +302,8 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
 
   name = parv[1];
   hop = atoi(parv[2]);
-  strlcpy(info, parv[3], REALLEN);
+  srvopt = atoi(parv[3]);
+  strlcpy(info, parv[4], REALLEN);
 
   if ((target_p = server_exists(name)))
     {
@@ -490,7 +498,10 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
   strlcpy(target_p->name, name, HOSTLEN+1);
   
   /* clear the Ulined flag before we look at info for (U) */
+
   target_p->flags &= ~FLAGS_ULINED;
+  if (srvopt && SERVER_ULINED) target_p->flags |= FLAGS_ULINED;
+  if (srvopt && SERVER_HIDDEN) target_p->hidden_server = 1;
   
   set_server_gecos(target_p, info);
   
@@ -533,10 +544,12 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
 	}
       if (match(my_name_for_link(me.name, aconf), target_p->name))
 	continue;
-
-      sendto_one(bclient_p, ":%s SERVER %s %d :%s%s",
+      srvopt = 0;
+      if (IsUlined(target_p)) srvopt |= SERVER_ULINED;
+      if (target_p->hidden_server) srvopt |= SERVER_HIDDEN;
+      sendto_one(bclient_p, ":%s SERVER %s %d %d :%s",
 		 parv[0], target_p->name, hop + 1,
-		 target_p->hidden_server ? "(H) " : "",
+		 srvopt,
 		 target_p->info);
     }
       
@@ -587,30 +600,6 @@ static int set_server_gecos(struct Client *client_p, char *info)
       /* a space? if not (H) could be the last part of info.. */
       if((p = strchr(s, ' ')))
         *p = '\0';
-      
-      /* check for (H) which is a hidden server */
-      if(!strcmp(s, "(H)"))
-      {
-        client_p->hidden_server = 1;
-
-        /* if there was no space.. theres nothing to set info to */
-        if(p)
-	  s = ++p;
-	else
-	  s = NULL;
-      }
-      /* check for (U) which is a U lined Server */
-      if (!strcmp(s, "(U)"))
-      {
-      	SetUlined(client_p);
-       
-        if(p)
-          s = ++p;
-        else
-          s = NULL;
-      }
-      else if(p)
-        *p = ' ';
       
       /* if there was a trailing space, s could point to \0, so check */
       if(s && (*s != '\0'))

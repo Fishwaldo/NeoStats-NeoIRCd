@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.h,v 1.7 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: channel_mode.h,v 1.8 2002/09/13 09:17:13 fishwaldo Exp $
  */
 
 
@@ -27,19 +27,6 @@
 #define INCLUDED_channel_mode_h
 #include "config.h"           /* config settings */
 #include "ircd_defs.h"        /* buffer sizes */
-
-/* If the below define is enabled, we will bounce halfops as follows:
- * If we receive a halfop for a user, we will check their ->from supports
- * CAP_HOPS, if not, we will bounce the mode back as a -h (which will
- * be translated to -o for any back down the line not supporting CAP_HOPS).
- * If it does, we'll send it as +h to that server, and any others supporting
- * CAP_HOPS.  All other servers will see a +o.
- *
- * The first server to find (user_being_halfoped)->from is not capable
- * of CAP_HOPS will also send a notice to the user performing the mode
- * (if it is indeed a user) informing them why.
- */
-#undef BOUNCE_BAD_HOPS
 
 #define MODEBUFLEN      200
 

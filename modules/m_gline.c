@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_gline.c,v 1.5 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: m_gline.c,v 1.6 2002/09/13 09:17:13 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -95,7 +95,7 @@ _moddeinit(void)
   mod_del_cmd(&gline_msgtab[1]);
 }
 
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 /*
  * mo_gline()
@@ -196,11 +196,11 @@ mo_gline(struct Client *client_p, struct Client *source_p,
       log_gline(source_p->name, source_p->username, source_p->host, me.name, user, host, reason);
 
       /* 4 param version for hyb-7 servers */
-      sendto_server(NULL, source_p, NULL, CAP_GLN|CAP_UID, NOCAPS,
+      sendto_server(NULL, source_p, NULL, CAP_UID, NOCAPS,
                     LL_ICLIENT,
                     ":%s GLINE %s %s :%s",
                     ID(source_p), user, host, reason);
-      sendto_server(NULL, source_p, NULL, CAP_GLN, CAP_UID,
+      sendto_server(NULL, source_p, NULL, NOCAPS, CAP_UID,
                     LL_ICLIENT,
                     ":%s GLINE %s %s :%s",
                     source_p->name, user, host, reason);
@@ -274,7 +274,7 @@ static void ms_gline(struct Client *client_p,
     return;
     
   /* send in hyb-7 to compatable servers */
-  sendto_server(client_p, acptr, NULL, CAP_GLN, NOCAPS, LL_ICLIENT,
+  sendto_server(client_p, acptr, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
                 ":%s GLINE %s %s :%s",
                 oper_nick, user, host, reason);
   if (ConfigFileEntry.glines)

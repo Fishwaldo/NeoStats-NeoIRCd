@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.10 2002/09/13 06:50:09 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.11 2002/09/13 09:17:14 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1139,7 +1139,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
    * only send out a sethost if +x mode was added
    */
   if (!(setflags & FLAGS_HIDDEN) && IsHidden(target_p)) {
-  	sendto_server(NULL, target_p, NULL, CAP_MODEX, 0, LL_ICLIENT, ":%s SETHOST %s :%s", target_p->name, target_p->name, target_p->vhost);					
+  	sendto_server(NULL, target_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SETHOST %s :%s", target_p->name, target_p->name, target_p->vhost);					
   	ilog(L_WARN, "Sending sethost for %s", target_p->name);
   }	
 

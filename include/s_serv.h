@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: s_serv.h,v 1.4 2002/09/13 09:17:13 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_serv_h
@@ -47,6 +47,15 @@ struct Client;
 struct ConfItem;
 struct Channel;
 
+
+/*
+ * Server command flags. Decide if a Server is Hidden, or Ulined
+ */
+#define SERVER_HIDDEN	0x00001
+#define SERVER_ULINED	0x00002
+
+
+
 /* Capabilities */
 struct Capability
 {
@@ -56,31 +65,19 @@ struct Capability
 
 #define CAP_CAP         0x00000001   /* received a CAP to begin with */
 #define CAP_QS          0x00000002   /* Can handle quit storm removal */
-#define CAP_EX          0x00000008   /* Can do channel +e exemptions */
-#define CAP_CHW         0x00000010   /* Can do channel wall @# */
 #define CAP_LL          0x00000020   /* Can do lazy links */
-#define CAP_IE          0x00000040   /* Can do invite exceptions */
 #define CAP_EOB	        0x00000100   /* Can do EOB message */
-#define CAP_KLN	        0x00000200   /* Can do KLINE message */
-#define CAP_GLN	        0x00000400   /* Can do GLINE message */
-#define CAP_HOPS        0x00000800   /* can do half ops (+h) */
 #define CAP_HUB         0x00001000   /* This server is a HUB */
-#define CAP_AOPS        0x00002000   /* Can do anon ops (+a) */
 #define CAP_UID         0x00004000   /* Can do UIDs */
 #define CAP_ZIP         0x00008000   /* Can do ZIPlinks */
 #define CAP_ENC         0x00010000   /* Can do ENCrypted links */
 
-#define CAP_KNOCK	0x00020000   /* supports KNOCK */
-
 #define CAP_TBURST	0x00040000   /* supports TBURST */
 #define CAP_PARA	0x00080000   /* supports invite broadcasting for +p */
-#define CAP_MODEX	0x00100000   /* Supports ModeX */
 
-#define CAP_MASK        (CAP_QS  | CAP_EX   | CAP_CHW  | \
-                         CAP_IE  | CAP_EOB  | CAP_KLN  | \
-                         CAP_GLN | CAP_HOPS | CAP_AOPS | \
+#define CAP_MASK        (CAP_QS  | CAP_EOB  | \
                          CAP_UID | CAP_ZIP  | CAP_ENC | \
-                         CAP_KNOCK  | CAP_PARA | CAP_MODEX)
+                         CAP_PARA)
 
 #ifdef HAVE_LIBZ
 #define CAP_ZIP_SUPPORTED       CAP_ZIP

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.6 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: channel.c,v 1.7 2002/09/13 09:17:14 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -341,11 +341,9 @@ send_channel_modes(struct Client *client_p, struct Channel *chptr)
 
   send_mode_list(client_p, chptr->chname, &chptr->banlist, 'b', 0);
 
-  if (IsCapable(client_p, CAP_EX))
-    send_mode_list(client_p, chptr->chname, &chptr->exceptlist, 'e', 0);
+  send_mode_list(client_p, chptr->chname, &chptr->exceptlist, 'e', 0);
 
-  if (IsCapable(client_p, CAP_IE))
-    send_mode_list(client_p, chptr->chname, &chptr->invexlist, 'I', 0);
+  send_mode_list(client_p, chptr->chname, &chptr->invexlist, 'I', 0);
 }
 
 /*

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_message.c,v 1.5 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_message.c,v 1.6 2002/09/13 09:17:14 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -122,7 +122,7 @@ _moddeinit(void)
   mod_del_cmd(&notice_msgtab);
 }
 
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 
 /*
@@ -551,14 +551,13 @@ msg_channel_flags(int p_or_n, char *command, struct Client *client_p,
   if (chptr->chname[0] == '&')
     return;
 
-  sendto_channel_remote(source_p, client_p, type, CAP_CHW, CAP_UID, vchan,
+  sendto_channel_remote(source_p, client_p, type, NOCAPS, CAP_UID, vchan,
                 ":%s %s %c%s :%s", source_p->name, command, c,
                 vchan->chname, text);
-  sendto_channel_remote(source_p, client_p, type, CAP_CHW|CAP_UID, NOCAPS, vchan,
+  sendto_channel_remote(source_p, client_p, type, CAP_UID, NOCAPS, vchan,
                 ":%s %s %c%s :%s", ID(source_p), command, c,
                 vchan->chname, text);
 
-  /* non CAP_CHW servers? */
 }
 
 /*

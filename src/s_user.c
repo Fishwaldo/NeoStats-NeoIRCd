@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.19 2002/09/24 11:50:16 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.20 2002/09/24 12:41:40 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -908,7 +908,6 @@ do_remote_user(char* nick, struct Client* client_p, struct Client* source_p,
    */
   user->server = find_or_add(server);
   strlcpy(source_p->host, host, HOSTLEN); 
-  strlcpy(source_p->vhost, host, HOSTLEN);
   strlcpy(source_p->info, realname, REALLEN);
   source_p->svsid = svsid;
   if (id != NULL)
@@ -1045,16 +1044,9 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 			 * of they are not a local client 
 			 */
 			SetHidden(target_p);
-			if (!MyClient(target_p)) {
-				break;
-			}
 			make_virthost(target_p->host, target_p->vhost, 0);
- 		  	sendto_server(NULL, target_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SETHOST %s :%s", me.name, target_p->name, target_p->vhost);					
 		} else {
 			ClearHidden(target_p);
-			if (!MyClient(target_p)) {
-				break;
-			}
 			strncpy(target_p->vhost, target_p->host, HOSTLEN);
 		}
 		break;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.14 2002/09/24 12:05:34 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.15 2002/09/24 12:41:40 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -78,7 +78,7 @@ struct Message nick_msgtab = {
 };
 
 struct Message client_msgtab = {
-  "CLIENT", 0, 0, 10, 0, MFLG_SLOW, 0,
+  "CLIENT", 0, 0, 11, 11, MFLG_SLOW, 0,
   {m_ignore, m_ignore, ms_client, m_ignore}
 };
 
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.14 $";
+const char *_version = "$Revision: 1.15 $";
 #endif
 
 /*
@@ -712,7 +712,7 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
     /* copy the nick in place */
     (void)strcpy(source_p->name, nick);
     (void)add_to_client_hash_table(nick, source_p);
-
+    strncpy(source_p->vhost, parv[6], HOSTLEN+1);
     if (parc > 8)
     {
        int   flag;
@@ -729,7 +729,7 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
 	   Count.oper++;
 
 	 if(!(source_p->umodes & FLAGS_HIDDEN) && (flag & FLAGS_HIDDEN)) {
-		if (parv[7][0] != '*') 
+		if (parv[7][0] != '*')
 			strncpy(source_p->vhost, parv[7], HOSTLEN +1);
 		else
 			make_virthost(source_p->host, source_p->vhost, 1);
@@ -813,6 +813,8 @@ client_from_server(struct Client *client_p, struct Client *source_p, int parc,
   (void)strcpy(source_p->name, nick);
   (void)add_to_client_hash_table(nick, source_p);
   add_to_id_hash_table(id, source_p);
+  strncpy(source_p->vhost, parv[6], HOSTLEN+1);
+  
 
   /* parse usermodes */
   m = &parv[4][1];
@@ -825,7 +827,7 @@ client_from_server(struct Client *client_p, struct Client *source_p, int parc,
       Count.oper++;
 
     if(!(source_p->umodes & FLAGS_HIDDEN) && (flag & FLAGS_HIDDEN)) {
-		if (parv[7][0] != '*') 
+		if (parv[7][0] != '*')
 			strncpy(source_p->vhost, parv[7], HOSTLEN +1);
 		else
 			make_virthost(source_p->host, source_p->vhost, 1);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_message.c,v 1.12 2002/10/25 11:13:08 fishwaldo Exp $
+ *  $Id: m_message.c,v 1.13 2002/10/31 13:01:57 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -122,7 +122,7 @@ _moddeinit(void)
   mod_del_cmd(&notice_msgtab);
 }
 
-const char *_version = "$Revision: 1.12 $";
+const char *_version = "$Revision: 1.13 $";
 #endif
 
 /*
@@ -542,11 +542,21 @@ msg_channel_flags(int p_or_n, char *command, struct Client *client_p,
     /* idletime shouldnt be reset by notice --fl */
     if ((p_or_n != NOTICE) && source_p->user)
       source_p->user->last = CurrentTime;
-  }
 
-  sendto_channel_local(type, vchan, ":%s!%s@%s %s %c%s :%s",
-                       source_p->name, source_p->username,
-                       source_p->vhost, command, c, chname, text);
+    sendto_channel_local_butone(source_p, type, vchan, ":%s!%s@%s %s %c%s :%s",
+                                source_p->name, source_p->username,
+                                source_p->vhost, command, c, chname, text);
+  }
+  else
+  {
+    /*
+     * another good catch, lee.  we never would echo to remote clients anyway,
+     * so use slightly less intensive sendto_channel_local()
+     */
+    sendto_channel_local(type, vchan, ":%s!%s@%s %s %c%s :%s",
+                         source_p->name, source_p->username,
+                         source_p->vhost, command, c, chname, text);
+  }
 
   if (chptr->chname[0] == '&')
     return;
@@ -670,7 +680,7 @@ flood_attack_client(int p_or_n, struct Client *source_p,
   int delta;
 
   if (GlobalSetOptions.floodcount && MyConnect(target_p)
-      && IsClient(source_p))
+      && IsClient(source_p) && !IsConfCanFlood(source_p))
   {
     if ((target_p->localClient->first_received_message_time + 1)
         < CurrentTime)
@@ -728,7 +738,7 @@ flood_attack_channel(int p_or_n, struct Client *source_p,
 {
   int delta;
 
-  if (GlobalSetOptions.floodcount)
+  if (GlobalSetOptions.floodcount && !IsConfCanFlood(source_p))
   {
     if ((chptr->first_received_message_time + 1) < CurrentTime)
     {
@@ -837,6 +847,10 @@ handle_opers(int p_or_n, char *command, struct Client *client_p,
                         nick + 1,
                         (*nick == '#') ? MATCH_HOST : MATCH_SERVER,
                         "%s $%s :%s", command, nick, text);
+
+    if ((p_or_n != NOTICE) && source_p->user)
+      source_p->user->last = CurrentTime;
+
     return;
   }
 
@@ -854,7 +868,9 @@ handle_opers(int p_or_n, char *command, struct Client *client_p,
     if (!IsMe(target_p))
     {
       sendto_one(target_p, ":%s %s %s :%s", source_p->name,
-                 "PRIVMSG", nick, text);
+                 command, nick, text);
+      if ((p_or_n != NOTICE) && source_p->user)
+        source_p->user->last = CurrentTime;
       return;
     }
 
@@ -885,14 +901,23 @@ handle_opers(int p_or_n, char *command, struct Client *client_p,
       if (host != NULL)
 	*--host = '%';
 
-      if (count == 1)
-        sendto_anywhere(target_p, source_p, "%s %s :%s", "PRIVMSG",
+      if (count == 1) {
+        sendto_anywhere(target_p, source_p, "%s %s :%s", command,
 			nick, text);
+        if ((p_or_n != NOTICE) && source_p->user)
+          source_p->user->last = CurrentTime;
+      }
       else
         sendto_one(source_p, form_str(ERR_TOOMANYTARGETS),
                    me.name, source_p->name, nick);
     }
   }
+  else if (server && *(server+1) && (target_p == NULL))
+    sendto_one(source_p, form_str(ERR_NOSUCHSERVER), me.name,
+               source_p->name, server+1);
+  else if (server && (target_p == NULL))
+    sendto_one(source_p, form_str(ERR_NOSUCHNICK), me.name,
+               source_p->name, nick);
 }
 
 /*

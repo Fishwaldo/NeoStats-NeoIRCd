@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_auth.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: s_auth.h,v 1.4 2002/10/31 13:01:54 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_auth_h
@@ -42,6 +42,9 @@ struct AuthRequest {
   unsigned int        flags;     /* current state of request */
   int                 fd;        /* file descriptor for auth queries */
   time_t              timeout;   /* time when query expires */
+#ifdef IPV6
+  unsigned int	      ip6_int;
+#endif
 };
 
 /*

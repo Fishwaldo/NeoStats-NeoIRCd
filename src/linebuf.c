@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: linebuf.c,v 1.4 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: linebuf.c,v 1.5 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -75,9 +75,6 @@ linebuf_allocate(void)
 {
   buf_line_t *t;
   t = BlockHeapAlloc(linebuf_heap);
-  assert(t != NULL);
-  if(t == NULL)
-    return NULL;
   t->refcount = 0;
   return(t);
  

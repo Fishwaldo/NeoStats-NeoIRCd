@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_bsd.c,v 1.7 2002/09/19 05:41:11 fishwaldo Exp $
+ *  $Id: s_bsd.c,v 1.8 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -397,13 +397,24 @@ void add_connection(struct Listener* listener, int fd)
 #else
   new_client->localClient->aftype = AF_INET;
 #endif
+  *new_client->host = '\0';
+#ifdef IPV6
+  if(*new_client->localClient->sockhost == ':')
+    strlcat(new_client->host, "0",HOSTLEN+1);
+
+  if(new_client->localClient->aftype == AF_INET6 && ConfigFileEntry.dot_in_ip6_addr == 1)
+  {
+    strlcat(new_client->host, new_client->localClient->sockhost,HOSTLEN+1);
+    strlcat(new_client->host, ".",HOSTLEN+1);
+  } else
+#endif
+    strlcat(new_client->host, new_client->localClient->sockhost,HOSTLEN+1);
 
   strcpy(new_client->host, new_client->localClient->sockhost);
 /* we also copy it to vhost here as well */
   strcpy(new_client->vhost, new_client->localClient->sockhost);
   
-  new_client->localClient->fd        = fd;
-
+  new_client->localClient->fd = fd;
   new_client->localClient->listener  = listener;
   ++listener->ref_count;
 

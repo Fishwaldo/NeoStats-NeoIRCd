@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_cryptlink.c,v 1.5 2002/09/13 16:30:03 fishwaldo Exp $
+ *  $Id: m_cryptlink.c,v 1.6 2002/10/31 13:01:54 fishwaldo Exp $
  */
 
 /*
@@ -68,7 +68,7 @@
 void _modinit(void) {}
 void _moddeinit(void) {}
 
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 #else
 
@@ -114,7 +114,7 @@ _moddeinit(void)
   mod_del_cmd(&cryptlink_msgtab);
 }
 
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 
 
@@ -239,7 +239,7 @@ static void cryptlink_auth(struct Client *client_p, struct Client *source_p,
              client_p->localClient->in_cipher->keylen) != 0)
   {
     cryptlink_error(client_p, "AUTH",
-                    "Unauthorised server connection attempt",
+                    "Unauthorized server connection attempt",
                     "Malformed CRYPTLINK AUTH reply");
     return;
   }
@@ -329,7 +329,7 @@ static void cryptlink_serv(struct Client *client_p, struct Client *source_p,
       if (ConfigFileEntry.warn_no_nline)
       {
         cryptlink_error(client_p, "SERV",
-          "Unauthorised server connection attempt: No entry for server",
+          "Unauthorized server connection attempt: No entry for server",
           NULL);
       }
       exit_client(client_p, client_p, client_p, "Invalid server name");
@@ -337,14 +337,14 @@ static void cryptlink_serv(struct Client *client_p, struct Client *source_p,
       break;
     case -2:
       cryptlink_error(client_p, "SERV",
-        "Unauthorised server connection attempt: CRYPTLINK not "
+        "Unauthorized server connection attempt: CRYPTLINK not "
                                       "enabled on remote server",
         "CRYPTLINK not enabled");
       return;
       break;
     case -3:
       cryptlink_error(client_p, "SERV",
-        "Unauthorised server connection attempt: Invalid host",
+        "Unauthorized server connection attempt: Invalid host",
         "Invalid host");
       return;
       break;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c,v 1.10 2002/10/15 07:30:09 fishwaldo Exp $
+ *  $Id: m_server.c,v 1.11 2002/10/31 13:01:57 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&server_msgtab);
 }
-const char *_version = "$Revision: 1.10 $";
+const char *_version = "$Revision: 1.11 $";
 #endif
 
 int bogus_host(char *host);
@@ -479,9 +479,6 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
     }
   
 
-  target_p = make_client(client_p);
-  make_server(target_p);
-  target_p->hopcount = hop;
 
   if(strlen(name) > HOSTLEN)
   {
@@ -495,6 +492,10 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
     exit_client(NULL, client_p, &me, "Invalid servername introduced.");
     return;
   }
+
+  target_p = make_client(client_p);
+  make_server(target_p);
+  target_p->hopcount = hop;
 
   strlcpy(target_p->name, name, HOSTLEN+1);
   

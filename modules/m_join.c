@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c,v 1.11 2002/09/23 10:47:30 fishwaldo Exp $
+ *  $Id: m_join.c,v 1.12 2002/10/31 13:01:55 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -64,7 +64,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&join_msgtab);
 }
-const char *_version = "$Revision: 1.11 $";
+const char *_version = "$Revision: 1.12 $";
 
 #endif
 static void do_join_0(struct Client *client_p, struct Client *source_p);
@@ -166,7 +166,8 @@ m_join(struct Client *client_p,
       }
       
       /* see if its resv'd */
-      if(find_channel_resv(name))
+      if(find_channel_resv(name) &&
+         !(IsOper(source_p) && ConfigChannel.oper_pass_resv))
 	{
 	  sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
 		     me.name, source_p->name, name);
@@ -232,8 +233,7 @@ m_join(struct Client *client_p,
 	  if(!ServerInfo.hub)
 	    {
 	      /* LazyLinks */
-	      if( (*name != '&') && uplink
-		  && IsCapable(uplink, CAP_LL) )
+	      if((*name != '&') && uplink && IsCapable(uplink, CAP_LL))
 		{
 		  sendto_one(uplink,":%s CBURST %s %s %s",
 			     me.name,name,source_p->name, key ? key: "" );
@@ -343,15 +343,13 @@ m_join(struct Client *client_p,
             {
               sendto_one(source_p, form_str(RPL_TOPICWHOTIME),
                          me.name, parv[0], root_chptr->chname,
-                         chptr->topic_info,
-                         chptr->topic_time);
+                         chptr->topic_info, chptr->topic_time);
             }
           else /* Hide from nonops */
             {
                sendto_one(source_p, form_str(RPL_TOPICWHOTIME),
                          me.name, parv[0], root_chptr->chname,
-                         me.name,
-                         chptr->topic_time);
+                         me.name, chptr->topic_time);
             }
 	}
 

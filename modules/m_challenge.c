@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_challenge.c,v 1.5 2002/09/19 05:41:10 fishwaldo Exp $
+ *  $Id: m_challenge.c,v 1.6 2002/10/31 13:01:54 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -55,7 +55,7 @@ _moddeinit(void)
   return;
 }
 
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 #else
 
@@ -80,7 +80,7 @@ _moddeinit(void)
   mod_del_cmd(&challenge_msgtab);
 }
 
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 /*
  * m_challenge - generate RSA challenge for wouldbe oper
@@ -158,7 +158,7 @@ static void m_challenge( struct Client *client_p, struct Client *source_p,
   MyFree(source_p->user->response);
   MyFree(source_p->user->auth_oper);
   source_p->user->response = NULL;
-  source_p->user->response = NULL;
+  source_p->user->auth_oper = NULL;
 
   if (!(aconf = find_conf_exact(parv[1], source_p->username, source_p->host,
 	             		CONF_OPERATOR)) &&
@@ -167,7 +167,14 @@ static void m_challenge( struct Client *client_p, struct Client *source_p,
                                 CONF_OPERATOR)))
   {
     sendto_one (source_p, form_str(ERR_NOOPERHOST), me.name, parv[0]);
-    log_failed_oper(source_p, source_p->user->auth_oper);
+    /* they suck, do we tell the world? */
+    if (ConfigFileEntry.failed_oper_notice)
+    {
+      sendto_realops_flags(FLAGS_ALL, L_ALL, "Failed CHALLENGE attempt - host"
+             " mismatch by %s (%s@%s)",
+             source_p->name, source_p->username, source_p->host);
+    }
+    log_failed_oper(source_p, parv[1]);
     return;
   }
   if (!aconf->rsa_public_key)

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_ping.c,v 1.3 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_ping.c,v 1.4 2002/10/31 13:01:56 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -57,7 +57,7 @@ _moddeinit(void)
   mod_del_cmd(&ping_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
 ** m_ping
@@ -89,7 +89,7 @@ static void m_ping(struct Client *client_p,
    return;
   }
 
-  if (!EmptyString(destination) && !match(destination, me.name))
+  if (!EmptyString(destination) && irccmp(destination, me.name) != 0)
   {
     /* We're sending it across servers.. origin == client_p->name --fl_ */
     origin = client_p->name;
@@ -150,7 +150,7 @@ static void ms_ping(struct Client *client_p,
     origin = client_p->name;
 #endif
 
-  if (!EmptyString(destination) && !match(destination, me.name))
+  if (!EmptyString(destination) && irccmp(destination, me.name) != 0)
   {
     if ((target_p = find_server(destination)))
       sendto_one(target_p,":%s PING %s :%s", parv[0],

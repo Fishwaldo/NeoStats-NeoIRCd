@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.13 2002/09/23 10:47:30 fishwaldo Exp $
+ *  $Id: channel.c,v 1.14 2002/10/31 13:01:57 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1130,7 +1130,7 @@ is_voiced(struct Channel *chptr, struct Client *who)
 int
 can_send(struct Channel *chptr, struct Client *source_p)
 {
-  if(MyClient(source_p) && find_channel_resv(chptr->chname))
+  if(MyClient(source_p) && find_channel_resv(chptr->chname) && !(IsOper(source_p)) && ConfigChannel.oper_pass_resv)
     return (CAN_SEND_NO);
     
   if (is_any_op(chptr, source_p))
@@ -1268,19 +1268,15 @@ allocate_topic(struct Channel *chptr)
     return FALSE;
   
   ptr = BlockHeapAlloc(topic_heap);  
-  if(ptr != NULL)
-  {
-    /* Basically we allocate one large block for the topic and
-     * the topic info.  We then split it up into two and shove it
-     * in the chptr 
-     */
-    chptr->topic = ptr;
-    chptr->topic_info = (char *)ptr + TOPICLEN+1;
-    *chptr->topic = '\0';
-    *chptr->topic_info = '\0';
-    return (TRUE);
-  }
-  return (FALSE);
+  /* Basically we allocate one large block for the topic and
+   * the topic info.  We then split it up into two and shove it
+   * in the chptr 
+   */
+  chptr->topic = ptr;
+  chptr->topic_info = (char *)ptr + TOPICLEN+1;
+  *chptr->topic = '\0';
+  *chptr->topic_info = '\0';
+  return (TRUE);
 }
 
 void

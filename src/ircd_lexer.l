@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_lexer.l,v 1.6 2002/09/17 06:09:35 fishwaldo Exp $
+ *  $Id: ircd_lexer.l,v 1.7 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 %option case-insensitive
@@ -139,6 +139,7 @@ auth		{ return AUTH; }
 autoconn	{ return AUTOCONN; }
 autojoin	{ return OPERAUTOJOIN; }
 caller_id_wait	{ return CALLER_ID_WAIT; }
+can_flood       { return CAN_FLOOD; }
 channel		{ return CHANNEL; }
 cipher_preference { return CIPHER_PREFERENCE; }
 class		{ return CLASS; }
@@ -167,6 +168,7 @@ encrypted       { return ENCRYPTED; }
 exceed_limit    { return EXCEED_LIMIT; }
 exempt		{ return EXEMPT; }
 fakename	{ return FAKENAME; }
+fallback_to_ip6_int { return FALLBACK_IP6_INT; }
 flatten_links	{ return FLATTEN_LINKS; }
 fname_foperlog  { return FNAME_FOPERLOG; }
 fname_operlog   { return FNAME_OPERLOG; }
@@ -225,6 +227,7 @@ no_tilde	{ return NO_TILDE; }
 number_per_ip	{ return NUMBER_PER_IP; }
 oper		{ return OPERATOR; }
 oper_log        { return OPER_LOG; }
+oper_pass_resv	{ return OPER_PASS_RESV; }
 operator	{ return OPERATOR; }
 passwd		{ return PASSWORD; }
 password	{ return PASSWORD; }
@@ -251,6 +254,7 @@ servlink_path   { return SERVLINK_PATH; }
 set_ulined	{ return ULINE_SERVER; }
 short_motd      { return SHORT_MOTD; }
 silent          { return SILENT; }
+true_no_oper_flood { return TRUE_NO_OPER_FLOOD; }
 unkline		{ return UNKLINE; }
 use_egd 	{ return USE_EGD; }
 use_help        { return USE_HELP; }

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.39 2002/10/16 06:23:30 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.40 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -308,7 +308,6 @@ register_local_user(struct Client *client_p, struct Client *source_p,
            source_p->localClient->random_ping = (unsigned long)rand();
            sendto_one(source_p, "PING :%lu", (unsigned long)source_p->localClient->random_ping);
            source_p->flags |= FLAGS_PINGSENT;
-	   strlcpy(source_p->username, username, USERLEN + 1);
   	   return -1;
   	} 
   	if(!(source_p->flags2 & FLAGS2_PING_COOKIE))
@@ -502,9 +501,8 @@ register_local_user(struct Client *client_p, struct Client *source_p,
      return CLIENT_EXITED;
   }
   user_welcome(source_p);
-  introduce_client(client_p, source_p, user, nick);
 
-  return (0);
+  return (introduce_client(client_p, source_p, user, nick));
 }
 
 /*
@@ -530,7 +528,7 @@ register_remote_user(struct Client *client_p, struct Client *source_p,
 
   user->last = CurrentTime;
 
-  strlcpy(source_p->username, username, USERLEN + 1);
+  strlcpy(source_p->username, username, sizeof(source_p->username));
 
   SetClient(source_p);
 
@@ -824,6 +822,13 @@ report_and_set_user_flags(struct Client *source_p,struct ConfItem *aconf)
          ":%s NOTICE %s :*** You are exempt from idle limits. congrats.",
                  me.name,source_p->name);
     }
+  if (IsConfCanFlood(aconf))
+    {
+      SetCanFlood(source_p);
+      sendto_one(source_p, ":%s NOTICE %s :*** You are exempt from flood "
+                 "protection, aren't you feersome.",
+                 me.name, source_p->name);
+    }
 }
 
 
@@ -859,23 +864,22 @@ do_local_user(char* nick, struct Client* client_p, struct Client* source_p,
    */
   user->server = me.name;
 
-  strlcpy(source_p->info, realname, REALLEN);
+  strlcpy(source_p->info, realname, sizeof(source_p->info));
  
+  if (!IsGotId(source_p)) 
+  {
+     /*
+      * save the username in the client
+      * If you move this you'll break ping cookies..you've been warned 
+      */
+      strlcpy(source_p->username, username, sizeof(source_p->username));
+  }
+
   if (source_p->name[0])
   { 
     /* NICK already received, now I have USER... */
     	return register_local_user(client_p, source_p, source_p->name, username);
   }
-  else
-    {
-      if (!IsGotId(source_p)) 
-        {
-          /*
-           * save the username in the client
-           */
-          strlcpy(source_p->username, username, USERLEN + 1);
-        }
-    }
   return 0;
 }
 

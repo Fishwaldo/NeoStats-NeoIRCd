@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_swhois.c,v 1.2 2002/09/17 06:09:35 fishwaldo Exp $
+ *  $Id: m_swhois.c,v 1.3 2002/10/31 13:01:56 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -70,7 +70,7 @@ _moddeinit(void)
   mod_del_cmd(&swhois_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 
 /* show a whois notice
    source_p does a /whois on client_p */
@@ -108,7 +108,6 @@ static void mo_swhois(struct Client *client_p, struct Client *source_p, int parc
     strncpy(target_p->swhois, parv[2], REALLEN);
     sendto_one(source_p, ":%s NOTICE %s :*** NOTICE: swhois updated for %s", me.name, source_p->name, target_p->name);
     sendto_server(NULL, target_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SWHOIS %s :%s", me.name, target_p->name, parv[2]);
-    
 }
 
 /*
@@ -132,6 +131,5 @@ static void ms_swhois(struct Client *client_p, struct Client *source_p, int parc
     	  return;
     }
     strncpy(target_p->swhois, parv[2], REALLEN);
-    sendto_server(client_p, target_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SWHOIS %s :%s", me.name, target_p->name, parv[2]);
-    
+    sendto_server(client_p, target_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SWHOIS %s :%s", source_p->name, target_p->name, parv[2]);
 }

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_who.c,v 1.12 2002/09/20 14:49:36 fishwaldo Exp $
+ *  $Id: m_who.c,v 1.13 2002/10/31 13:01:56 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -60,7 +60,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&who_msgtab);
 }
-const char *_version = "$Revision: 1.12 $";
+const char *_version = "$Revision: 1.13 $";
 #endif
 static void do_who_on_channel(struct Client *source_p,
 			      struct Channel *chptr, char *real_name,
@@ -186,11 +186,15 @@ static void m_who(struct Client *client_p,
 
           member = IsMember(source_p, chptr);
           if (isinvis && !member)
+          {
+            chptr = NULL;
             continue;
+          }
           if (member || (!isinvis && PubChannel(chptr)))
             {
               break;
             }
+	  chptr = NULL;
 	}
 
       if (chptr != NULL)

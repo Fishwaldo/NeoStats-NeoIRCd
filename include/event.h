@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: event.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: event.h,v 1.4 2002/10/31 13:01:54 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_event_h
@@ -42,7 +42,6 @@ struct ev_entry
   const char *name;
   time_t frequency;
   time_t when;
-  struct ev_entry *next;
   int active;
 };
 

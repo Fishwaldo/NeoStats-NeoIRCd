@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: packet.c,v 1.4 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: packet.c,v 1.5 2002/10/31 13:01:58 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -107,9 +107,11 @@ parse_client_queued(struct Client *client_p)
   } 
   else if(IsClient(client_p)) 
   {
+    checkflood = 0;
+    if (ConfigFileEntry.no_oper_flood && (IsOper(client_p) || IsCanFlood(client_p)))
+      if (ConfigFileEntry.true_no_oper_flood) 
+        checkflood = -1;
 
-    if (ConfigFileEntry.no_oper_flood && IsOper(client_p))
-      checkflood = 0;
     /*
      * Handle flood protection here - if we exceed our flood limit on
      * messages in this loop, we simply drop out of the loop prematurely.
@@ -130,7 +132,7 @@ parse_client_queued(struct Client *client_p)
        * as sent_parsed will always hover around the allow_read limit
        * and no 'bursts' will be permitted.
        */
-      if(checkflood)
+      if(checkflood > 0)
       {
         if(lclient_p->sent_parsed >= lclient_p->allow_read)
           break;
@@ -139,7 +141,7 @@ parse_client_queued(struct Client *client_p)
       /* allow opers 4 times the amount of messages as users. why 4?
        * why not. :) --fl_
        */
-      else if(lclient_p->sent_parsed >= (4 * lclient_p->allow_read))
+      else if(lclient_p->sent_parsed >= (4 * lclient_p->allow_read) && checkflood != -1)
         break;
        
       dolen = linebuf_get(&client_p->localClient->buf_recvq, readBuf,

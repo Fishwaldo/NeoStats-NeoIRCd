@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c,v 1.10 2002/09/24 11:50:16 fishwaldo Exp $
+ *  $Id: client.c,v 1.11 2002/10/31 13:01:58 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -124,8 +124,6 @@ struct Client* make_client(struct Client* from)
   dlink_node *m;
 
   client_p = BlockHeapAlloc(client_heap);
-  if(client_p == NULL)
-    return NULL;
   memset(client_p, 0, sizeof(struct Client)); 
   if (from == NULL)
     {
@@ -1121,9 +1119,9 @@ remove_dependents(struct Client* client_p,
        */
 
       if ((aconf = to->serv->sconf) != NULL)
-        strlcpy(myname, my_name_for_link(me.name, aconf), HOSTLEN + 1);
+        strlcpy(myname, my_name_for_link(me.name, aconf), sizeof(myname));
       else
-        strlcpy(myname, me.name, HOSTLEN + 1);
+        strlcpy(myname, me.name, sizeof(myname));
       recurse_send_quits(client_p, source_p, to, comment1, myname);
     }
 
@@ -1560,7 +1558,7 @@ set_initial_nick(struct Client *client_p, struct Client *source_p,
 
  if (source_p->user != NULL)
  {
-  strlcpy(buf, source_p->username, USERLEN);
+  strlcpy(buf, source_p->username, sizeof(buf));
   /*
    * USER already received, now we have NICK.
    * *NOTE* For servers "NICK" *must* precede the

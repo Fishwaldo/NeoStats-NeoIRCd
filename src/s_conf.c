@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c,v 1.10 2002/10/16 05:01:53 fishwaldo Exp $
+ *  $Id: s_conf.c,v 1.11 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -507,8 +507,8 @@ verify_access(struct Client* client_p, const char* username)
     }
   else
     {
-      non_ident[0] = '~';
-      strlcpy(&non_ident[1],username, USERLEN + 1);
+      strlcpy(non_ident, "~", sizeof(non_ident));
+      strlcat(non_ident, username, USERLEN + 1);
       aconf = find_address_conf(client_p->host,non_ident,
 				&client_p->localClient->ip,
 				client_p->localClient->aftype);
@@ -758,7 +758,7 @@ static int
 hash_ip(struct irc_inaddr *addr)
 {
   int hash;
-  u_int32_t *ip = (unsigned long *)&PIN_ADDR(addr);
+  u_int32_t *ip = (u_int32_t *)&PIN_ADDR(addr);
 
   if(IN6_IS_ADDR_V4MAPPED((struct in6_addr *)ip))
   {
@@ -1245,7 +1245,7 @@ rehash(int sig)
 
   if (ServerInfo.description != NULL)
     {
-      strlcpy(me.info, ServerInfo.description, REALLEN);
+      strlcpy(me.info, ServerInfo.description, sizeof(me.info));
     }
 
   flush_deleted_I_P();
@@ -1301,7 +1301,7 @@ set_default_conf(void)
   AdminInfo.description = NULL;
 
   set_log_level(L_NOTICE);
-
+  
   ConfigFileEntry.failed_oper_notice = YES;
   ConfigFileEntry.anti_nick_flood = NO;
   ConfigFileEntry.max_nick_time = 20;
@@ -1324,6 +1324,7 @@ set_default_conf(void)
   ConfigFileEntry.pace_wait_simple = 1;
   ConfigFileEntry.short_motd = NO;
   ConfigFileEntry.no_oper_flood = NO;
+  ConfigFileEntry.true_no_oper_flood = NO;
   ConfigFileEntry.fname_userlog[0] = '\0';
   ConfigFileEntry.fname_foperlog[0] = '\0';
   ConfigFileEntry.fname_operlog[0] = '\0';
@@ -1372,6 +1373,7 @@ set_default_conf(void)
   ConfigChannel.default_split_server_count = 0;
   ConfigChannel.no_join_on_split = NO;
   ConfigChannel.no_create_on_split = NO;
+  ConfigChannel.oper_pass_resv = YES;
 
   ConfigServerHide.flatten_links = 0;
   ConfigServerHide.hide_servers = 0;
@@ -1383,6 +1385,10 @@ set_default_conf(void)
   ConfigFileEntry.min_nonwildcard = 4;
   ConfigFileEntry.default_floodcount = 8;
   ConfigFileEntry.client_flood = CLIENT_FLOOD_DEFAULT;
+
+#ifdef IPV6  
+  ConfigFileEntry.fallback_to_ip6_int = 1;
+#endif
 
 #ifdef EFNET
   ConfigFileEntry.use_help = 0;
@@ -1687,6 +1693,8 @@ oper_privs_as_string(struct Client *client_p,int port)
         SetOperN(client_p);
       *privs_ptr++ = 'N';
     }
+  else
+    *privs_ptr++ = 'n';
 
   if(port & CONF_OPER_GLOBAL_KILL)
     {
@@ -1894,7 +1902,7 @@ read_conf_files(int cold)
 
      - Gozem 2002-07-21 
   */
-  strlcpy(conffilebuf, filename, IRCD_BUFSIZE);
+  strlcpy(conffilebuf, filename, sizeof(conffilebuf));
 
   if ((conf_fbfile_in = fbopen(filename,"r")) == NULL)
     {

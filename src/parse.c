@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: parse.c,v 1.7 2002/09/19 05:41:11 fishwaldo Exp $
+ *  $Id: parse.c,v 1.8 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -667,14 +667,14 @@ cancel_clients(struct Client *client_p, struct Client *source_p, char *cmd)
 	   if (source_p->user)
 	   {
 	     sendto_realops_flags(FLAGS_DEBUG, L_ADMIN,
-			"Message for %s[%s@%s!%s] from %s (TS, ignored)",
+			"Message for %s[%s@%s!%s] from %s (TS, ignored): %s",
 			source_p->name, source_p->username, source_p->host,
-			source_p->from->name, get_client_name(client_p, SHOW_IP));
+			source_p->from->name, get_client_name(client_p, SHOW_IP), cmd);
 
              sendto_realops_flags(FLAGS_DEBUG, L_OPER,
-	                "Message for %s[%s@%s!%s] from %s (TS, ignored)",
+	                "Message for %s[%s@%s!%s] from %s (TS, ignored): %s",
 			 source_p->name, source_p->username, source_p->host,
-			 source_p->from->name, get_client_name(client_p, MASK_IP));
+			 source_p->from->name, get_client_name(client_p, MASK_IP), cmd);
            }
 	   
 	   return 0;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: tools.h,v 1.4 2002/09/19 05:41:10 fishwaldo Exp $
+ *  $Id: tools.h,v 1.5 2002/10/31 13:01:54 fishwaldo Exp $
  */
 
 #ifndef __TOOLS_H__
@@ -230,6 +230,28 @@ dlinkMoveList(dlink_list *from, dlink_list *to)
     from->length = 0;
 
   /* I think I got that right */
+}
+
+extern inline dlink_node *
+dlinkFindDelete(dlink_list *list, void *data)
+{
+  dlink_node *m;
+ 
+  DLINK_FOREACH(m, list->head)
+  {
+    if(m->data != data)
+      continue;
+ 
+    if (m->next != NULL)
+      m->next->prev = m->prev;
+    else
+      list->tail = m->prev;
+
+    m->next = m->prev = NULL;
+    list->length--;
+    return m;
+  }
+  return(NULL);
 }
 #endif /* __GNUC__ */
 

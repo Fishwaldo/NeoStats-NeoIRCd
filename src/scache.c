@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: scache.c,v 1.4 2002/09/13 06:50:09 fishwaldo Exp $
+ *  $Id: scache.c,v 1.5 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -96,7 +96,7 @@ const char* find_or_add(const char* name)
   ptr = (SCACHE*) MyMalloc(sizeof(SCACHE));
   assert(0 != ptr);
 
-  strlcpy(ptr->name, name, HOSTLEN + 1);
+  strlcpy(ptr->name, name, sizeof(ptr->name));
 
   ptr->next = scache_hash[hash_index];
   scache_hash[hash_index] = ptr;

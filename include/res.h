@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: res.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: res.h,v 1.4 2002/10/31 13:01:54 fishwaldo Exp $
  */
 
 #ifndef _RES_H_INCLUDED
@@ -47,7 +47,7 @@ void dns_readable (int fd , void *ptr );
 void dns_do_callbacks(void);
 void dns_select (void);
 void adns_gethost (const char *name , int aftype , struct DNSQuery *req );
-void adns_getaddr (struct irc_inaddr *addr , int aftype , struct DNSQuery *req );
+void adns_getaddr (struct irc_inaddr *addr , int aftype , struct DNSQuery *req, int arpa_type );
 void delete_adns_queries(struct DNSQuery *q);
 void report_adns_servers(struct Client *);
 #endif

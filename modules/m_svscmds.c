@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_svscmds.c,v 1.8 2002/09/25 07:43:28 fishwaldo Exp $
+ *   $Id: m_svscmds.c,v 1.9 2002/10/31 13:01:56 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -134,7 +134,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.8 $";
+const char *_version = "$Revision: 1.9 $";
 #endif
 
 /*
@@ -153,12 +153,7 @@ static void ms_svshost(struct Client *client_p, struct Client *source_p,
 	target_p = find_person(parv[1]);
 	/* first find the target that we want to change */
 	if (target_p != NULL) {
-		ilog(L_WARN, "svshost: Found Target %s", target_p->name);
-		
 		if (IsServer(source_p) && IsUlined(source_p)) {
-			
-			ilog(L_WARN, "svshost: Setting his own hostname %s (from %s)", target_p->name, client_p->name);
-
 			SetHidden(target_p);		
 			strncpy(target_p->vhost, parv[2], HOSTLEN);
 		
@@ -379,7 +374,7 @@ static void ms_svsjoin(struct Client *client_p, struct Client *source_p,
       add_user_to_channel(chptr, target_p, type);
 
       if (chptr->chname[0] != '&')
-        sendto_server(target_p, target_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT,
+        sendto_server(NULL, target_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT,
 	              ":%s SJOIN %lu %s + :%c%s",
 	              me.name, (unsigned long) chptr->channelts,
 	              chptr->chname, type ? sjmode : ' ', target_p->name);
@@ -448,7 +443,7 @@ static void ms_svsjoin(struct Client *client_p, struct Client *source_p,
 
       /* send out a join, make target_p join chptr */
       if (chptr->chname[0] != '&')
-        sendto_server(target_p, target_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT,
+        sendto_server(NULL, target_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT,
                       ":%s SJOIN %lu %s +nt :!%s", me.name,
 		      (unsigned long) chptr->channelts, chptr->chname,
 		      target_p->name);

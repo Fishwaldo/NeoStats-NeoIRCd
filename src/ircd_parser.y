@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.10 2002/09/26 12:34:46 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.11 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 %{
@@ -102,6 +102,7 @@ int   class_redirport_var;
 %token  OPERAUTOJOIN
 %token  BYTES KBYTES MBYTES GBYTES TBYTES
 %token  CALLER_ID_WAIT
+%token  CAN_FLOOD
 %token  CHANNEL
 %token  CIPHER_PREFERENCE
 %token  CLASS
@@ -130,6 +131,7 @@ int   class_redirport_var;
 %token  EXEMPT
 %token  FAILED_OPER_NOTICE
 %token  FAKENAME
+%token  FALLBACK_IP6_INT
 %token  FLATTEN_LINKS
 %token  FNAME_FOPERLOG
 %token  FNAME_OPERLOG
@@ -193,6 +195,7 @@ int   class_redirport_var;
 %token  OPERATOR
 %token  OPER_LOG
 %token  OPER_ONLY_UMODES
+%token	OPER_PASS_RESV
 %token  OPER_UMODES
 %token  PACE_WAIT
 %token	PACE_WAIT_SIMPLE
@@ -263,6 +266,7 @@ int   class_redirport_var;
 %token  T_UNAUTH
 %token  T_WALLOP
 %token  THROTTLE_TIME
+%token  TRUE_NO_OPER_FLOOD
 %token  UNKLINE
 %token  USER
 %token  USE_EGD
@@ -276,8 +280,10 @@ int   class_redirport_var;
 
 %type   <string>   QSTRING
 %type   <number>   NUMBER
-%type   <number>   timespec, timespec_
-%type   <number>   sizespec, sizespec_
+%type   <number>   timespec
+%type	<number>   timespec_
+%type   <number>   sizespec
+%type   <number>   sizespec_
 
 %%
 conf:   
@@ -292,7 +298,7 @@ conf_item:        admin_entry
                 | listen_entry
                 | auth_entry
                 | serverinfo_entry
-		| serverhide_entry;
+		| serverhide_entry
                 | resv_entry
                 | connect_entry
                 | kill_entry
@@ -1062,7 +1068,7 @@ auth_items:     auth_items auth_item |
 auth_item:      auth_user | auth_passwd | auth_class |
                 auth_kline_exempt | auth_have_ident | auth_is_restricted |
                 auth_exceed_limit | auth_no_tilde | auth_gline_exempt |
-                auth_redir_serv | auth_redir_port |
+                auth_redir_serv | auth_redir_port | auth_can_flood |
                 error;
 
 auth_user:   USER '=' QSTRING ';'
@@ -1146,6 +1152,16 @@ auth_have_ident:      HAVE_IDENT '=' TYES ';'
                       HAVE_IDENT '=' TNO ';'
   {
     yy_achead->flags &= ~CONF_FLAGS_NEED_IDENTD;
+  };
+
+auth_can_flood:      CAN_FLOOD '=' TYES ';'
+  {
+    yy_achead->flags |= CONF_FLAGS_CAN_FLOOD;
+  }
+                      |
+                      CAN_FLOOD '=' TNO ';'
+  {
+    yy_achead->flags &= ~CONF_FLAGS_CAN_FLOOD;
   };
 
 auth_no_tilde:        NO_TILDE '=' TYES ';' 
@@ -1865,6 +1881,7 @@ general_item:       general_failed_oper_notice |
                     general_pace_wait | general_stats_i_oper_only |
                     general_pace_wait_simple | general_stats_P_oper_only |
                     general_short_motd | general_no_oper_flood |
+                    general_true_no_oper_flood |
                     general_iauth_server |
                     general_iauth_port |
                     general_glines | general_gline_time |
@@ -1883,7 +1900,7 @@ general_item:       general_failed_oper_notice |
                     general_compression_level | general_client_flood |
                     general_throttle_time | general_havent_read_conf |
                     general_dot_in_ip6_addr | general_ping_cookie |
-		    general_oper_autojoin | 
+                    general_fallback_to_ip6_int | 
                     error;
 
 general_failed_oper_notice:   FAILED_OPER_NOTICE '=' TYES ';'
@@ -2098,6 +2115,16 @@ general_no_oper_flood: NO_OPER_FLOOD '=' TYES ';'
     ConfigFileEntry.no_oper_flood = 0;
   };
 
+general_true_no_oper_flood: TRUE_NO_OPER_FLOOD '=' TYES ';'
+  {
+    ConfigFileEntry.true_no_oper_flood = 1;
+  }
+    |
+    TRUE_NO_OPER_FLOOD '=' TNO ';'
+  {
+    ConfigFileEntry.true_no_oper_flood = 0;
+  };
+
 general_iauth_server: IAUTH_SERVER '=' QSTRING ';'
 {
 #if 0
@@ -2272,6 +2299,19 @@ general_use_help: USE_HELP '=' TYES ';'
 general_throttle_time: THROTTLE_TIME '=' timespec ';'
 {
  ConfigFileEntry.throttle_time = yylval.number;
+} ;
+
+general_fallback_to_ip6_int: FALLBACK_IP6_INT '=' TYES ';'
+{
+#ifdef IPV6
+ ConfigFileEntry.fallback_to_ip6_int = 1;
+#endif
+} |
+  FALLBACK_IP6_INT '=' TNO ';'
+{
+#ifdef IPV6
+ ConfigFileEntry.fallback_to_ip6_int = 0;
+#endif
 } ;
 
 general_oper_umodes: OPER_UMODES
@@ -2465,6 +2505,7 @@ channel_item:       channel_max_bans |
 		    channel_default_split_server_count |
 		    channel_no_create_on_split | 
 		    channel_no_join_on_split |
+		    channel_oper_pass_resv |
                     error;
 
 
@@ -2533,6 +2574,15 @@ channel_no_join_on_split: NO_JOIN_ON_SPLIT '=' TYES ';'
     ConfigChannel.no_join_on_split = 0;
   } ;
   
+channel_oper_pass_resv: OPER_PASS_RESV '=' TYES ';'
+  {
+    ConfigChannel.oper_pass_resv = 1;
+  }
+    |
+    OPER_PASS_RESV '=' TNO ';'
+  {
+    ConfigChannel.oper_pass_resv = 0;
+  } ;
 
 /***************************************************************************
  *  section serverhide

@@ -26,7 +26,7 @@
  *  along with this program; if not, write to the Free Software Foundation,
  *  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. 
  *
- * $Id: query.c,v 1.3 2002/09/24 14:02:09 fishwaldo Exp $
+ * $Id: query.c,v 1.4 2002/10/31 13:01:53 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -342,10 +342,13 @@ int adns_submit_reverse(adns_state ads,
 			adns_queryflags flags,
 			void *context,
 			adns_query *query_r) {
-  if (type != adns_r_ptr && type != adns_r_ptr_raw && type != adns_r_ptr_ip6 ) return EINVAL;
+  if (type != adns_r_ptr && type != adns_r_ptr_raw && type != adns_r_ptr_ip6 && type != adns_r_ptr_ip6_old ) return EINVAL;
 #ifdef IPV6
-  if(addr->sa_family == AF_INET6)
+  if(addr->sa_family == AF_INET6 && type == adns_r_ptr_ip6_old)
   	  return adns_submit_reverse_ip6(ads,addr,"ip6.int", type,flags,context,query_r);
+  else
+  if(addr->sa_family == AF_INET6 && type == adns_r_ptr_ip6)
+  	  return adns_submit_reverse_ip6(ads,addr,"ip6.arpa", type,flags,context,query_r);
   else
 #endif
 	  return adns_submit_reverse_any(ads,addr,"in-addr.arpa",type,flags,context,query_r);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_info.c,v 1.5 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: m_info.c,v 1.6 2002/10/31 13:01:55 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -69,7 +69,7 @@ _moddeinit(void)
   hook_del_event("doing_info");
   mod_del_cmd(&info_msgtab);
 }
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 
 /*
@@ -389,6 +389,12 @@ static struct InfoStruct info_table[] =
     OUTPUT_DECIMAL,
     &ConfigChannel.persist_time,
     "Delay before persistent channels expire",
+  },
+  {
+    "oper_pass_resv",
+    OUTPUT_BOOLEAN_YN,
+    &ConfigChannel.oper_pass_resv,
+    "Opers can over-ride RESVs",
   },
   {
     "quiet_on_ban",

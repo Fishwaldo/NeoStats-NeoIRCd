@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: resv.c,v 1.4 2002/09/13 16:30:04 fishwaldo Exp $
+ *  $Id: resv.c,v 1.5 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -58,7 +58,7 @@ create_channel_resv(char *name, char *reason, int conf)
 
   resv_p = (struct ResvChannel *)MyMalloc(sizeof(struct ResvChannel));
 
-  strlcpy(resv_p->name, name, CHANNELLEN+1);
+  strlcpy(resv_p->name, name, sizeof(resv_p->name));
   DupString(resv_p->reason, reason);
   resv_p->conf = conf;
 
@@ -92,7 +92,7 @@ create_nick_resv(char *name, char *reason, int conf)
 
   resv_p = (struct ResvNick *)MyMalloc(sizeof(struct ResvNick));
 
-  strlcpy(resv_p->name, name, RESVNICKLEN);
+  strlcpy(resv_p->name, name, sizeof(resv_p->name));
   DupString(resv_p->reason, reason);
   resv_p->conf = conf;
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: motd.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: motd.c,v 1.4 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -46,7 +46,7 @@
 void
 InitMessageFile(MotdType motdType, char *fileName, MessageFile *motd)
   {
-    strlcpy(motd->fileName, fileName, PATH_MAX);
+    strlcpy(motd->fileName, fileName, sizeof(motd->fileName));
     motd->motdType = motdType;
     motd->contentsOfFile = NULL;
     motd->lastChangedDate[0] = '\0';
@@ -197,7 +197,7 @@ ReadMessageFile(MessageFile *MessageFileptr)
         *p = '\0';
       newMessageLine = (MessageFileLine*) MyMalloc(sizeof(MessageFileLine));
 
-      strlcpy(newMessageLine->line, buffer, MESSAGELINELEN);
+      strlcpy(newMessageLine->line, buffer, sizeof(newMessageLine->line));
       newMessageLine->next = (MessageFileLine *)NULL;
 
       if(MessageFileptr->contentsOfFile)

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.c,v 1.8 2002/09/19 05:41:11 fishwaldo Exp $
+ *  $Id: send.c,v 1.9 2002/10/31 13:01:58 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -61,6 +61,10 @@ unsigned long current_serial=0L;
 
 static void
 sendto_list_local(dlink_list *list, buf_head_t *linebuf);
+
+static void
+sendto_list_local_butone(struct Client *one, dlink_list *list,
+                         buf_head_t *linebuf);
 
 static void
 sendto_list_remote(struct Client *one,
@@ -794,6 +798,56 @@ sendto_channel_local(int type,
 } /* sendto_channel_local() */
 
 /*
+ * sendto_channel_local_butone
+ *
+ * inputs       - pointer to client to NOT send message to
+ *              - int type, i.e. ALL_MEMBERS, NON_CHANOPS,
+ *                ONLY_CHANOPS_VOICED, ONLY_CHANOPS
+ *              - pointer to channel to send to
+ *              - var args pattern
+ * output       - NONE
+ * side effects - Send a message to all members of a channel that are
+ *                locally connected to this server except one.
+ */
+void       
+sendto_channel_local_butone(struct Client *one, int type,
+                            struct Channel *chptr,
+                            const char *pattern, ...)
+{
+  va_list args;
+  buf_head_t linebuf;
+
+  linebuf_newbuf(&linebuf);
+  va_start(args, pattern); 
+  linebuf_putmsg(&linebuf, pattern, &args, NULL);
+  va_end(args);
+
+  /* Serial number checking isn't strictly necessary, but won't hurt */
+  ++current_serial;
+
+  switch(type)
+  {
+    case NON_CHANOPS:
+      sendto_list_local_butone(one, &chptr->locvoiced, &linebuf);
+      sendto_list_local_butone(one, &chptr->locpeons, &linebuf);
+      break;
+                     
+    default:
+    case ALL_MEMBERS:
+      sendto_list_local_butone(one, &chptr->locpeons, &linebuf);
+    case ONLY_CHANOPS_HALFOPS_VOICED:
+      sendto_list_local_butone(one, &chptr->locvoiced, &linebuf);
+    case ONLY_CHANOPS_HALFOPS:
+      sendto_list_local_butone(one, &chptr->lochalfops, &linebuf);
+    case ONLY_CHANOPS:
+      sendto_list_local_butone(one, &chptr->locchanops, &linebuf);
+    case ONLY_CHANADMIN:
+      sendto_list_local_butone(one, &chptr->locchanadmins, &linebuf);
+  }
+  linebuf_donebuf(&linebuf);
+} /* sendto_channel_local_butone() */
+
+/*
  * sendto_channel_remote
  *
  * inputs	- Client not to send towards
@@ -877,10 +931,51 @@ sendto_list_local(dlink_list *list, buf_head_t *linebuf_ptr)
       continue;
 
     target_p->serial = current_serial;
-    if (!IsDead(target_p))
-      send_linebuf(target_p, linebuf_ptr);
+
+    send_linebuf(target_p, linebuf_ptr);
   } 
 } /* sendto_list_local() */
+
+/*
+ * sendto_list_local_butone
+ *
+ * inputs       - pointer to client not to send to
+ *              - pointer to all members of this list
+ *              - buffer to send
+ *              - length of buffer
+ * output       - NONE
+ * side effects - all members who are locally on this server on given list
+ *                are sent given message, except one. Right now, its always
+ *                a channel list but there is no reason we could not use
+ *                another dlink list to send a message to a group of people.
+ */
+static void 
+sendto_list_local_butone(struct Client *one, dlink_list *list,
+                         buf_head_t *linebuf_ptr)
+{
+  dlink_node *ptr;
+  dlink_node *ptr_next;
+  struct Client *target_p;
+    
+  DLINK_FOREACH_SAFE(ptr, ptr_next, list->head)       
+  {   
+    if ((target_p = ptr->data) == NULL)
+      continue;
+
+    if (target_p == one)
+      continue;
+
+    if (!MyConnect(target_p) || IsDead(target_p))
+      continue;
+   
+    if (target_p->serial == current_serial)
+      continue;
+
+    target_p->serial = current_serial;
+
+    send_linebuf(target_p, linebuf_ptr);
+  }
+} /* sendto_list_local_butone() */
 
 /*
  * sendto_list_remote(struct Client *one,

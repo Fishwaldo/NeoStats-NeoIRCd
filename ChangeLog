@@ -6,6 +6,8 @@ Symbols are:
 (HP)	- Hybrid Team Patches to Hybrid Source
 
 * NeoIRCd Version 0.9.4 - 24th Sept, 2002 - Fish
+(S)     - Fixed up event.c for a possible serious bug reported by Dianora from hybrid team
+	  Also thanks for the reference and event code in question.
 (F)	- Changed HiddenHost System to Use Ultimates version instead... 
 (F)	- Changed NICK and Client Messages to include vhost, so we dont have to burst SETHOST
 (F)	- Don't burst SETHOST when we remove -x

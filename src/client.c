@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  client.c: Controls clients.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c,v 1.6 2002/08/16 14:22:06 fishwaldo Exp $
+ *  $Id: client.c,v 1.7 2002/09/13 06:50:08 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -826,10 +826,6 @@ get_client_name(struct Client* client, int showip)
       if(IsServer(client) || IsConnecting(client) || IsHandshake(client))
         showip = MASK_IP;
 #endif
-#ifdef HIDE_SPOOF_IPS
-      if(showip == SHOW_IP && IsIPSpoof(client))
-        showip = MASK_IP;
-#endif
 
       /* And finally, let's get the host information, ip or name */
       switch (showip)
@@ -1324,12 +1320,7 @@ int exit_client(
                              "Client exiting: %s (%s@%s) [%s] [%s]",
                              source_p->name, source_p->username, source_p->host,
                              comment, 
-#ifdef HIDE_SPOOF_IPS
-                             "255.255.255.255");
-#else
                              source_p->localClient->sockhost);
-#endif
-
       log_user_exit(source_p);
 
       if (source_p->localClient->fd >= 0)

@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  s_user.c: User related functions.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.9 2002/09/12 05:45:20 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.10 2002/09/13 06:50:09 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -448,11 +448,7 @@ register_local_user(struct Client *client_p, struct Client *source_p,
   sendto_realops_flags(FLAGS_CCONN, L_ALL,
 		       "Client connecting: %s (%s@%s) [%s] {%s} [%s]",
 		       nick, source_p->username, source_p->host,
-#ifdef HIDE_SPOOF_IPS
-                       IsIPSpoof(client_p) ? "255.255.255.255" : ipaddr,
-#else
 		       ipaddr,
-#endif
 		       get_client_class(source_p), source_p->info);
 
   /* If they have died in send_* don't do anything. */
@@ -789,14 +785,6 @@ valid_username(const char* username)
 static void 
 report_and_set_user_flags(struct Client *source_p,struct ConfItem *aconf)
 {
-  /* If this user is being spoofed, tell them so */
-  if(IsConfDoSpoofIp(aconf))
-    {
-      sendto_one(source_p,
-                 ":%s NOTICE %s :*** Spoofing your IP. congrats.",
-                 me.name,source_p->name);
-    }
-
   /* If this user is in the exception class, Set it "E lined" */
   if(IsConfExemptKline(aconf))
     {

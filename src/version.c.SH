@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: version.c.SH,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $ 
+# $Id: version.c.SH,v 1.3 2002/09/13 06:50:09 fishwaldo Exp $ 
 
 spitshell=cat
 package=IRC
@@ -61,7 +61,7 @@ char *serno = SERIALNUM;
 char *infotext[] =
 {
   "$package --",
-  "Based on the original code written by Jarkko Oikarinen",
+  "Based on the original code written by Jarkko Oikarinen and the Hybird7 Team",
   "Copyright 1988, 1989, 1990, 1991 University of Oulu, Computing Center",
   "Copyright (c) 1996-2001 Hybrid Development Team", 
   "",
@@ -74,7 +74,7 @@ char *infotext[] =
 
 IFS='
 '
-for i in `grep -v '^$Id' ../Hybrid-team |tr -d '"'` ; do
+for i in `grep -v '^$Id' ../NeoStats-team |tr -d '"'` ; do
 echo "  \"$i\"," >> version.c
 done
 $spitshell >>version.c <<!SUB!THISTOO!

@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  listener.c: Listens on a port.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: listener.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: listener.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"

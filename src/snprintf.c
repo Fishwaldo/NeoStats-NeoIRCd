@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  snprintf.c: Functions for printing to a length-limited string.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: snprintf.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: snprintf.c,v 1.3 2002/09/13 06:50:09 fishwaldo Exp $
  */
 
 /**************************************************************

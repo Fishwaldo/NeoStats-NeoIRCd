@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  resv.c: Functions to reserve(jupe) a nick/channel.
  *
  *  Copyright (C) 2001-2002 Hybrid Development Team
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: resv.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: resv.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"

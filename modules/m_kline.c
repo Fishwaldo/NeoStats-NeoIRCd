@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  m_kline.c: Bans a user.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c,v 1.5 2002/09/12 07:15:58 fishwaldo Exp $
+ *  $Id: m_kline.c,v 1.6 2002/09/13 06:50:06 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -86,7 +86,7 @@ _moddeinit(void)
   mod_del_cmd(&dline_msgtab[0]);
   mod_del_cmd(&dline_msgtab[1]);
 }
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 
 /* Local function prototypes */
@@ -325,8 +325,7 @@ ms_kline(struct Client *client_p, struct Client *source_p,
 
   tkline_time = atoi(parv[2]);
 
-  if (find_u_conf((char *)source_p->user->server,
-		  source_p->username, source_p->host) || IsUlined(source_p) || IsServices(source_p))
+  if (IsUlined(source_p) || IsServices(source_p))
     {
       sendto_realops_flags(FLAGS_ALL, L_ALL,
 			   "*** Received K-Line for [%s@%s] [%s], from %s!%s@%s on %s",

@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  ircd_parser.y: Parses the ircd configuration file.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.4 2002/09/02 04:11:00 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.5 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 %{
@@ -218,11 +218,8 @@ int   class_redirport_var;
 %token  SERVERHIDE
 %token  SERVERINFO
 %token  SERVLINK_PATH
-%token  T_SHARED
 %token  SHORT_MOTD
 %token  SILENT
-%token  SPOOF
-%token  SPOOF_NOTICE
 %token  STATS_I_OPER_ONLY
 %token  STATS_K_OPER_ONLY
 %token  STATS_O_OPER_ONLY
@@ -267,13 +264,8 @@ int   class_redirport_var;
 %token  THROTTLE_TIME
 %token  UNKLINE
 %token  USER
-%token	USE_ANONOPS
 %token  USE_EGD
-%token  USE_EXCEPT
-%token  USE_HALFOPS
 %token  USE_HELP
-%token  USE_INVEX
-%token  USE_KNOCK
 %token  VHOST
 %token  VHOST6
 %token  WARN
@@ -301,7 +293,6 @@ conf_item:        admin_entry
                 | serverinfo_entry
 		| serverhide_entry;
                 | resv_entry
-                | shared_entry
                 | connect_entry
                 | kill_entry
                 | deny_entry
@@ -1070,7 +1061,6 @@ auth_items:     auth_items auth_item |
 auth_item:      auth_user | auth_passwd | auth_class |
                 auth_kline_exempt | auth_have_ident | auth_is_restricted |
                 auth_exceed_limit | auth_no_tilde | auth_gline_exempt |
-                auth_spoof | auth_spoof_notice |
                 auth_redir_serv | auth_redir_port |
                 error;
 
@@ -1115,28 +1105,6 @@ auth_passwd:  PASSWORD '=' QSTRING ';'
       memset(yy_achead->passwd, 0, strlen(yy_achead->passwd));
     MyFree(yy_achead->passwd);
     DupString(yy_achead->passwd,yylval.string);
-  };
-
-/* TYES/TNO are flipped to change the default value to YES */
-auth_spoof_notice:   SPOOF_NOTICE '=' TNO ';'
-  {
-    yy_achead->flags |= CONF_FLAGS_SPOOF_NOTICE;
-  }
-    |
-    SPOOF_NOTICE '=' TYES ';'
-  {
-    yy_achead->flags &= ~CONF_FLAGS_SPOOF_NOTICE;
-  };
-
-auth_spoof:   SPOOF '=' QSTRING ';' 
-  {
-    MyFree(yy_achead->name);
-    if(strlen(yylval.string) < HOSTLEN)
-    {    
-	DupString(yy_achead->name, yylval.string);
-    	yy_achead->flags |= CONF_FLAGS_SPOOF_IP;
-    } else
-	ilog(L_ERROR, "Spoofs must be less than %d..ignoring it", HOSTLEN);
   };
 
 auth_exceed_limit:    EXCEED_LIMIT '=' TYES ';'
@@ -1271,60 +1239,6 @@ resv_nick:	NICK '=' QSTRING ';'
   /* otherwise its erroneous, but ignore it for now */
 };
 
-
-/***************************************************************************
- *  section shared, for sharing remote klines etc.
- ***************************************************************************/
-
-shared_entry:		T_SHARED
-  {
-    if(yy_aconf != NULL)
-      {
-        free_conf(yy_aconf);
-        yy_aconf = NULL;
-      }
-    yy_aconf=make_conf();
-    yy_aconf->status = CONF_ULINE;
-    yy_aconf->name = NULL;
-    yy_aconf->user = NULL;
-    yy_aconf->host = NULL;
-  }
-  '{' shared_items '}' ';'
-  {
-    conf_add_u_conf(yy_aconf);
-    yy_aconf = (struct ConfItem *)NULL;
-  };
-
-shared_items:		shared_items shared_item |
-			shared_item;
-
-shared_item:		shared_name | shared_user | error;
-
-shared_name:		NAME '=' QSTRING ';'
-  {
-    MyFree(yy_aconf->name);
-    DupString(yy_aconf->name, yylval.string);
-  };
-
-shared_user:		USER '=' QSTRING ';'
-  {
-    char *p;
-    char *new_user;
-    char *new_host;
-
-    if((p = strchr(yylval.string,'@')))
-    {
-      *p = '\0';
-      DupString(new_user, yylval.string);
-      MyFree(yy_aconf->user);
-      yy_aconf->user = new_user;
-
-      p++;
-      DupString(new_host, p);
-      MyFree(yy_aconf->host);
-      yy_aconf->host = new_host;
-    }
-  };
 
 /***************************************************************************
  *  section connect

@@ -6,7 +6,7 @@ Symbols are:
 (HP)	- Hybrid Team Patches to Hybrid Source
 
 
-* NeoIRCd Version 1.0 - 12th August, 2002 - Fish
+* NeoIRCd Version 0.9.1 - 12th August, 2002 - Fish
 (F)	- Added +S UserMode. For Services. Allow them to override anything
 (F)	- Added Ulined Support (In Addition to whats already there) to allow it to override anything
 (F)	- Added Dynamic U lines. Means a
@@ -35,3 +35,9 @@ Symbols are:
 (F)	- No more need for 3 opers to vote on a Gline. One oper does it now. 
 (F)	- Moved ungline to m_gline, and unkline, undline to m_kline. removed m_unkline now.
 (F)	- Added /vhost as a alias for hostserv (From NeoStats). Have to get Shmad to update hostserv. (:fish PRIVMSG HostServ!services@stats.dynam.ac :login username password) is the syntax.
+(F)     - Added /nickserv /chanserv /hostserv /operserv /identify /statserv as aliases for the respective services
+(F)	- Fixed up the config file parsing for the reduantant commands
+(F)	- Changed all the headers to reflect this is NeoIRCd and not Hybrid7 any more
+(F)	- Fixed up /credits and /info
+(F)	- Started to clean up Documentation 
+(F)	- This is version 0.9.1 Getting ready for Beta testing by Closed group.

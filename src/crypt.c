@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  crypt.c: Provides MD5 password crypt() functions.
  *
  *  ----------------------------------------------------------------------------
@@ -9,7 +9,7 @@
  *  this stuff is worth it, you can buy me a beer in return.  Poul-Henning Kamp
  *  ----------------------------------------------------------------------------
  *  
- *  $Id: crypt.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: crypt.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"

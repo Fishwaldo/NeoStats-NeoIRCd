@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  m_trace.c: Traces a path to a client/server.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_trace.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_trace.c,v 1.3 2002/09/13 06:50:07 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -68,7 +68,7 @@ _moddeinit(void)
   hook_del_event("doing_trace");
   mod_del_cmd(&trace_msgtab);
 }
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 static int report_this_status(struct Client *source_p, struct Client *target_p,int dow,
                               int link_u_p, int link_u_s);
@@ -170,7 +170,7 @@ static void mo_trace(struct Client *client_p, struct Client *source_p,
           sendto_one(source_p, form_str(RPL_TRACEOPERATOR),
                      me.name, parv[0], class_name, name, 
                      MyOper(source_p) ? ipaddr :
-		     (IsIPSpoof(target_p) ? "255.255.255.255" : ipaddr),
+		     "255.255.255.255",
                      CurrentTime - target_p->lasttime,
                      (target_p->user) ? (CurrentTime - target_p->user->last) : 0);
         }
@@ -179,7 +179,7 @@ static void mo_trace(struct Client *client_p, struct Client *source_p,
           sendto_one(source_p,form_str(RPL_TRACEUSER),
                      me.name, parv[0], class_name, name, 
                      MyOper(source_p) ? ipaddr : 
-		     (IsIPSpoof(target_p) ? "255.255.255.255" : ipaddr),
+		     "255.255.255.255",
                      CurrentTime - target_p->lasttime,
                      (target_p->user)?(CurrentTime - target_p->user->last):0);
         }
@@ -358,7 +358,6 @@ static int report_this_status(struct Client *source_p, struct Client *target_p,
 	   (MyClient(source_p) || !(dow && IsInvisible(target_p))))
 	  || !dow || IsOper(target_p))
 	{
-#ifndef HIDE_SPOOF_IPS
           if (IsAdmin(target_p))
 	    sendto_one(source_p, form_str(RPL_TRACEOPERATOR),
                        me.name, source_p->name, class_name, name,
@@ -367,28 +366,19 @@ static int report_this_status(struct Client *source_p, struct Client *target_p,
                        (target_p->user) ? (CurrentTime - target_p->user->last) : 0);
 		       
 	  else 
-#endif
           if (IsOper(target_p))
 	    sendto_one(source_p, form_str(RPL_TRACEOPERATOR),
 		       me.name, source_p->name, class_name, name, 
-#ifdef HIDE_SPOOF_IPS
-		       IsIPSpoof(target_p) ? "255.255.255.255" : ip,
-#else
                        MyOper(source_p) ? ip :
-		       (IsIPSpoof(target_p) ? "255.255.255.255" : ip),
-#endif
+		       "255.255.255.255",
 		       CurrentTime - target_p->lasttime,
 		       (target_p->user)?(CurrentTime - target_p->user->last):0);
 		       
 	  else
 	    sendto_one(source_p, form_str(RPL_TRACEUSER),
 		       me.name, source_p->name, class_name, name,
-#ifdef HIDE_SPOOF_IPS
-                       IsIPSpoof(target_p) ? "255.255.255.255" : ip,
-#else
 		       MyOper(source_p) ? ip : 
-		       (IsIPSpoof(target_p) ? "255.255.255.255" : ip),
-#endif
+		       "255.255.255.255",
 		       CurrentTime - target_p->lasttime,
 		       (target_p->user)?(CurrentTime - target_p->user->last):0);
 	  cnt++;

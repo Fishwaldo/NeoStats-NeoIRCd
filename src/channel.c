@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  channel.c: Controls channels.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.5 2002/09/02 04:11:00 fishwaldo Exp $
+ *  $Id: channel.c,v 1.6 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"

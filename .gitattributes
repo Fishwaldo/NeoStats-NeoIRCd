@@ -3,10 +3,10 @@
 /.indent.pro -text
 /BUGS -text
 /ChangeLog -text
-/Hybrid-team -text
 /INSTALL -text
 /LICENSE -text
 /Makefile.in -text
+/NeoStats-team -text
 /README.FIRST -text
 /README.PLATFORMS -text
 /README.VMS -text
@@ -85,6 +85,7 @@ doc/modes.txt -text
 doc/old/Authors -text
 doc/old/ChangeLog-Hybrid7Rc1 -text
 doc/old/Etiquette -text
+doc/old/Hybrid-team -text
 doc/old/README -text
 doc/old/US-Admin/Networking -text
 doc/old/US-Admin/Operators -text
@@ -336,6 +337,7 @@ modules/core/m_squit.c -text
 modules/descrip.mms -text
 modules/m_accept.c -text
 modules/m_admin.c -text
+modules/m_alias.c -text
 modules/m_away.c -text
 modules/m_capab.c -text
 modules/m_cburst.c -text

@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  hostmask.c: Code to efficiently find IP & hostmask based configs.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: hostmask.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
+ *  $Id: hostmask.c,v 1.4 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -676,8 +676,6 @@ show_iline_prefix(struct Client *sptr, struct ConfItem *aconf, char *name)
     *prefix_ptr++ = '$';
   if (IsNoMatchIp(aconf))
     *prefix_ptr++ = '%';
-  if (IsConfDoSpoofIp(aconf))
-    *prefix_ptr++ = '=';
   if (MyOper(sptr) && IsConfExemptKline(aconf))
     *prefix_ptr++ = '^';
   if (MyOper(sptr) && IsConfExemptLimits(aconf))
@@ -709,9 +707,6 @@ report_auth(struct Client *client_p)
       {
         aconf = arec->aconf;
 
-        if (!MyOper(client_p) && IsConfDoSpoofIp(aconf))
-          continue;
-
         get_printable_conf(aconf, &name, &host, &pass, &user, &port,
                            &classname);
 
@@ -721,9 +716,6 @@ report_auth(struct Client *client_p)
         sendto_one(client_p, form_str(RPL_STATSILINE), me.name,
                    client_p->name, (IsConfRestricted(aconf)) ? 'i' : 'I', name,
                    show_iline_prefix(client_p, aconf, user),
-#ifdef HIDE_SPOOF_IPS
-                   IsConfDoSpoofIp(aconf) ? "255.255.255.255" :
-#endif
                    host, port, classname);
       }
 }

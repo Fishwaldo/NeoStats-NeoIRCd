@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  s_conf.c: Configuration file functions.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c,v 1.4 2002/09/02 04:11:00 fishwaldo Exp $
+ *  $Id: s_conf.c,v 1.5 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -117,9 +117,6 @@ struct ConfItem* ConfigItemList = NULL;
 
 /* conf xline link list root */
 struct ConfItem        *x_conf = ((struct ConfItem *)NULL);
-
-/* conf uline link list root */
-struct ConfItem        *u_conf = ((struct ConfItem *)NULL);
 
 /*
  * conf_dns_callback
@@ -315,20 +312,6 @@ report_configured_links(struct Client* source_p, int mask)
 	      
 	    *s++ = '\0';
 
-            /* Allow admins to see actual ips */
-            /* except if HIDE_SERVERS_IPS is defined */
-#ifndef HIDE_SERVERS_IPS
-            if(IsOperAdmin(source_p))
-              sendto_one(source_p, form_str(p->rpl_stats), me.name,
-                         source_p->name, c,
-                         host,
-			 buf,
-                         name,
-                         port,
-                         classname,
-                         oper_flags_as_string((int)tmp->hold));
-            else
-#endif
               sendto_one(source_p, form_str(p->rpl_stats), me.name,
                          source_p->name, c,
                          "*@127.0.0.1",
@@ -389,8 +372,6 @@ report_specials(struct Client* source_p, int flags, int numeric)
 
   if (flags & CONF_XLINE)
     this_conf = x_conf;
-  else if (flags & CONF_ULINE)
-    this_conf = u_conf;
   else return;
 
   for (aconf = this_conf; aconf; aconf = aconf->next)
@@ -568,20 +549,7 @@ verify_access(struct Client* client_p, const char* username)
 	    SetNeedId(client_p);
 	  if (IsConfRestricted(aconf))
 	    SetRestricted(client_p);
-	  /* Thanks for spoof idea amm */
-	  if (IsConfDoSpoofIp(aconf))
-	    {
-#ifndef HIDE_SPOOF_IPS
-	      if (IsConfSpoofNotice(aconf))
-		{
-		  sendto_realops_flags(FLAGS_ALL, L_ADMIN,
-				       "%s spoofing: %s as %s", client_p->name,
-				       client_p->host, aconf->name);
-		}
-#endif
-	      strlcpy(client_p->host, aconf->name, HOSTLEN + 1);
-	      SetIPSpoof(client_p);
-	    }
+
 	  return(attach_iline(client_p, aconf));
 	}
       else if (aconf->status & CONF_KILL)
@@ -1224,38 +1192,6 @@ find_x_conf(char *to_find)
     }
   return(NULL);
 }
-
-/*
- * find_u_conf
- *
- * inputs       - pointer to servername
- *		- pointer to user of oper
- *		- pointer to host of oper
- * output       - NULL or pointer to found struct ConfItem
- * side effects - looks for a matches on all fields
- */
-int 
-find_u_conf(char *server,char *user,char *host)
-{
-  struct ConfItem *aconf;
-
-  for (aconf = u_conf; aconf; aconf = aconf->next)
-    {
-      if (BadPtr(aconf->name))
-          continue;
-
-      if (match(aconf->name,server))
-	{
-	  if (BadPtr(aconf->user) || BadPtr(aconf->host))
-	    return(YES);
-	  if(match(aconf->user,user) && match(aconf->host,host))
-	    return(YES);
-
-	}
-    }
-  return(NO);
-}
-
 
 /*
  * clear_special_conf
@@ -2071,7 +2007,6 @@ void clear_out_old_conf(void)
 
   clear_out_address_conf();
   clear_special_conf(&x_conf);
-  clear_special_conf(&u_conf);
 
   /* clean out module paths */
 #ifndef STATIC_MODULES
@@ -2402,20 +2337,6 @@ conf_add_x_conf(struct ConfItem *aconf)
   aconf->host = (char *)NULL;
   aconf->next = x_conf;
   x_conf = aconf;
-}
-
-/*
- * conf_add_x_conf
- * inputs       - pointer to config item
- * output       - NONE
- * side effects - Add an U line
- */
-
-void 
-conf_add_u_conf(struct ConfItem *aconf)
-{
-  aconf->next = u_conf;
-  u_conf = aconf;
 }
 
 

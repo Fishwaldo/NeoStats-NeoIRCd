@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  numeric.h: A header for the numeric functions.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: numeric.h,v 1.5 2002/09/05 10:48:36 fishwaldo Exp $
+ *  $Id: numeric.h,v 1.6 2002/09/13 06:50:06 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_numeric_h

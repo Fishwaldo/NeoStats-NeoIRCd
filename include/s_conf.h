@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  s_conf.h: A header for the configuration functions.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h,v 1.4 2002/09/02 04:10:59 fishwaldo Exp $
+ *  $Id: s_conf.h,v 1.5 2002/09/13 06:50:06 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -119,8 +119,6 @@ struct ConfItem
 #define CONF_FLAGS_EXEMPTKLINE          0x00000040
 #define CONF_FLAGS_NOLIMIT              0x00000080
 #define CONF_FLAGS_IDLE_LINED           0x00000100
-#define CONF_FLAGS_SPOOF_IP             0x00000200
-#define CONF_FLAGS_SPOOF_NOTICE         0x00000400
 #define CONF_FLAGS_REDIR                0x00000800
 #define CONF_FLAGS_EXEMPTGLINE          0x00001000
 #define CONF_FLAGS_RESTRICTED           0x00002000
@@ -144,9 +142,6 @@ struct ConfItem
 #define IsConfExemptGline(x)    ((x)->flags & CONF_FLAGS_EXEMPTGLINE)
 #define IsConfIdlelined(x)      ((x)->flags & CONF_FLAGS_IDLE_LINED)
 #define IsConfDoIdentd(x)       ((x)->flags & CONF_FLAGS_DO_IDENTD)
-#define IsConfDoSpoofIp(x)      ((x)->flags & CONF_FLAGS_SPOOF_IP)
-/* jdc -- flip logic since YES/NO are reversed in the conf code */
-#define IsConfSpoofNotice(x)    (!((x)->flags & CONF_FLAGS_SPOOF_NOTICE))
 #define IsConfRestricted(x)     ((x)->flags & CONF_FLAGS_RESTRICTED)
 #define IsConfEncrypted(x)      ((x)->flags & CONF_FLAGS_ENCRYPTED)
 #define IsConfCompressed(x)     ((x)->flags & CONF_FLAGS_COMPRESSED)
@@ -296,8 +291,6 @@ struct admin_info
 extern int scount;
 
 /* struct ConfItems */
-/* conf uline link list root */
-extern struct ConfItem *u_conf;
 /* conf xline link list root */
 extern struct ConfItem *x_conf;
 
@@ -347,7 +340,6 @@ extern int conf_connect_allowed(struct irc_inaddr *addr, int aftype);
 extern char *oper_flags_as_string(int);
 extern char *oper_privs_as_string(struct Client *, int);
 
-extern int find_u_conf(char*, char*, char *);
 extern struct ConfItem *find_x_conf(char*);
 
 extern struct ConfItem* find_tkline(const char*, const char*, struct irc_inaddr *);
@@ -386,7 +378,6 @@ extern void conf_add_me(struct ConfItem *);
 extern void conf_add_class(struct ConfItem *,int );
 extern void conf_add_d_conf(struct ConfItem *);
 extern void conf_add_x_conf(struct ConfItem *);
-extern void conf_add_u_conf(struct ConfItem *);
 extern void conf_add_fields(struct ConfItem*, char*, char *, char*, char *,char *);
 extern void conf_add_conf(struct ConfItem *);
 extern void flush_expired_ips(void *);

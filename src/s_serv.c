@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  s_serv.c: Server related functions.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.8 2002/09/12 05:45:20 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.9 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"

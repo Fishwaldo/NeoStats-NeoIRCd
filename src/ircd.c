@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  ircd.c: Starts up and runs the ircd.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c,v 1.5 2002/09/05 10:48:36 fishwaldo Exp $
+ *  $Id: ircd.c,v 1.6 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -698,8 +698,8 @@ int main(int argc, char *argv[])
     putenv("LANGUAGE=");
   }
 
-  textdomain("ircd-hybrid");
-  bindtextdomain("ircd-hybrid" , MSGPATH);
+  textdomain("NeoIRCd");
+  bindtextdomain("NeoIRCd" , MSGPATH);
 #endif
 
 #ifdef USE_IAUTH

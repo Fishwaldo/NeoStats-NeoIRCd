@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  m_stats.c: Sends the user statistics or config information.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_stats.c,v 1.4 2002/09/12 05:45:20 fishwaldo Exp $
+ *  $Id: m_stats.c,v 1.5 2002/09/13 06:50:07 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -80,7 +80,7 @@ _moddeinit(void)
   mod_del_cmd(&stats_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 
 const char* Lformat = ":%s %d %s %s %u %u %u %u %u :%u %u %s";
@@ -898,7 +898,7 @@ static void stats_L_list(struct Client *source_p,char *name, int doall, int wild
       else
 	{
           /* If its a hidden ip, an admin, or a server, mask the real IP */
-	  if(IsIPSpoof(target_p) || IsServer(target_p) || IsAdmin(target_p)
+	  if(IsServer(target_p) || IsAdmin(target_p)
 	     || IsHandshake(target_p) || IsConnecting(target_p))
 	    sendto_one(source_p, Lformat, me.name,
 		       RPL_STATSLINKINFO, source_p->name,

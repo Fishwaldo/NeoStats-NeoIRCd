@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  adns.c: Interfaces to the adns DNS library.
  *
  *  Copyright (C) 2001-2002 Aaron Sethman <androsyn@ratbox.org> 
@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: adns.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: adns.c,v 1.3 2002/09/13 06:50:07 fishwaldo Exp $
  */
 
 #include "stdinc.h"

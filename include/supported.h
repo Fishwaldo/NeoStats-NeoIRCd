@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  supported.h: Header for 005 numeric etc...
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: supported.h,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: supported.h,v 1.4 2002/09/13 06:50:06 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_supported_h

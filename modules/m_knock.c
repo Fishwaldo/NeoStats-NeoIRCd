@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  m_knock.c: Requests to be invited to a channel.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_knock.c,v 1.4 2002/09/02 04:10:59 fishwaldo Exp $
+ *  $Id: m_knock.c,v 1.5 2002/09/13 06:50:06 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -80,7 +80,7 @@ _moddeinit(void)
   mod_del_cmd(&knockll_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 
 /* m_knock
@@ -195,7 +195,6 @@ static void parse_knock_local(struct Client *client_p,
     {
       sendto_one(uplink, ":%s KNOCKLL %s %s %s",
                  source_p->name, parv[1],
-		 IsIPSpoof(source_p) ? "255.255.255.255" :
 		 source_p->localClient->sockhost,
 		 (parc > 2) ? parv[2] : "");
     }

@@ -1,0 +1,36 @@
+$Id: NeoStats-team,v 1.1 2002/09/13 06:50:04 fishwaldo Exp $
+
+The NeoStats team is a group of IRC coders who aim to provide a
+complete set of IRC Services for IRC networks. Currently, our 
+prime software package is NeoStats, a expandable and extenable
+set of IRC Services, that aim to provide more than just NickServ
+and ChanServ (In Fact, as of now, (Sept 2002) there are no NickServ
+or ChanServ features in NeoStats. although they are being developed)
+
+The NeoStats team is commited to IRC software, and has been writting 
+software for close to 4 years now. Anyone is welcome to join in our 
+coding efforts by sending us Patches, or just helping out in our support
+Boards or channels. 
+ 
+ 
+The core team as, of this major release:
+ 
+Fish, Jusitn Hammond <fish@dynam.ac>
+Shmad, Adam Rutter <shmad@neostats.net>
+ 
+The Following have helped us improve our software (and coding skills)
+over the past. 
+ 
+^Enigma^, Mystery Man, <Engima@neostats.net>
+Eggy, Unknown, <eggy@pvpgn.org>
+ 
+All the users of irc-chat.net who encouraged us to develop this IRCD
+Many Many Others. If I left you out, please send me a email and I'll update 
+this file with your details.
+
+
+This ircd is based on Hybrid7, who's credits live in
+doc/old/Hybrid-team. They deserve a big clap and pat on the back for
+writting a awesome ircd!
+
+

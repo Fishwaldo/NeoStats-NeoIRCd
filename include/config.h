@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  config.h: The ircd compile-time-configurable header.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: config.h,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
+ *  $Id: config.h,v 1.4 2002/09/13 06:50:06 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_config_h
@@ -29,7 +29,7 @@
 
 #define DEBUG
 /*
- * IRCD-HYBRID-7 COMPILE TIME CONFIGURATION OPTIONS
+ * NeoIRCd COMPILE TIME CONFIGURATION OPTIONS
  *
  * Most of the items which used to be configurable in here have
  * been moved into the new improved ircd.conf file.
@@ -182,13 +182,6 @@
  */
 #undef  HIDE_SERVERS_IPS
 
-/* HIDE_SPOOF_IPS
- *
- * If this is undefined, opers will be allowed to see the real IP of spoofed
- * users in /trace etc.  If this is defined they will be shown a masked IP.
- */
-#undef HIDE_SPOOF_IPS
-
 /* TS5_ONLY
  *
  * If this is defined only TS5 servers may link to the network.  See
@@ -290,32 +283,6 @@
  * try 5 or 25. 5 for AIX and SUNOS, 25 should work better for other OS's
 */
 #define HYBRID_SOMAXCONN 25
-
-/* CODE DISABLE SECTION
- *
- * If you have enabled efnet specific code these will be disabled automatically
- * else they are here for anyone else.
- */
-#define ANONOPS
-#define HALFOPS
-
-/* END OF CONFIGURABLE OPTIONS */
-
-/* disable them for efnet */
-#ifdef EFNET
-#undef VCHANS
-#undef ANONOPS
-#undef HALFOPS
-#ifndef HIDE_SERVERS_IPS
-#define HIDE_SERVERS_IPS
-#endif
-#ifndef HIDE_SPOOF_IPS
-#define HIDE_SPOOF_IPS
-#endif
-#ifndef TS5_ONLY
-#define TS5_ONLY
-#endif
-#endif
 
 /* 
  * Default pre-allocations for various things...

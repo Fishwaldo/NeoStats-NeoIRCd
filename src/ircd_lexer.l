@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  ircd_lexer.l: Scans the ircd configuration file for tokens.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_lexer.l,v 1.4 2002/09/02 04:11:00 fishwaldo Exp $
+ *  $Id: ircd_lexer.l,v 1.5 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 %option case-insensitive
@@ -248,19 +248,11 @@ serverhide	{ return SERVERHIDE; }
 serverinfo	{ return SERVERINFO; }
 servlink_path   { return SERVLINK_PATH; }
 set_ulined	{ return ULINE_SERVER; }
-shared          { return T_SHARED; }
 short_motd      { return SHORT_MOTD; }
 silent          { return SILENT; }
-spoof		{ return SPOOF; }
-spoof_notice	{ return SPOOF_NOTICE; }
 unkline		{ return UNKLINE; }
-use_anonops	{ return USE_ANONOPS; }
 use_egd 	{ return USE_EGD; }
-use_except	{ return USE_EXCEPT; }
-use_halfops     { return USE_HALFOPS; }
 use_help        { return USE_HELP; }
-use_invex	{ return USE_INVEX; }
-use_knock	{ return USE_KNOCK; }
 throttle_time { return THROTTLE_TIME; }
 user		{ return USER;} 
 vhost	{ return VHOST; }

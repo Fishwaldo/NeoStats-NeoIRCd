@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  client.h: The ircd client header.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h,v 1.6 2002/09/12 05:45:19 fishwaldo Exp $
+ *  $Id: client.h,v 1.7 2002/09/13 06:50:06 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_client_h
@@ -448,7 +448,6 @@ struct LocalUser
 #define FLAGS2_CBURST		0x10000  /* connection burst being sent */
 #define FLAGS2_PING_COOKIE	0x20000		/* PING Cookie */
 #define FLAGS2_IDLE_LINED       0x40000
-#define FLAGS2_IP_SPOOFING      0x80000        /* client IP is spoofed */
 #define FLAGS2_FLOODDONE        0x200000      /* Flood grace period has
                                                * been ended. */
 
@@ -552,8 +551,6 @@ struct LocalUser
 #define SetExemptLimits(x)      ((x)->flags2 |= FLAGS2_NOLIMIT)
 #define IsExemptGline(x)        ((x)->flags2 & FLAGS2_EXEMPTGLINE)
 #define SetExemptGline(x)       ((x)->flags2 |= FLAGS2_EXEMPTGLINE)
-#define SetIPSpoof(x)           ((x)->flags2 |= FLAGS2_IP_SPOOFING)
-#define IsIPSpoof(x)            ((x)->flags2 & FLAGS2_IP_SPOOFING)
 
 #define SetIdlelined(x)         ((x)->flags2 |= FLAGS2_IDLE_LINED)
 #define IsIdlelined(x)          ((x)->flags2 & FLAGS2_IDLE_LINED)

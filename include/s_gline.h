@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  s_gline.h: A header for the gline functions.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_gline.h,v 1.3 2002/09/12 05:45:19 fishwaldo Exp $
+ *  $Id: s_gline.h,v 1.4 2002/09/13 06:50:06 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_gline_h

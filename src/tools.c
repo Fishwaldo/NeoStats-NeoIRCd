@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  tools.c: Various functions needed here and there.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: tools.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: tools.c,v 1.3 2002/09/13 06:50:09 fishwaldo Exp $
  *
  * When you update these functions make sure you update the ones in tools.h
  * as well!!!

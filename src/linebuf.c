@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  linebuf.c: Maintains linebuffers.
  *
  *  Copyright (C) 2001-2002 Adrian Chadd <adrian@creative.net.au>
@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: linebuf.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
+ *  $Id: linebuf.c,v 1.4 2002/09/13 06:50:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"

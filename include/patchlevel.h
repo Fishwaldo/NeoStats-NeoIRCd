@@ -1,5 +1,5 @@
 /*
- *  ircd-hybrid: an advanced Internet Relay Chat Daemon(ircd).
+ *  NeoIRCd: NeoStats Group. Based on Hybird7
  *  patchlevel.h: A header defining the patchlevel.
  *
  *  Copyright (C) 2002 by the past and present ircd coders, and others.
@@ -19,9 +19,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: patchlevel.h,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
+ *  $Id: patchlevel.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
  */
 
 #ifndef PATCHLEVEL
-#define PATCHLEVEL   "NeoIRCd-1.0"
+#define PATCHLEVEL   "NeoIRCd 0.9.1"
 #endif

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: packet.c,v 1.6 2002/11/04 08:14:00 fishwaldo Exp $
+ *  $Id: packet.c,v 1.7 2002/11/04 08:50:46 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -379,7 +379,7 @@ read_packet(int fd, void *data)
    */
    
 #ifdef USE_SSL
-  if (IsSSL(client_p))
+  if (IsSSL(client_p)) {
   	length = safe_SSL_read(client_p, readBuf, READBUF_SIZE);
   	if (!IsSSLOK(client_p) && length > 0) {
 		SetSSLOK(client_p);
@@ -389,7 +389,7 @@ read_packet(int fd, void *data)
   		return;
   	}	
   	
-  else
+  } else
 #endif
 	length = recv(fd_r, readBuf, READBUF_SIZE, 0);
 
@@ -444,6 +444,8 @@ printf("leng %d\n", length);
 
   lclient_p->actually_read += lbuf_len;
   
+  if (client_p->next == NULL)
+  	return;
   
   /* Attempt to parse what we have */
   parse_client_queued(client_p);

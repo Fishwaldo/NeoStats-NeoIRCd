@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: linebuf.c,v 1.6 2002/11/04 08:14:00 fishwaldo Exp $
+ *  $Id: linebuf.c,v 1.7 2002/11/04 08:50:46 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -631,13 +631,14 @@ linebuf_putmsg(buf_head_t *bufhead, const char *format, va_list *va_args,
  */
 #ifdef USE_SSL
 int
-linebuf_flush(int fd, buf_head_t *bufhead, SSL *ssl)
+linebuf_flush(int fd, buf_head_t *bufhead, void *data)
 #else 
 int
 linebuf_flush(int fd, buf_head_t *bufhead)
 #endif
 {
   buf_line_t *bufline;
+  struct Client *client_p = data;
   int retval;
   
   /* Check we actually have a first buffer */
@@ -666,8 +667,8 @@ linebuf_flush(int fd, buf_head_t *bufhead)
 
   /* Now, try writing data */
 #ifdef USE_SSL
-  if (ssl != NULL)
-  	retval = safe_SSL_write(ssl, bufline->buf + bufhead->writeofs, bufline->len - bufhead->writeofs);
+  if (IsSSL(client_p))
+  	retval = safe_SSL_write(client_p, bufline->buf + bufhead->writeofs, bufline->len - bufhead->writeofs);
   else 
 #endif
 	retval = send(fd, bufline->buf + bufhead->writeofs, bufline->len

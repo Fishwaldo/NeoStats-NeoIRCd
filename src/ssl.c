@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ssl.c,v 1.1 2002/11/04 08:14:01 fishwaldo Exp $
+ *  $Id: ssl.c,v 1.2 2002/11/04 08:50:46 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -88,14 +88,17 @@ safe_SSL_read (struct Client * client_p, void *buf, int sz)
 {
   int len, ssl_err;
 
+  bzero(buf, sz);
   len = SSL_read(client_p->localClient->ssl, buf, sz);
-printf("ssl read %s\n", buf);
+printf("ssl read %s\n\nlen %d (%d)", buf, len, sz);
 
   if (len <= 0)
     {
+    printf("len is less than 0 (%d)\n", len);
       switch (ssl_err = SSL_get_error (client_p->localClient->ssl, len))
 	{
 	case SSL_ERROR_SYSCALL:
+printf("SSL_ERROR_SYSCALL\n");
 	  if (errno == EWOULDBLOCK || errno == EAGAIN || errno == EINTR)
 	    {
 	case SSL_ERROR_WANT_READ:

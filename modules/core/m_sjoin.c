@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c,v 1.12 2002/10/15 07:37:57 fishwaldo Exp $
+ *  $Id: m_sjoin.c,v 1.13 2002/10/15 07:58:13 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ _moddeinit(void)
   mod_del_cmd(&sjoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.12 $";
+const char *_version = "$Revision: 1.13 $";
 #endif
 /*
  * ms_sjoin
@@ -369,19 +369,29 @@ static void ms_sjoin(struct Client *client_p,
     {
       fl = 0;
       num_prefix = 0;
-
-      for (i = 0; i < 2; i++)
-	{
-	  if (*s == '!')
+	switch (*s) {
+		case '!':
+			fl |= MODE_ADMIN;
+		case '@':
+			fl |= MODE_CHANOP;
+		case '+':
+			fl |= MODE_VOICE;
+		case '%':
+			fl |= MODE_HALFOP;
+	}
+	*hops++ = *s;
+	s++;
+#if 0		
+	 if (*s == '!')
 	    {
 	      fl |= MODE_ADMIN;
-	      if (keep_new_modes || IsOper(find_client(s++)))
-	      {
-	        *hops++ = '!';
+	      if (keep_new_modes)
+              {
+        	*hops++ = *s;
 		num_prefix++;
-              }
+   	      }
 	      
-//	      s++;
+	      s++;
 	    }
 	  if (*s == '@')
 	    {
@@ -416,8 +426,7 @@ static void ms_sjoin(struct Client *client_p,
 	      
 	      s++;
 	    }
-	}
-
+#endif
       /* if the client doesnt exist, backtrack over the prefix (*@%+) that we
        * just added and skip to the next nick
        */
@@ -434,21 +443,24 @@ static void ms_sjoin(struct Client *client_p,
         goto nextnick;
       }
 
-      /* copy the nick to the two buffers */
-      hops += ircsprintf(hops, "%s ", s);
-      assert((hops - sjbuf_hops) < sizeof(sjbuf_hops));
-
       if (!keep_new_modes && !IsOper(target_p))
 	{
-	  if ((fl & MODE_CHANOP) || (fl & MODE_HALFOP) || (fl & MODE_ADMIN))
+	  if ((fl & MODE_CHANOP) || (fl & MODE_HALFOP) || (fl & MODE_ADMIN) || fl & MODE_VOICE)
 	    {
 	      fl = MODE_DEOPPED;
+	      hops -= 1;
+	      *hops = '\0';
 	    }
 	  else
 	    {
 	      fl = 0;
 	    }
 	}
+
+
+      /* copy the nick to the two buffers */
+      hops += ircsprintf(hops, "%s ", s);
+      assert((hops - sjbuf_hops) < sizeof(sjbuf_hops));
 
       people++;
 

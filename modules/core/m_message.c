@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_message.c,v 1.9 2002/09/24 13:25:28 fishwaldo Exp $
+ *  $Id: m_message.c,v 1.10 2002/10/15 02:44:33 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -122,7 +122,7 @@ _moddeinit(void)
   mod_del_cmd(&notice_msgtab);
 }
 
-const char *_version = "$Revision: 1.9 $";
+const char *_version = "$Revision: 1.10 $";
 #endif
 
 /*
@@ -814,7 +814,10 @@ handle_opers(int p_or_n, char *command, struct Client *client_p,
 		 me.name, source_p->name, command, nick, nick);
       return;
     }
-      
+
+    /* we allow it to send messages to anybody */
+
+#if 0      
     if ((s = strrchr(nick, '.')) == NULL)
     {
       sendto_one(source_p, form_str(ERR_NOTOPLEVEL),
@@ -830,7 +833,7 @@ handle_opers(int p_or_n, char *command, struct Client *client_p,
                  me.name, source_p->name, nick);
       return;
     }
-    
+#endif    
     sendto_match_butone(IsServer(client_p) ? client_p : NULL, source_p,
                         nick + 1,
                         (*nick == '#') ? MATCH_HOST : MATCH_SERVER,

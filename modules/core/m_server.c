@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c,v 1.8 2002/09/20 09:05:18 fishwaldo Exp $
+ *  $Id: m_server.c,v 1.9 2002/10/15 02:44:33 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&server_msgtab);
 }
-const char *_version = "$Revision: 1.8 $";
+const char *_version = "$Revision: 1.9 $";
 #endif
 
 int bogus_host(char *host);
@@ -254,7 +254,6 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
   client_p->flags &= ~FLAGS_ULINED;
   if (srvopt & SERVER_HIDDEN) client_p->hidden_server = 1;
   set_server_gecos(client_p, info);
-  
   /* if this server is trying to set itself Ulined, its Not allowed, so exit it */
   if (srvopt & SERVER_ULINED) {
   	sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Server %s trying to U line itself. No Way, Nadda, I dun think so", client_p->name);
@@ -597,9 +596,6 @@ static int set_server_gecos(struct Client *client_p, char *info)
      * it isnt \0 */
     if(s && (*s != '\0'))
     {
-      /* a space? if not (H) could be the last part of info.. */
-      if((p = strchr(s, ' ')))
-        *p = '\0';
       
       /* if there was a trailing space, s could point to \0, so check */
       if(s && (*s != '\0'))

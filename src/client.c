@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c,v 1.4 2002/08/14 16:52:02 fishwaldo Exp $
+ *  $Id: client.c,v 1.5 2002/08/16 12:05:37 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -124,6 +124,8 @@ struct Client* make_client(struct Client* from)
   dlink_node *m;
 
   client_p = BlockHeapAlloc(client_heap);
+  if(client_p == NULL)
+    return NULL;
   memset(client_p, 0, sizeof(struct Client)); 
   if (from == NULL)
     {
@@ -780,7 +782,7 @@ find_chasing(struct Client *source_p, char *user, int *chasing)
     {
       sendto_one(source_p, form_str(ERR_NOSUCHNICK),
                  me.name, source_p->name, user);
-      return ((struct Client *)NULL);
+      return (NULL);
     }
   if (chasing)
     *chasing = 1;
@@ -1126,10 +1128,10 @@ static void remove_dependents(struct Client* client_p,
        * comstud, since m_squit already does the notification.
        */
 
-      if ((aconf = to->serv->sconf))
-        strlcpy(myname, my_name_for_link(me.name, aconf), HOSTLEN);
+      if ((aconf = to->serv->sconf) != NULL)
+        strlcpy(myname, my_name_for_link(me.name, aconf), HOSTLEN + 1);
       else
-        strlcpy(myname, me.name, HOSTLEN);
+        strlcpy(myname, me.name, HOSTLEN + 1);
       recurse_send_quits(client_p, source_p, to, comment1, myname);
     }
 
@@ -1157,16 +1159,7 @@ void dead_link(struct Client *client_p)
   else
     notice = "Write error: connection closed";
 
-  /* Mark it dead before sending out any notices, just in case this ever goes
-   * global */    	
-  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(client_p, HIDE_IP), 
-      notice));
-  assert(dlinkFind(&abort_list, client_p) == NULL);
-  m = make_dlink_node();
-  dlinkAdd(client_p, m, &abort_list);
-
-  SetDead(client_p); /* You are dead my friend */
-
+    	
   if (!IsPerson(client_p) && !IsUnknown(client_p) && !IsClosing(client_p))
   {
     sendto_realops_flags(FLAGS_ALL, L_ADMIN,
@@ -1176,6 +1169,11 @@ void dead_link(struct Client *client_p)
 		         "Closing link to %s: %s",
                          get_client_name(client_p, MASK_IP), notice);
   }
+  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(client_p, HIDE_IP), notice));
+  assert(dlinkFind(&abort_list, client_p) == NULL);
+  m = make_dlink_node();
+  dlinkAdd(client_p, m, &abort_list);
+  SetDead(client_p); /* You are dead my friend */
 }
 
 void exit_aborted_clients(void)
@@ -1326,7 +1324,12 @@ int exit_client(
         sendto_realops_flags(FLAGS_CCONN, L_ALL,
                              "Client exiting: %s (%s@%s) [%s] [%s]",
                              source_p->name, source_p->username, source_p->host,
-                             comment, source_p->localClient->sockhost);
+                             comment, 
+#ifdef HIDE_SPOOF_IPS
+                             "255.255.255.255");
+#else
+                             source_p->localClient->sockhost);
+#endif
 
       log_user_exit(source_p);
 

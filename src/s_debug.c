@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_debug.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: s_debug.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -244,16 +244,10 @@ void count_memory(struct Client *source_p)
         channel_users++;
       for (dlink = chptr->chanops.head; dlink; dlink = dlink->next)
         channel_users++;
-#ifdef REQUIRE_OANDV
-      for (dlink = chptr->chanops_voiced.head; dlink; dlink = dlink->next)
-        channel_users++;
-#endif
       for (dlink = chptr->voiced.head; dlink; dlink = dlink->next)
         channel_users++;
-#ifdef HALFOPS
       for (dlink = chptr->halfops.head; dlink; dlink = dlink->next)
         channel_users++;
-#endif
 
       for (dlink = chptr->invites.head; dlink; dlink = dlink->next)
         channel_invites++;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_auth.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: s_auth.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 /*
@@ -195,9 +195,9 @@ static void auth_dns_callback(void* vptr, adns_answer* reply)
   *auth->client->host = '\0';
   if(reply && (reply->status == adns_s_ok))
     {
-      if(strlen(*reply->rrs.str) < HOSTLEN)
+      if(strlen(*reply->rrs.str) <= HOSTLEN)
         {
-          strcpy(str, *reply->rrs.str);
+          strlcpy(str, *reply->rrs.str, HOSTLEN+1);
           sendheader(auth->client, REPORT_FIN_DNS);
         }
       else
@@ -205,15 +205,15 @@ static void auth_dns_callback(void* vptr, adns_answer* reply)
 #ifdef IPV6
           if(*auth->client->localClient->sockhost == ':')
           {
-            strcat(str, "0");
+            strlcat(str, "0",HOSTLEN+1);
 	  }
           if(auth->client->localClient->aftype == AF_INET6 && ConfigFileEntry.dot_in_ip6_addr == 1)
 	  {
-            strcat(str, auth->client->localClient->sockhost);
-            strcat(str, ".");
+            strlcat(str, auth->client->localClient->sockhost,HOSTLEN+1);
+            strlcat(str, ".",HOSTLEN+1);
           } else
 #endif
-            strcat(str, auth->client->localClient->sockhost);
+            strlcat(str, auth->client->localClient->sockhost,HOSTLEN+1);
           sendheader(auth->client, REPORT_HOST_TOOLONG);
         }
     }
@@ -222,16 +222,16 @@ static void auth_dns_callback(void* vptr, adns_answer* reply)
 #ifdef IPV6
       if(*auth->client->localClient->sockhost == ':')
       {
-	strcat(str, "0");
+	strlcat(str, "0",HOSTLEN);
       }
       if(auth->client->localClient->aftype == AF_INET6 && ConfigFileEntry.dot_in_ip6_addr == 1)
       {
-        strcat(str, auth->client->localClient->sockhost);
-        strcat(str, ".");
+        strlcat(str, auth->client->localClient->sockhost,HOSTLEN+1);
+        strlcat(str, ".",HOSTLEN+1);
         sendheader(auth->client, REPORT_FAIL_DNS);
       } else 
 #endif
-      strcat(str, auth->client->localClient->sockhost); 
+      strlcat(str, auth->client->localClient->sockhost,HOSTLEN+1); 
       sendheader(auth->client, REPORT_FAIL_DNS);
     }
 

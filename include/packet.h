@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: packet.h,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
+ *  $Id: packet.h,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_packet_h
@@ -44,7 +44,7 @@
  * without being so heavily penalised they excess flood.
  */
 #define MAX_FLOOD 5
-#define MAX_FLOOD_BURST MAX_FLOOD * 6
+#define MAX_FLOOD_BURST MAX_FLOOD * 8
 
 extern PF  read_ctrl_packet;
 extern PF  read_packet;

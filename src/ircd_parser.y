@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 %{
@@ -285,8 +285,8 @@ int   class_redirport_var;
 
 %type   <string>   QSTRING
 %type   <number>   NUMBER
-%type   <number>   timespec
-%type   <number>   sizespec
+%type   <number>   timespec, timespec_
+%type   <number>   sizespec, sizespec_
 
 %%
 conf:   
@@ -316,53 +316,38 @@ conf_item:        admin_entry
         ;
 
 
-timespec:	NUMBER 
-		= {
-			$$ = $1;
-		}
-		| NUMBER SECONDS
-		= {
-			$$ = $1;
-		}
-		| NUMBER MINUTES
-		= {
-			$$ = $1 * 60;
-		}
-		| NUMBER HOURS
-		= {
-			$$ = $1 * 60 * 60;
-		}
-		| NUMBER DAYS
-		= {
-			$$ = $1 * 60 * 60 * 24;
-		}
-		| NUMBER WEEKS
-		= {
-			$$ = $1 * 60 * 60 * 24 * 7;
-		}
-		| timespec timespec
-		= {
-			/* 2 years 3 days */
+timespec_: { $$ = 0; } | timespec;
+timespec:	NUMBER timespec_
+		{
 			$$ = $1 + $2;
+		}
+		| NUMBER SECONDS timespec_
+		{
+			$$ = $1 + $3;
+		}
+		| NUMBER MINUTES timespec_
+		{
+			$$ = $1 * 60 + $3;
+		}
+		| NUMBER HOURS timespec_
+		{
+			$$ = $1 * 60 * 60 + $3;
+		}
+		| NUMBER DAYS timespec_
+		{
+			$$ = $1 * 60 * 60 * 24 + $3;
+		}
+		| NUMBER WEEKS timespec_
+		{
+			$$ = $1 * 60 * 60 * 24 * 7 + $3;
 		}
 		;
 
-sizespec:	NUMBER	
-		= {
-			$$ = $1;
-		}
-		| NUMBER BYTES
-		= { 
-			$$ = $1;
-		}
-		| NUMBER KBYTES
-		= {
-			$$ = $1 * 1024;
-		}
-		| NUMBER MBYTES
-		= {
-			$$ = $1 * 1024 * 1024;
-		}
+sizespec_:	{ $$ = 0; } | sizespec;
+sizespec:	NUMBER sizespec_ { $$ = $1 + $2; }
+		| NUMBER BYTES sizespec_ { $$ = $1 + $3; }
+		| NUMBER KBYTES sizespec_ { $$ = $1 * 1024 + $3; }
+		| NUMBER MBYTES sizespec_ { $$ = $1 * 1024 * 1024 + $3; }
 		;
 
 
@@ -2540,13 +2525,7 @@ channel_entry:      CHANNEL
 channel_items:      channel_items channel_item |
                     channel_item;
 
-channel_item:       channel_use_except |
-                    channel_use_halfops |
-                    channel_use_invex |
-                    channel_use_knock |
-                    channel_use_vchans |
-		    channel_use_anonops |
-		    channel_vchans_oper_only |
+channel_item:       channel_vchans_oper_only |
                     channel_max_bans |
                     channel_knock_delay |
 		    channel_knock_delay_channel |
@@ -2558,105 +2537,6 @@ channel_item:       channel_use_except |
 		    channel_no_create_on_split | 
 		    channel_no_join_on_split |
                     error;
-
-channel_use_except:   USE_EXCEPT '=' TYES ';'
-  {
-    ConfigChannel.use_except = 1;
-  }
-                        |
-                      USE_EXCEPT '=' TNO ';'
-  {
-    ConfigChannel.use_except = 0;
-  } ;
-
-
-channel_use_halfops:   USE_HALFOPS '=' TYES ';'
-  {
-#ifdef HALFOPS
-    /* Set to -1 on boot */
-    if (ConfigChannel.use_halfops == 0)
-    {
-      ilog(L_ERROR, "Ignoring config file entry 'use_halfops = yes' "
-                    "-- can only be changed on boot");
-      break;
-    }
-    else
-      ConfigChannel.use_halfops = 1;
-#endif
-  }
-  |
-    USE_HALFOPS '=' TNO ';'
-  {
-    /* Set to -1 on boot */
-    if (ConfigChannel.use_halfops == 1)
-    {
-      ilog(L_ERROR, "Ignoring config file entry 'use_halfops = no' "
-                    "-- can only be changed on boot");
-      break;
-    }
-    else
-      ConfigChannel.use_halfops = 0;
-  };
-
-
-channel_use_anonops: USE_ANONOPS '=' TYES ';'
-  {
-#ifdef ANONOPS
-    if(ConfigChannel.use_anonops == 0)
-    {
-      ilog(L_ERROR, "Ignoring config file entry 'use_anonops = yes' "
-                    "-- can only be changed on boot");
-      break;
-    }
-    else
-      ConfigChannel.use_anonops = 1;
-#endif
-  }
-    |
-    USE_ANONOPS '=' TNO ';'
-  {
-    if(ConfigChannel.use_anonops == 1)
-    {
-      ilog(L_ERROR, "Ignoring config file entry 'use_anonops = no' "
-                    "-- can only be changed on boot");
-      break;
-    }
-    else
-      ConfigChannel.use_anonops = 0;
-  } ;
-
-
-channel_use_invex:   USE_INVEX '=' TYES ';'
-  {
-    ConfigChannel.use_invex = 1;
-  }
-                        |
-                     USE_INVEX '=' TNO ';'
-  {
-    ConfigChannel.use_invex = 0;
-  } ;
-
-
-channel_use_knock:   USE_KNOCK '=' TYES ';'
-  {
-    ConfigChannel.use_knock = 1;
-  }
-                     |
-                     USE_KNOCK '=' TNO ';'
-  {
-    ConfigChannel.use_knock = 0;
-  } ;
-
-
-channel_use_vchans: USE_VCHANS '=' TYES ';'
-  { 
-#ifdef VCHANS
-    ConfigChannel.use_vchans = 1;
-#endif
-  }
-    |
-    USE_VCHANS '=' TNO ';'
-  { ConfigChannel.use_vchans = 0; };
 
 
 channel_vchans_oper_only: VCHANS_OPER_ONLY '=' TYES ';'

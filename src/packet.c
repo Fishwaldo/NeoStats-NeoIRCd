@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: packet.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: packet.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -36,6 +36,7 @@
 #include "irc_string.h"
 #include "memory.h"
 #include "hook.h"
+#include "send.h"
 
 static char               readBuf[READBUF_SIZE];
 static void client_dopacket(struct Client *client_p, char *buffer, size_t length);
@@ -51,7 +52,44 @@ parse_client_queued(struct Client *client_p)
   int checkflood = 1;
   struct LocalUser *lclient_p = client_p->localClient;
 
-  if (IsServer(client_p) || !IsRegistered(client_p))
+  if(IsUnknown(client_p))
+  {
+    int i = 0;
+
+    for(;;)
+    {
+      /* rate unknown clients at MAX_FLOOD per loop */
+      if(i >= MAX_FLOOD)
+        break;
+
+      dolen = linebuf_get(&client_p->localClient->buf_recvq, readBuf,
+                          READBUF_SIZE, LINEBUF_COMPLETE, LINEBUF_PARSED);
+
+      if(dolen <= 0)
+        break;
+                          
+      if(!IsDead(client_p))
+      {
+        client_dopacket(client_p, readBuf, dolen);
+        i++;
+
+        /* if theyve dropped out of the unknown state, break and move
+         * to the parsing for their appropriate status.  --fl
+         */
+        if(!IsUnknown(client_p))
+          break;
+
+      }
+      else if(MyConnect(client_p))
+      {
+        linebuf_donebuf(&client_p->localClient->buf_recvq);
+        linebuf_donebuf(&client_p->localClient->buf_sendq);
+        return;
+      }
+    }
+  }
+
+  if (IsServer(client_p) || IsConnecting(client_p) || IsHandshake(client_p))
   {
     while ((dolen = linebuf_get(&client_p->localClient->buf_recvq,
                               readBuf, READBUF_SIZE, LINEBUF_COMPLETE,
@@ -59,19 +97,15 @@ parse_client_queued(struct Client *client_p)
     {
       if (!IsDead(client_p))
         client_dopacket(client_p, readBuf, dolen);
-      else
+      else if(MyConnect(client_p))
       {
-        if (MyClient(client_p))
-        {
-          linebuf_donebuf(&client_p->localClient->buf_recvq);
-          linebuf_donebuf(&client_p->localClient->buf_sendq);
-        }
-	
+        linebuf_donebuf(&client_p->localClient->buf_recvq);
+        linebuf_donebuf(&client_p->localClient->buf_sendq);
         return;
       }
     }
   } 
-  else 
+  else if(IsClient(client_p)) 
   {
 
     if (ConfigFileEntry.no_oper_flood && IsOper(client_p))
@@ -124,7 +158,8 @@ parse_client_queued(struct Client *client_p)
  *
  * marks the end of the clients grace period
  */
-void flood_endgrace(struct Client *client_p)
+void
+flood_endgrace(struct Client *client_p)
 {
   SetFloodDone(client_p);
 
@@ -153,13 +188,13 @@ flood_recalc(int fd, void *data)
   if (!lclient_p)
     return;
 
-  /* Reset the sent-per-second count, decrease opers quicker
-   * than normal users
+  /* allow a bursting client their allocation per second, allow
+   * a client whos flooding an extra 2 per second
    */
-  if(ConfigFileEntry.no_oper_flood && IsOper(client_p))
+  if(IsFloodDone(client_p))
     lclient_p->sent_parsed -= 2;
   else
-    lclient_p->sent_parsed--;
+    lclient_p->sent_parsed = 0;
   
   if(lclient_p->sent_parsed < 0)
     lclient_p->sent_parsed = 0;
@@ -376,30 +411,36 @@ read_packet(int fd, void *data)
     binary = 1;
 
   lbuf_len = linebuf_parse(&client_p->localClient->buf_recvq,
-      readBuf, length, binary);
+                           readBuf, length, binary);
 
   if (lbuf_len < 0)
   {
-    error_exit_client(client_p, 0);
+    if (IsClient(client_p))
+      sendto_one(client_p, ":%s NOTICE %s :*** - You sent a NULL character in "
+                 "your message. Ignored.",
+                 me.name, client_p->name);
+    else
+      exit_client(client_p, client_p, client_p, "NULL character found in message");
     return;
   }
 
   lclient_p->actually_read += lbuf_len;
   
+  /* Attempt to parse what we have */
+  parse_client_queued(client_p);
+  
   /* Check to make sure we're not flooding */
   if (IsPerson(client_p) &&
      (linebuf_alloclen(&client_p->localClient->buf_recvq) >
-      ConfigFileEntry.client_flood)) {
+      ConfigFileEntry.client_flood))
+  {
       if (!(ConfigFileEntry.no_oper_flood && IsOper(client_p)))
       {
        exit_client(client_p, client_p, client_p, "Excess Flood");
        return;
       }
-    }
+  }
 
-  /* Attempt to parse what we have */
-  parse_client_queued(client_p);
-  
   /* server fd may have changed */
   fd_r = client_p->localClient->fd;
 #ifndef HAVE_SOCKETPAIR
@@ -442,7 +483,8 @@ read_packet(int fd, void *data)
  *      with client_p of "local" variation, which contains all the
  *      necessary fields (buffer etc..)
  */
-void client_dopacket(struct Client *client_p, char *buffer, size_t length)
+void
+client_dopacket(struct Client *client_p, char *buffer, size_t length)
 {
   assert(client_p != NULL);
   assert(buffer != NULL);
@@ -460,7 +502,8 @@ void client_dopacket(struct Client *client_p, char *buffer, size_t length)
    */
   client_p->localClient->receiveB += length;
 
-  if (client_p->localClient->receiveB > 1023) {
+  if (client_p->localClient->receiveB > 1023)
+  {
     client_p->localClient->receiveK += (client_p->localClient->receiveB >> 10);
     client_p->localClient->receiveB &= 0x03ff; /* 2^10 = 1024, 3ff = 1023 */
   }

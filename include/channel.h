@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.h,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
+ *  $Id: channel.h,v 1.4 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_channel_h
@@ -68,24 +68,14 @@ struct Channel
 #endif
   dlink_list	  chanadmins;		/* list of Channel Admins */
   dlink_list      chanops;		/* lists of chanops etc. */
-#ifdef REQUIRE_OANDV
-  dlink_list	  chanops_voiced;	/* UGH I'm sorry */
-#endif
-#ifdef HALFOPS
   dlink_list      halfops;
-#endif
   dlink_list      voiced;
   dlink_list      peons;                /* non ops, just members */
   dlink_list	  deopped;              /* users deopped on sjoin */
   
   dlink_list	  locchanadmins;	/* local versions of the above */
   dlink_list      locchanops;           /* local versions of the above */
-#ifdef REQUIRE_OANDV
-  dlink_list	  locchanops_voiced;	/* UGH I'm sorry */
-#endif
-#ifdef HALFOPS
   dlink_list      lochalfops;
-#endif
   dlink_list      locvoiced;
   dlink_list      locpeons;             /* ... */
   
@@ -117,9 +107,7 @@ extern int     can_join(struct Client *source_p, struct Channel *chptr,
 extern int     is_chan_op (struct Channel *chptr,struct Client *who);
 extern int     is_chan_admin (struct Channel *chptr, struct Client *who);
 extern int     is_any_op (struct Channel *chptr,struct Client *who);
-#ifdef HALFOPS
 extern int     is_half_op (struct Channel *chptr,struct Client *who);
-#endif
 extern int     is_voiced (struct Channel *chptr,struct Client *who);
 
 extern dlink_node *find_user_link (dlink_list *, struct Client *);

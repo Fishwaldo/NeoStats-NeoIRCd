@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.h,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
+ *  $Id: channel_mode.h,v 1.4 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 
@@ -49,9 +49,7 @@
 extern void    set_channel_mode(struct Client *, struct Client *, 
                                 struct Channel *, int, char **, char *);
 
-#ifdef ANONOPS
 extern void sync_channel_oplists(struct Channel *, int);
-#endif
 
 extern void set_channel_mode_flags( char flags_ptr[4][2],
 				    struct Channel *chptr,
@@ -124,20 +122,22 @@ extern void unset_chcap_usage_counts(struct Client *serv_p);
 
 struct ChModeChange
 {
- char letter;
- char *arg, *id;
- int caps, nocaps, mems;
- struct Client *client;
+  char letter;
+  char *arg;
+  char *id;
+  int dir;
+  int caps;
+  int nocaps;
+  int mems;
+  struct Client *client;
 };
 
-#ifdef HALFOPS
 struct ChModeBounce
 {
   char letter;
   char *arg, *id;
   int dir;
 };
-#endif
 
 struct ChCapCombo
 {

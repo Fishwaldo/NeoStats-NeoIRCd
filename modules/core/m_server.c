@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c,v 1.2 2002/08/14 06:29:46 fishwaldo Exp $
+ *  $Id: m_server.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -51,7 +51,7 @@ static void ms_server(struct Client*, struct Client*, int, char **);
 static int set_server_gecos(struct Client *, char *);
 
 struct Message server_msgtab = {
-  "SERVER", 0, 0, 3, 0, MFLG_SLOW | MFLG_UNREG, 0,
+  "SERVER", 0, 0, 4, 0, MFLG_SLOW | MFLG_UNREG, 0,
   {mr_server, m_registered, ms_server, m_registered}
 };
 
@@ -67,7 +67,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&server_msgtab);
 }
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 int bogus_host(char *host);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: vchannel.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: vchannel.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -479,23 +479,13 @@ pick_vchan_id(struct Channel *chptr)
         return target_p->name;
       }
 
-#ifdef REQUIRE_OANDV
-  for (lp = chptr->chanops_voiced.head; lp; lp = lp->next)
-    if (!lp->next)
-      {
-        target_p = lp->data;
-        return target_p->name;
-      }
-#endif
 
-#ifdef HALFOPS
   for (lp = chptr->halfops.head; lp; lp = lp->next)
     if (!lp->next)
       {
         target_p = lp->data;
         return target_p->name;
       }
-#endif
 
   for (lp = chptr->voiced.head; lp; lp = lp->next)
     if (!lp->next)
@@ -510,7 +500,12 @@ pick_vchan_id(struct Channel *chptr)
         target_p = lp->data;
         return target_p->name;
       }
-
+  for (lp = chptr->chanadmins.head; lp; lp = lp->next)
+    if (!lp->next)
+      {
+        target_p = lp->data;
+        return target_p->name;
+      }
   return chptr->vchan_id;
 }
 

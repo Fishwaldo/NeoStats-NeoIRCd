@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: supported.h,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: supported.h,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_supported_h
@@ -29,8 +29,13 @@
 #include "channel.h"
 #include "ircd_defs.h"
 
+#ifndef USE_ASCII_CASEMAP
+#define CASEMAP "rfc1459"
+#else
+#define CASEMAP "ascii"
+#endif
+
 #define FEATURES "WALLCHOPS"\
-                "%s%s%s%s" \
                 " MODES=%i" \
                 " MAXCHANNELS=%i" \
                 " MAXBANS=%i" \
@@ -39,11 +44,7 @@
                 " TOPICLEN=%i" \
                 " KICKLEN=%i"
 
-#define FEATURESVALUES ConfigChannel.use_knock ? " KNOCK" : "", \
-        ConfigChannel.use_vchans ? " VCHANS" : "", \
-        ConfigChannel.use_except ? " EXCEPTS" : "", \
-        ConfigChannel.use_invex ? " INVEX" : "", \
-        MAXMODEPARAMS,ConfigChannel.max_chans_per_user, \
+#define FEATURESVALUES MAXMODEPARAMS,ConfigChannel.max_chans_per_user, \
         ConfigChannel.max_bans, \
         ConfigFileEntry.max_targets,NICKLEN-1,TOPICLEN,TOPICLEN
 
@@ -51,13 +52,12 @@
                   " PREFIX=%s" \
 		  " CHANMODES=%s" \
 		  " NETWORK=%s" \
-		  " CHARSET=rfc1459" \
-		  " CASEMAPPING=rfc1459" \
+		  " CASEMAPPING=%s" \
 		  " CALLERID"
 
 #define FEATURES2VALUES ConfigServerHide.disable_local_channels ? "#" : "#&", \
-                        "(ohv)@%+", "beI,k,l,imnpsta", \
-			ServerInfo.network_name
+                        "(aohv)*@%+", "beI,k,l,imnpsta", \
+			ServerInfo.network_name, CASEMAP
                           
 /*
  * - from mirc's versions.txt

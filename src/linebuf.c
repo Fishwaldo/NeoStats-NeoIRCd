@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: linebuf.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: linebuf.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -102,8 +102,11 @@ linebuf_new_line(buf_head_t *bufhead)
   dlink_node *node;
 
   bufline = linebuf_allocate();
+  if(bufline == NULL)
+    return NULL;
   ++bufline_count;
-
+  
+  
   node = make_dlink_node();
   
   bufline->len = 0;
@@ -170,6 +173,8 @@ linebuf_skip_crlf(char *ch, int len)
 	break;
       else if(*ch == '\n')
         break;
+      else if (*ch == 0)
+        return -1;
     }
 
   /* Then, skip until the last CRLF */
@@ -268,6 +273,8 @@ linebuf_copy_line(buf_head_t *bufhead, buf_line_t *bufline,
     return 0;
 
   clen = cpylen = linebuf_skip_crlf(ch, len);
+  if (clen == -1)
+    return -1;
 
   /* This is the ~overflow case..This doesn't happen often.. */
   if(cpylen > (BUF_DATA_SIZE - bufline->len - 1))
@@ -321,64 +328,60 @@ linebuf_copy_line(buf_head_t *bufhead, buf_line_t *bufline,
  * Copy as much data as possible directly into a linebuf,
  * splitting at \r\n, but without altering any data.
  *
- * -David-T
  */
 static int
 linebuf_copy_raw(buf_head_t *bufhead, buf_line_t *bufline,
-                 char *data, int len)
+                  char *data, int len)
 {
+  int cpylen = 0;	/* how many bytes we've copied */
   char *ch = data;	/* Pointer to where we are in the read data */
   char *bufch = bufline->buf + bufline->len;
   int clen = 0;                 /* how many bytes we've processed,
                                    and don't ever want to see again.. */
-  int remaining;
-  
+
   /* If its full or terminated, ignore it */
-  if ((bufline->len == BUF_DATA_SIZE) || (bufline->terminated == 1))
+
+  bufline->raw = 1;
+  assert(bufline->len < BUF_DATA_SIZE);
+  if (bufline->terminated == 1)
     return 0;
 
-  if (len < (BUF_DATA_SIZE - bufline->len - 1))
-    remaining = len;
-  else
-    remaining = BUF_DATA_SIZE - bufline->len - 1;
+  clen = cpylen = linebuf_skip_crlf(ch, len);
+  if (clen == -1)
+    return -1;
 
-  while (remaining && *ch != '\r' && *ch != '\n')
-  {
-    *bufch++ = *ch++;
-    clen++;
-    remaining--;
-  }
-
-  /*
-   * If we've reached '\r' or '\n', or filled up the linebuf,
-   * terminate it
-   */
-  if (*ch == '\r' || *ch == '\n' ||
-      (clen >= (BUF_DATA_SIZE - bufline->len - 1)))
-  {
-    bufline->terminated = 1;
-
-    /*
-     * Whilst we have remaining data (and space in the linebuf)
-     * eat any '\r's or '\n's, but leave them in the linebuf,
-     * incase it's important ziplinks data
-     */
-    while (remaining && (*ch == '\r' || *ch == '\n'))
+  /* This is the overflow case..This doesn't happen often.. */
+  if(cpylen > (BUF_DATA_SIZE - bufline->len - 1))
     {
-      *bufch++ = *ch++;
-      clen++;
-      remaining--;
+      memcpy(bufch, ch, (BUF_DATA_SIZE - bufline->len - 1));
+      bufline->buf[BUF_DATA_SIZE-1] = '\0';
+      bufch = bufline->buf + BUF_DATA_SIZE - 2;
+      bufline->terminated = 1;
+      bufline->len = BUF_DATA_SIZE - 1;
+      bufhead->len += BUF_DATA_SIZE - 1;
+      return clen;
     }
-  }
 
+  memcpy(bufch, ch, cpylen);
+  bufch += cpylen;
   *bufch = '\0';
+  bufch--;
 
-  /* Tell linebuf_get that it might need to clean up the buffer */
-  bufline->raw = 1;
-  bufline->len += clen;
-  bufhead->len += clen;
+  if(*bufch != '\r' && *bufch != '\n')
+    { 
+      /* No linefeed, bail for the next time */
+      bufhead->len += cpylen;
+      bufline->len += cpylen;
+      bufline->terminated = 0;
+      return clen;
+    }
+
+  bufline->terminated = 1;
+  bufhead->len += cpylen;
+  bufline->len += cpylen;
   return clen;
 }
+
 
 /*
  * linebuf_parse
@@ -406,43 +409,49 @@ linebuf_parse(buf_head_t *bufhead, char *data, int len, int raw)
 
   /* First, if we have a partial buffer, try to squeze data into it */
   if (bufhead->list.tail != NULL)
-    {
-      /* Check we're doing the partial buffer thing */
-      bufline = bufhead->list.tail->data;
-      assert(!bufline->flushing);
-      /* just try, the worst it could do is *reject* us .. */
-      if (raw) /* if we could be dealing with 8-bit data */
-        cpylen = linebuf_copy_raw(bufhead, bufline, data, len);
-      else
-        cpylen = linebuf_copy_line(bufhead, bufline, data, len);
-      linecnt++;
-      /* If we've copied the same as what we've got, quit now */
-      if (cpylen == len)
-	return linecnt; /* all the data done so soon? */
+  {
+    /* Check we're doing the partial buffer thing */
+    bufline = bufhead->list.tail->data;
+    assert(!bufline->flushing);
+    /* just try, the worst it could do is *reject* us .. */
+    if (raw) /* if we could be dealing with 8-bit data */
+      cpylen = linebuf_copy_raw(bufhead, bufline, data, len);
+    else
+      cpylen = linebuf_copy_line(bufhead, bufline, data, len);
+    if (cpylen == -1)
+      return -1;
+    
+    linecnt++;
+    /* If we've copied the same as what we've got, quit now */
+    if (cpylen == len)
+      return linecnt; /* all the data done so soon? */
+    
+    /* Skip the data and update len .. */
+    len -= cpylen;
+    assert(len >= 0);
+    data += cpylen;
+  }
+  
+  /* Next, the loop */
+  while (len > 0)
+  {
+    /* We obviously need a new buffer, so .. */
+    bufline = linebuf_new_line(bufhead);
+    
+    /* And parse */
+    if (raw) /* if we could be dealing with 8-bit data */
+      cpylen = linebuf_copy_raw(bufhead, bufline, data, len);
+    else
+      cpylen = linebuf_copy_line(bufhead, bufline, data, len);
+    if (cpylen == -1)
+      return -1;
 
-      /* Skip the data and update len .. */
-      len -= cpylen;
-      assert(len >= 0);
-      data += cpylen;
-    }
-
-    /* Next, the loop */
-    while (len > 0)
-      {
-        /* We obviously need a new buffer, so .. */
-        bufline = linebuf_new_line(bufhead);
-        
-        /* And parse */
-        if (raw) /* if we could be dealing with 8-bit data */
-          cpylen = linebuf_copy_raw(bufhead, bufline, data, len);
-        else
-          cpylen = linebuf_copy_line(bufhead, bufline, data, len);
-        len -= cpylen;
-	assert(len >= 0);
-        data += cpylen;
-        linecnt++;
-      }
-    return linecnt;
+    len -= cpylen;
+    assert(len >= 0);
+    data += cpylen;
+    linecnt++;
+  }
+  return linecnt;
 }
 
 

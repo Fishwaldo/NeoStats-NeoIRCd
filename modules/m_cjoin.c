@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_cjoin.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_cjoin.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -69,7 +69,7 @@ _moddeinit(void)
 #endif
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif /* STATIC_MODULES */
 
 #ifdef VCHANS
@@ -97,13 +97,6 @@ static void m_cjoin(struct Client *client_p,
       return;
     }
 
-  if(ConfigChannel.use_vchans == 0)
-  {
-    sendto_one(source_p, form_str(ERR_VCHANDISABLED),
-               me.name, parv[0]);
-    return;
-  }
-  
   if (ConfigChannel.vchans_oper_only && !IsOper(source_p))
   {
     sendto_one(source_p, form_str(ERR_NOPRIVILEGES),

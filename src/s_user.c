@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.3 2002/08/14 06:29:46 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.4 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -178,7 +178,8 @@ int user_modes_from_c_to_bitmask[] =
  * output	-
  * side effects	- display to client user counts etc.
  */
-int show_lusers(struct Client *source_p) 
+int
+show_lusers(struct Client *source_p) 
 {
   if(!ConfigServerHide.hide_servers || IsOper(source_p))
     sendto_one(source_p, form_str(RPL_LUSERCLIENT), me.name, source_p->name,
@@ -236,7 +237,8 @@ int show_lusers(struct Client *source_p)
  * output	- 
  * side effects	- display to client what we support (for them)
  */
-void show_isupport(struct Client *source_p) 
+void
+show_isupport(struct Client *source_p) 
 {
   char isupportbuffer[512];
 
@@ -276,7 +278,8 @@ void show_isupport(struct Client *source_p)
 **         nick from local user or kill him/her...
 */
 
-int register_local_user(struct Client *client_p, struct Client *source_p, 
+int
+register_local_user(struct Client *client_p, struct Client *source_p, 
 			char *nick, char *username)
 {
   struct ConfItem*  aconf;
@@ -296,6 +299,7 @@ int register_local_user(struct Client *client_p, struct Client *source_p,
   
   if(!MyConnect(source_p))
     return -1;
+
   if(ConfigFileEntry.ping_cookie)
   {
   	if(!(source_p->flags & FLAGS_PINGSENT) && source_p->localClient->random_ping == 0)
@@ -303,7 +307,7 @@ int register_local_user(struct Client *client_p, struct Client *source_p,
            source_p->localClient->random_ping = (unsigned long)rand();
            sendto_one(source_p, "PING :%lu", (unsigned long)source_p->localClient->random_ping);
            source_p->flags |= FLAGS_PINGSENT;
-	   strlcpy(source_p->username, username, USERLEN);
+	   strlcpy(source_p->username, username, USERLEN + 1);
   	   return -1;
   	} 
   	if(!(source_p->flags2 & FLAGS2_PING_COOKIE))
@@ -325,7 +329,7 @@ int register_local_user(struct Client *client_p, struct Client *source_p,
     {
       sendto_one(source_p,":%s NOTICE %s :*** Notice -- You have an illegal character in your hostname", 
 		 me.name, source_p->name );
-	      strncpy(source_p->host,source_p->localClient->sockhost,HOSTIPLEN+1);
+      strncpy(source_p->host,source_p->localClient->sockhost,HOSTIPLEN+1);
     }
 
   ptr = source_p->localClient->confs.head;
@@ -443,7 +447,11 @@ int register_local_user(struct Client *client_p, struct Client *source_p,
   sendto_realops_flags(FLAGS_CCONN, L_ALL,
 		       "Client connecting: %s (%s@%s) [%s] {%s} [%s]",
 		       nick, source_p->username, source_p->host,
+#ifdef HIDE_SPOOF_IPS
+                       IsIPSpoof(client_p) ? "255.255.255.255" : ipaddr,
+#else
 		       ipaddr,
+#endif
 		       get_client_class(source_p), source_p->info);
 
   /* If they have died in send_* don't do anything. */
@@ -509,10 +517,11 @@ int register_local_user(struct Client *client_p, struct Client *source_p,
  * side effects	- This function is called when a remote client
  *		  is introduced by a server.
  */
-int register_remote_user(struct Client *client_p, struct Client *source_p, 
+int
+register_remote_user(struct Client *client_p, struct Client *source_p, 
 			 char *nick, char *username)
 {
-  struct User*     user = source_p->user;
+  struct User *user = source_p->user;
   struct Client *target_p;
   
   assert(NULL != source_p);
@@ -523,7 +532,7 @@ int register_remote_user(struct Client *client_p, struct Client *source_p,
 
   user->last = CurrentTime;
 
-  strlcpy(source_p->username, username, USERLEN);
+  strlcpy(source_p->username, username, USERLEN + 1);
 
   SetClient(source_p);
 
@@ -611,6 +620,7 @@ introduce_client(struct Client *client_p, struct Client *source_p,
       ubuf[0] = '+';
       ubuf[1] = '\0';
     }
+
   /* arghhh one could try not introducing new nicks to ll leafs
    * but then you have to introduce them "on the fly" in SJOIN
    * not fun.
@@ -693,7 +703,8 @@ introduce_client(struct Client *client_p, struct Client *source_p,
  * NOTE: this doesn't allow a hostname to begin with a dot and
  * will not allow more dots than chars.
  */
-static int valid_hostname(const char* hostname)
+static int
+valid_hostname(const char* hostname)
 {
   const char* p     = hostname;
 
@@ -726,7 +737,8 @@ static int valid_hostname(const char* hostname)
  * Allow '.' in username to allow for "first.last"
  * style of username
  */
-static int valid_username(const char* username)
+static int
+valid_username(const char* username)
 {
   int dots = 0;
   const char *p = username;
@@ -790,6 +802,16 @@ report_and_set_user_flags(struct Client *source_p,struct ConfItem *aconf)
          ":%s NOTICE %s :*** You are exempt from K/D/G lines. congrats.",
                  me.name,source_p->name);
     }
+  /* The else here is to make sure that G line exempt users
+   * do not get noticed twice.
+   */
+  else if (IsConfExemptGline(aconf))
+    {
+      SetExemptGline(source_p);
+      sendto_one(source_p,
+         ":%s NOTICE %s :*** You are exempt from G lines.",
+                 me.name,source_p->name);
+    }
 
   /* If this user is exempt from user limits set it F lined" */
   if(IsConfExemptLimits(aconf))
@@ -818,7 +840,8 @@ report_and_set_user_flags(struct Client *source_p,struct ConfItem *aconf)
  * output	-
  * side effects -
  */
-int do_local_user(char* nick, struct Client* client_p, struct Client* source_p,
+int
+do_local_user(char* nick, struct Client* client_p, struct Client* source_p,
 		  char* username, char *host, char *server, char *realname)
 {
   struct User* user;
@@ -856,7 +879,7 @@ int do_local_user(char* nick, struct Client* client_p, struct Client* source_p,
           /*
            * save the username in the client
            */
-          strlcpy(source_p->username, username, USERLEN);
+          strlcpy(source_p->username, username, USERLEN + 1);
         }
     }
   return 0;
@@ -869,7 +892,8 @@ int do_local_user(char* nick, struct Client* client_p, struct Client* source_p,
  * output	-
  * side effects -
  */
-int do_remote_user(char* nick, struct Client* client_p, struct Client* source_p,
+int
+do_remote_user(char* nick, struct Client* client_p, struct Client* source_p,
 		   char* username, char *host, char *server, char *realname,
 		   char *id)
 {
@@ -892,8 +916,8 @@ int do_remote_user(char* nick, struct Client* client_p, struct Client* source_p,
   strlcpy(source_p->host, host, HOSTLEN); 
   strlcpy(source_p->vhost, host, HOSTLEN);
   strlcpy(source_p->info, realname, REALLEN);
-  if (id)
-	  strcpy(source_p->user->id, id);
+  if (id != NULL)
+    strcpy(source_p->user->id, id);
   
   return register_remote_user(client_p, source_p, source_p->name, username);
 }
@@ -906,7 +930,8 @@ int do_remote_user(char* nick, struct Client* client_p, struct Client* source_p,
  * parv[1] - username to change mode for
  * parv[2] - modes to change
  */
-int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv[])
+int
+user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv[])
 {
   int   flag;
   int   i;
@@ -915,10 +940,9 @@ int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *
   int   what, setflags;
   int   badflag = NO;		/* Only send one bad flag notice */
   char  buf[BUFSIZE];
-  dlink_node *ptr;
-  struct ConfItem *aconf;
 
   what = MODE_ADD;
+
   if (parc < 2)
     {
       sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
@@ -971,7 +995,7 @@ int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *
   /*
    * parse mode change string(s)
    */
-  for (p = &parv[2]; p && *p; p++ )
+  for (p = &parv[2]; p && *p; p++)
     for (m = *p; *m; m++)
       switch(*m)
         {
@@ -1009,32 +1033,13 @@ int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *
                 {
                   dlink_node *dm;
 
-		  ptr = source_p->localClient->confs.head;
-		  aconf = ptr->data;
-                  detach_conf(source_p,aconf);
-
-                  source_p->flags2 &= ~(FLAGS2_OPER_GLOBAL_KILL|
-                                    FLAGS2_OPER_REMOTE|
-                                    FLAGS2_OPER_UNKLINE|
-                                    FLAGS2_OPER_GLINE|
-                                    FLAGS2_OPER_N|
-                                    FLAGS2_OPER_K|
-                                    FLAGS2_OPER_ADMIN);
-
+		  source_p->flags2 &= ~FLAGS2_OPER_FLAGS;
 		  dm = dlinkFind(&oper_list,source_p);
 		  if(dm != NULL)
 		    {
 		      dlinkDelete(dm,&oper_list);
 		      free_dlink_node(dm);
 		    }
-
-		  /*
-		    20001216:
-		    reattach to "old" iline
-		    - einride
-		  */
-		  remove_one_ip(&source_p->localClient->ip);
-		  check_client(source_p->servptr, source_p, source_p->username);
                 }
             }
           break;
@@ -1106,7 +1111,7 @@ int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *
                  me.name,parv[0]);
       source_p->umodes &= ~FLAGS_NCHANGE; /* only tcm's really need this */
     }
-  
+
   if (MyConnect(source_p) && (source_p->umodes & FLAGS_ADMIN) && !IsOperAdmin(source_p))
     {
       sendto_one(source_p,":%s NOTICE %s :*** You need oper and A flag for +a",
@@ -1144,8 +1149,9 @@ int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *
 /*
  * send the MODE string for user (user) to connection client_p
  * -avalon
- */	
-void send_umode(struct Client *client_p, struct Client *source_p, int old, 
+ */
+void
+send_umode(struct Client *client_p, struct Client *source_p, int old, 
 		int sendmask,  char *umode_buf)
 {
   int   i;
@@ -1163,8 +1169,8 @@ void send_umode(struct Client *client_p, struct Client *source_p, int old,
   for (i = 0; user_modes[i].letter; i++ )
     {
       flag = user_modes[i].mode;
+
       if (MyClient(source_p) && !(flag & sendmask))
- 
         continue;
       if ((flag & old) && !(source_p->umodes & flag))
         {
@@ -1179,10 +1185,9 @@ void send_umode(struct Client *client_p, struct Client *source_p, int old,
         }
       else if (!(flag & old) && (source_p->umodes & flag))
         {
-        
-          if (what == MODE_ADD) {
+          if (what == MODE_ADD)
             *m++ = user_modes[i].letter;
-          } else
+          else
             {
               what = MODE_ADD;
               *m++ = '+';
@@ -1203,7 +1208,8 @@ void send_umode(struct Client *client_p, struct Client *source_p, int old,
  * output	- NONE
  * side effects - Only send ubuf out to servers that know about this client
  */
-void send_umode_out(struct Client *client_p,
+void
+send_umode_out(struct Client *client_p,
 		    struct Client *source_p,
 		    int old)
 {
@@ -1229,7 +1235,6 @@ void send_umode_out(struct Client *client_p,
 
   if (client_p && MyClient(client_p))
     send_umode(client_p, source_p, old, ALL_UMODES, buf);
-
 }
 
 /* 
@@ -1239,7 +1244,8 @@ void send_umode_out(struct Client *client_p,
  * output	- NONE
  * side effects	-
  */
-void user_welcome(struct Client *source_p)
+void
+user_welcome(struct Client *source_p)
 {
   sendto_one(source_p, form_str(RPL_WELCOME), me.name, source_p->name, 
              ServerInfo.network_name, source_p->name );
@@ -1301,7 +1307,8 @@ void user_welcome(struct Client *source_p)
  * outupt	- -1 if exiting 0 if ok
  * side effects	-
  */
-static int check_X_line(struct Client *client_p, struct Client *source_p)
+static int
+check_X_line(struct Client *client_p, struct Client *source_p)
 {
   struct ConfItem *aconf;
   char *reason;
@@ -1338,7 +1345,7 @@ static int check_X_line(struct Client *client_p, struct Client *source_p)
 			     get_client_name(client_p, HIDE_IP));
     }
 
-  return 0;
+  return (0);
 }
 
 /*
@@ -1353,8 +1360,8 @@ static int check_X_line(struct Client *client_p, struct Client *source_p)
  * This could also be used by rsa oper routines. 
  */
 
-int oper_up( struct Client *source_p,
-                    struct ConfItem *aconf )
+int
+oper_up( struct Client *source_p, struct ConfItem *aconf )
 {
   int old = (source_p->umodes & ALL_UMODES);
   char *operprivs=NULL;
@@ -1366,7 +1373,7 @@ int oper_up( struct Client *source_p,
   if((int)aconf->hold)
     {
       source_p->umodes |= ((int)aconf->hold & ALL_UMODES); 
-      if( !IsOperN(source_p) )
+      if (!IsOperN(source_p))
 	source_p->umodes &= ~FLAGS_NCHANGE;
       
       sendto_one(source_p, ":%s NOTICE %s :*** Oper flags set from conf",
@@ -1416,5 +1423,5 @@ int oper_up( struct Client *source_p,
              source_p->name, operprivs);
   SendMessageFile(source_p, &ConfigFileEntry.opermotd);
   
-  return 1;
+  return(1);
 }

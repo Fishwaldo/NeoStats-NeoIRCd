@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_info.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_info.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -69,7 +69,7 @@ _moddeinit(void)
   hook_del_event("doing_info");
   mod_del_cmd(&info_msgtab);
 }
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 /*
@@ -395,42 +395,6 @@ static struct InfoStruct info_table[] =
     OUTPUT_BOOLEAN_YN,
     &ConfigChannel.quiet_on_ban,
     "Banned users may not send text to a channel"
-  },
-  {
-    "use_anonops",
-    OUTPUT_BOOLEAN_YN,
-    &ConfigChannel.use_anonops,
-    "Enable chanmode +a (anonymous ops)",
-  },
-  {
-    "use_except",
-    OUTPUT_BOOLEAN_YN,
-    &ConfigChannel.use_except,
-    "Enable chanmode +e (ban exceptions)",
-  },
-  {
-    "use_halfops",
-    OUTPUT_BOOLEAN_YN,
-    &ConfigChannel.use_halfops,
-    "Enable chanmode +h (halfops)",
-  },
-  {
-    "use_invex",
-    OUTPUT_BOOLEAN_YN,
-    &ConfigChannel.use_invex,
-    "Enable chanmode +I (invite exceptions)",
-  },
-  {
-    "use_knock",
-    OUTPUT_BOOLEAN_YN,
-    &ConfigChannel.use_knock,
-    "Enable /KNOCK",
-  },
-  {
-    "use_vchans",
-    OUTPUT_BOOLEAN_YN,
-    &ConfigChannel.use_vchans,
-    "Enabled vchans",
   },
   {
     "vchans_oper_only",

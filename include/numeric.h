@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: numeric.h,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
+ *  $Id: numeric.h,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_numeric_h
@@ -43,11 +43,22 @@ extern const char* form_str(int);
 #define RPL_CREATED          003
 #define RPL_MYINFO           004
 #define RPL_ISUPPORT         005
+     /* RPL_BOUNCE                         IRCnet extension */
+/*	RPL_MAP		       6	unreal */
+/*	RPL_MAPEND	       7	unreal */
+/*	RPL_SNOMASK            8        Undernet extension */
+/*	RPL_STATMEMTOT         9        Undernet extension */
+/*	RPL_STATMEM           10        Undernet extension */
+
 #define RPL_REDIR            10
 #define RPL_MAP		     15		/* Undernet extension */
 #define RPL_MAPMORE	     16		/* Undernet extension */
 #define RPL_MAPEND	     17		/* Undernet extension */
 #define RPL_YOURID           20
+
+/*	RPL_YOURID	      42	IRCnet extension */
+/*      RPL_ATTEMPTINGJUNC    50           aircd extension */
+/*      RPL_ATTEMPTINGREROUTE 51           aircd extension */
 
 /*
  * Numeric replies from server commands.
@@ -63,10 +74,15 @@ extern const char* form_str(int);
 #define RPL_TRACENEWTYPE     208
 #define RPL_TRACECLASS       209
 
+/*      RPL_STATS            210 aircd extension, used instead of having
+                                 multiple stats numerics */
+/*      RPL_TRACERECONNECT   210 IRCnet extension */                                 
+
 #define RPL_STATSLINKINFO    211
 #define RPL_STATSCOMMANDS    212
 #define RPL_STATSCLINE       213
 #define RPL_STATSNLINE       214
+/*	RPL_STATSOLDNLINE    214    unreal */
 #define RPL_STATSILINE       215
 #define RPL_STATSKLINE       216
 #define RPL_STATSQLINE       217
@@ -77,15 +93,35 @@ extern const char* form_str(int);
  * I'm going to steal 220 for now *sigh*
  * -Dianora
  */
+
 #define RPL_STATSPLINE       220
 #define RPL_UMODEIS          221
+
+/*	RPL_SQLINE_NICK	     222	   Numerics List: Dalnet */
+/*	RPL_STATSELINE       223	   dalnet */
+/*	RPL_STATSGLINE	     223	   unreal */
+/*      RPL_STATSFLINE       224           Hybrid extension,Dalnet */
+/*	RPL_STATSTLINE	     224	   unreal */
+/*      RPL_STATSDLINE       225           Hybrid extension */
+/*	RPL_STATSZLINE	     225	   Dalnet
+ 	RPL_STATSELINE	     225	   unreal
+ 	RPL_STATSCOUNT	     226	   Dalnet
+	RPL_STATSNLINE	     226	   unreal
+	RPL_STATSGLINE	     227	   Dalnet 
+	RPL_STATSVLINE	     227	   unreal */
 
 #define RPL_STATSFLINE       224
 #define RPL_STATSDLINE       225
 #define RPL_STATSALINE	     226
 
+/*	RPL_RULES	     232	unreal */
+
 #define RPL_SERVLIST         234
 #define RPL_SERVLISTEND      235
+
+/*      RPL_STATSIAUTH       239           IRCnet extension */
+/*      RPL_STATSVLINE       240           IRCnet extension */
+/*	RPL_STATSXLINE	     240	austnet */
 
 #define RPL_STATSLLINE       241
 #define RPL_STATSUPTIME      242
@@ -97,6 +133,7 @@ extern const char* form_str(int);
 #define RPL_STATSULINE       248
 #define RPL_STATSDEBUG       249
 #define RPL_STATSCONN        250
+/*	RPL_STATSDLINE	     250	   Numerics List: IRCnet */
 #define RPL_LUSERCLIENT      251
 #define RPL_LUSEROP          252
 #define RPL_LUSERUNKNOWN     253
@@ -111,6 +148,14 @@ extern const char* form_str(int);
 #define RPL_ENDOFTRACE       262
 #define RPL_LOAD2HI          263
 
+/*	RPL_TRYAGAIN	     263	   Numerics List: IRCnet */
+/*	RPL_LOAD2HI	     263	   Dalnet */
+/*      RPL_CURRENT_LOCAL    265           aircd/efnet/hybrid/dalnet*/
+/*      RPL_CURRENT_GLOBAL   266           aircd/efnet/hybrid/dalnet */
+/*      RPL_START_NETSTAT    267           aircd */
+/*      RPL_NETSTAT          268           aircd */
+/*      RPL_END_NETSTAT      269           aircd */
+
 #define RPL_LOCALUSERS       265
 #define RPL_GLOBALUSERS      266
 
@@ -121,6 +166,32 @@ extern const char* form_str(int);
 #define RPL_ACCEPTLIST	     281
 #define RPL_ENDOFACCEPT      282
 
+/*	RPL_GLIST            280        Undernet extension */
+/*	RPL_ENDOFGLIST       281        Undernet extension */
+/*	RPL_JUPELIST         282        Undernet extension - jupe -Kev */
+/*	RPL_ENDOFJUPELIST    283        Undernet extension - jupe -Kev */
+/*	RPL_FEATURE	     284	Undernet extension - features */
+/*      RPL_CHANINFO_HANDLE  285           aircd */
+/*      RPL_CHANINFO_USERS   286           aircd */
+/*      RPL_CHANINFO_CHOPS   287           aircd */
+/*      RPL_CHANINFO_VOICES  288           aircd */
+/*      RPL_CHANINFO_AWAY    289           aircd */
+/*      RPL_CHANINFO_OPERS   290           aircd */
+/*	RPL_HELPHDR	     290	Numeric List: Dalnet */
+/*      RPL_CHANINFO_BANNED  291           aircd */
+/*	RPL_HELPOP	     291	Numeric List: Dalnet */
+/*      RPL_CHANINFO_BANS    292           aircd */
+/*	RPL_HELPTLR	     292	Numeric List: Dalnet */
+/*      RPL_CHANINFO_INVITE  293           aircd */
+/*	RPL_HELPHLP	     293	Numeric List: Dalnet */
+/*      RPL_CHANINFO_INVITES 294           aircd */
+/*	RPL_HELPFWD	     294	Numeric List: Dalnet */
+/*      RPL_CHANINFO_KICK    295           aircd */
+/*	RPL_HELPIGN	     295	Numeric List: Dalnet */
+/*      RPL_CHANINFO_KICKS   296           aircd */
+
+/*      RPL_END_CHANINFO     299           aircd */
+
 /* numeric_replies */
 
 #define RPL_NONE             300
@@ -130,6 +201,19 @@ extern const char* form_str(int);
 #define RPL_TEXT             304
 #define RPL_UNAWAY           305
 #define RPL_NOWAWAY          306
+#define	RPL_USERIP	     307	/* Undernet extension */
+/*	RPL_WHOISREGNICK     307 	Numeric List: Dalnet */
+/*	RPL_SUSERHOST	     307	austnet */
+/*      RPL_NOTIFYACTION     308         aircd */
+/*	RPL_WHOISADMIN	     308	Numeric List: Dalnet */
+/*	RPL_RULESSTART	     308	unreal */
+/*      RPL_NICKTRACE        309         aircd */
+/*	RPL_WHOISSADMIN	     309	Numeric List: Dalnet */
+/*	RPL_ENDOFRULES	     309	unreal */
+/*	RPL_WHOISHELPER	     309	austnet */
+/*      RPL_WHOISSVCMSG      310         Dalnet */
+/*	RPL_WHOISHELPOP	     310	unreal */
+/*	RPL_WHOISSERVICE     310	austnet */
 
 #define RPL_WHOISADMIN       308
 
@@ -146,23 +230,33 @@ extern const char* form_str(int);
 
 #define RPL_ENDOFWHOIS       318
 #define RPL_WHOISCHANNELS    319
-
+/*      RPL_WHOIS_HIDDEN     320         Anothernet +h, ick! */
+/*	RPL_WHOISSPECIAL     320	unreal */
 #define RPL_LISTSTART        321
 #define RPL_LIST             322
 #define RPL_LISTEND          323
 #define RPL_CHANNELMODEIS    324
-
+/*      RPL_CHANNELPASSIS    325           IRCnet extension */
+/*      RPL_UNIQOPIS         325           IRCnet extension */
+/*      RPL_NOCHANPASS       326           IRCnet extension */
+/*      RPL_CHPASSUNKNOWN    327           IRCnet extension */
+/*      RPL_CHANNEL_URL      328           dalnet, anothernet */
 #define RPL_CREATIONTIME     329
-
+/*      RPL_WHOWAS_TIME      330               ? */
 #define RPL_NOTOPIC          331
 #define RPL_TOPIC            332
 #define RPL_TOPICWHOTIME     333
-
+/*	RPL_COMMANDSYNTAX    334	   Dalnet */
+/*	RPL_LISTSYNTAX	     334	   unreal */
+/*      RPL_CHANPASSOK       338           IRCnet extension (?)*/
+/*	RPL_WHOISACTUALLY    338	   Undernet extension, dalnet */
+/*      RPL_BADCHANPASS      339           IRCnet extension (?)*/
+/*	RPL_USERIP           340           (old) Undernet extension */
 #define RPL_INVITING         341
-#define RPL_SUMMONING        342
+/*	RPL_SUMMONING        342	   removed from RFC1459 */
 
 #define RPL_INVITELIST       346
-#define RPL_ENDOFINVITELIST  347
+#define RPL_ENDOFINVITELIST  347	/* IRCnet, Undernet extension */
 #define RPL_EXCEPTLIST       348
 #define RPL_ENDOFEXCEPTLIST  349
 
@@ -190,11 +284,23 @@ extern const char* form_str(int);
 #define RPL_MOTDSTART        375
 #define RPL_ENDOFMOTD        376
 
+/*      RPL_KICKEXPIRED      377   aircd */
+/*	RPL_SPAM	     377   austnet */
+/*      RPL_BANEXPIRED       378   aircd */
+/*      RPL_KICKLINKED       379   aircd */
+/*      RPL_BANLINKED        380   aircd */
+
 #define RPL_YOUREOPER        381
 #define RPL_REHASHING        382
+/*	RPL_YOURSERVICE	     383	   Numeric List: various */
 #define RPL_MYPORTIS         384
 #define RPL_NOTOPERANYMORE   385
 #define RPL_RSACHALLENGE     386
+
+/*	RPL_QLIST	     386	unreal */
+/*	RPL_ENDOFQLIST	     387	unreal */
+/*	RPL_ALIST	     388	unreal */
+/*	RPL_ENDOFALIST	     389	unreal */ 
 
 #define RPL_TIME             391
 #define RPL_USERSSTART       392
@@ -219,18 +325,28 @@ extern const char* form_str(int);
 #define ERR_NOTEXTTOSEND     412
 #define ERR_NOTOPLEVEL       413
 #define ERR_WILDTOPLEVEL     414
-
+/*	ERR_BADMASK          415           IRCnet extension */
 #define ERR_UNKNOWNCOMMAND   421
 #define ERR_NOMOTD           422
 #define ERR_NOADMININFO      423
 #define ERR_FILEERROR        424
 
+/* 	ERR_TOOMANYAWAY	     429	    Dalnet */
+
 #define ERR_NONICKNAMEGIVEN  431
 #define ERR_ERRONEUSNICKNAME 432
 #define ERR_NICKNAMEINUSE    433
+
+/*      ERR_SERVICENAMEINUSE 434 ? */
+/*	ERR_NORULES	     434   unreal */
+/*      ERR_SERVICECONFUSED  435 ? */
+/*	ERR_BANONCHAN	     435   dalnet */
+
 #define ERR_NICKCOLLISION    436
 #define ERR_UNAVAILRESOURCE  437
 #define ERR_NICKTOOFAST	     438	/* We did it first Undernet! ;) db */
+
+/*	ERR_SERVICESDOWN     440	Dalnet,unreal */
 
 #define ERR_USERNOTINCHANNEL 441
 #define ERR_NOTONCHANNEL     442
@@ -240,6 +356,14 @@ extern const char* form_str(int);
 #define ERR_USERSDISABLED    446
 
 #define ERR_NOTREGISTERED    451
+
+/*      ERR_IDCOLLISION      452           IRCnet extension ? */
+/*      ERR_NICKLOST         453           IRCnet extension ? */
+
+/*	ERR_HOSTILENAME	     455	   unreal */
+
+/*	ERR_NOHIDING	     459	   unreal */
+/*	ERR_NOTFORHALFOPS    460	   unreal */
 
 #define ERR_ACCEPTFULL       456
 #define ERR_ACCEPTEXIST      457
@@ -252,7 +376,10 @@ extern const char* form_str(int);
 #define ERR_YOUREBANNEDCREEP 465
 #define ERR_YOUWILLBEBANNED  466
 #define ERR_KEYSET           467
-
+/* 	ERR_ONLYSERVERSCANCHANGE 468	   Dalnet,unreal */
+/*	ERR_LINKSET	     469	unreal */
+/*	ERR_LINKCHANNEL	     470	unreal */
+/*      ERR_KICKEDFROMCHAN   470         aircd */
 #define ERR_CHANNELISFULL    471
 #define ERR_UNKNOWNMODE      472
 #define ERR_INVITEONLYCHAN   473
@@ -262,19 +389,32 @@ extern const char* form_str(int);
 #define ERR_MODELESS         477        /* ircu numeric -db */
 #define ERR_BANLISTFULL      478        /* I stole the numeric from ircu -db */
 #define ERR_BADCHANNAME      479
-
+/* 	ERR_LINKFAIL	     479	unreal */
+/*	ERR_CANNOTKNOCK	     480	unreal */
+/*	ERR_NOULINE	     480	austnet */
 #define ERR_NOPRIVILEGES     481
 #define ERR_CHANOPRIVSNEEDED 482
 #define ERR_CANTKILLSERVER   483
 #define ERR_RESTRICTED       484
 #define ERR_BANNEDNICK       485
-
+/*	ERR_DESYNC	     484	 Dalnet,PTlink */
+/*	ERR_ATTACKDENY	     484	 unreal */
+/*	ERR_RESTRICTED	     484	   IRCnet extension */
+/*      ERR_UNIQOPRIVSNEEDED 485           IRCnet extension */
+/*	ERR_KILLDENY         485	   unreal */
+/*	ERR_CANTKICKADMIN    485	   PTlink */
+/*	ERR_HTMDISABLED      486	   unreal */
+/*      ERR_CHANTOORECENT    487           IRCnet extension (?) */
+/*      ERR_TSLESSCHAN       488           IRCnet extension (?) */
+/*	ERR_VOICENEEDED      489           Undernet extension */
 #define ERR_NOOPERHOST       491
+/*      ERR_NOSERVICEHOST    492 	   IRCnet extension */
 
 #define ERR_UMODEUNKNOWNFLAG 501
 #define ERR_USERSDONTMATCH   502
 
 #define ERR_GHOSTEDCLIENT    503
+/*	ERR_VWORLDWARN	     503	   austnet */
 
 #define ERR_USERNOTONSERV    504
 
@@ -285,15 +425,52 @@ extern const char* form_str(int);
 #define ERR_VCHANDISABLED    506
 #define ERR_ALREADYONVCHAN   507
 
+/*      ERR_NOTIFYFULL       512           aircd */
+/*	ERR_TOOMANYWATCH     512           Numeric List: Dalnet */
+/*      ERR_NEEDPONG	     512           Numeric List: Dalnet */
+
 #define ERR_WRONGPONG	     513
+/*	ERR_TOOMANYDCC	     514	dalnet */
+/*	ERR_NOINVITE	     518	unreal */
+#define ERR_LONGMASK	     518	/* Undernet extension -Kev */
+/*	ERR_ADMONLY	     519	unreal */
+/*	ERR_TOOMANYUSERS     519	Undernet extension -Kev */
+/*	ERR_OPERONLY	     520	unreal */
+/*	ERR_MASKTOOWIDE	     520	Undernet extension -Kev */
+/*	ERR_WHOTRUNC	     520	austnet */
+/*	ERR_LASTERROR        521	Undernet extension -Kev */
+/*	ERR_LISTSYNTAX       521	dalnet */
+/*	ERR_WHOSYNTAX	     522        dalnet */
+/*	ERR_WHOLIMEXCEED     523	dalnet */
 
 #define ERR_HELPNOTFOUND     524
 
+/*	RPL_LOGON	     600	dalnet,unreal
+	RPL_LOGOFF           601	dalnet,unreal
+	RPL_WATCHOFF         602	dalnet,unreal
+	RPL_WATCHSTAT        603	dalnet,unreal
+	RPL_NOWON            604	dalnet,unreal
+	RPL_NOWOFF           605	dalnet,unreal
+	RPL_WATCHLIST        606	dalnet,unreal
+	RPL_ENDOFWATCHLIST   607	dalnet,unreal
 
-#define RPL_WHOISSERVICES    613
-#define RPL_WHOISMODES	     615
+	RPL_MAPMORE          610	unreal
+*/
+#define	RPL_WHOISSERVICES    613
+#define	RPL_WHOISMODES	     615
+/*
+	RPL_MAPMORE          615	PTlink
+	
+	RPL_DCCSTATUS        617	dalnet
+	RPL_DCCLIST          618	dalnet
+	RPL_ENDOFDCCLIST     619	dalnet
+	RPL_DCCINFO          620	dalnet
+	
+	RPL_DUMPING	     640	unreal
+	RPL_DUMPRPL	     641	unreal
+	RPL_EODUMP	     642	unreal
+*/
 #define RPL_WHOISREALHOST    670
-
 #define RPL_MODLIST          702
 #define RPL_ENDOFMODLIST     703
 

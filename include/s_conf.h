@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
+ *  $Id: s_conf.h,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -240,12 +240,6 @@ struct config_file_entry
 
 struct config_channel_entry
 {
-  int	use_anonops;
-  int   use_except;
-  int   use_halfops;
-  int   use_invex;
-  int   use_knock;
-  int   use_vchans;
   int   knock_delay;
   int	knock_delay_channel;
   int   vchans_oper_only;

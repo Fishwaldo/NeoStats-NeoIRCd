@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.3 2002/08/15 06:05:02 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.4 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1060,11 +1060,12 @@ int server_estab(struct Client *client_p)
   **    ...a bit tricky, but you have been warned, besides
   **    code is more neat this way...  --msa
   */
-  SetServer(client_p);
   client_p->servptr = &me;
 
   if (IsDead(client_p))
     return CLIENT_EXITED;
+
+  SetServer(client_p);
 
  /* Update the capability combination usage counts. -A1kmm */
   set_chcap_usage_counts(client_p);
@@ -1597,14 +1598,10 @@ burst_all(struct Client *client_p)
       if(chptr->users != 0)
         {
           burst_members(client_p,&chptr->chanops);
-#ifdef REQUIRE_OANDV
-          burst_members(client_p,&chptr->chanops_voiced);
-#endif
           burst_members(client_p,&chptr->voiced);
-#ifdef HALFOPS
           burst_members(client_p,&chptr->halfops);
-#endif
           burst_members(client_p,&chptr->peons);
+	  burst_members(client_p,&chptr->chanadmins);
           send_channel_modes(client_p, chptr);
           hinfo.chptr = chptr;
           hinfo.client = client_p;
@@ -1621,14 +1618,11 @@ burst_all(struct Client *client_p)
               if(vchan->users != 0)
                 {
                   burst_members(client_p,&vchan->chanops);
-#ifdef REQUIRE_OANDV
-                  burst_members(client_p,&vchan->chanops_voiced);
-#endif
                   burst_members(client_p,&vchan->voiced);
-#ifdef HALFOPS
                   burst_members(client_p,&vchan->halfops);
-#endif
                   burst_members(client_p,&vchan->peons);
+                  burst_members(client_p,&vchan->chanadmins);
+                  
                   send_channel_modes(client_p, vchan);
 	          hinfo.chptr = chptr;
         	  hinfo.client = client_p;
@@ -1700,14 +1694,10 @@ burst_channel(struct Client *client_p, struct Channel *chptr)
 #endif
 
   burst_ll_members(client_p,&chptr->chanops);
-#ifdef REQUIRE_OANDV
-  burst_ll_members(client_p, &chptr->chanops_voiced);
-#endif
   burst_ll_members(client_p,&chptr->voiced);
-#ifdef HALFOPS
   burst_ll_members(client_p,&chptr->halfops);
-#endif
   burst_ll_members(client_p,&chptr->peons);
+  burst_ll_members(client_p,&chptr->chanadmins);
   send_channel_modes(client_p, chptr);
   add_lazylinkchannel(client_p,chptr);
 
@@ -1728,14 +1718,10 @@ burst_channel(struct Client *client_p, struct Channel *chptr)
 	{
 	  vchan = ptr->data;
 	  burst_ll_members(client_p,&vchan->chanops);
-#ifdef REQUIRE_OANDV
-	  burst_ll_members(client_p,&vchan->chanops_voiced);
-#endif
 	  burst_ll_members(client_p,&vchan->voiced);
-#ifdef HALFOPS
 	  burst_ll_members(client_p,&vchan->halfops);
-#endif
 	  burst_ll_members(client_p,&vchan->peons);
+	  burst_ll_members(client_p,&vchan->chanadmins);
 	  send_channel_modes(client_p, vchan);
 	  add_lazylinkchannel(client_p,vchan);
 
@@ -2047,8 +2033,8 @@ serv_connect(struct ConfItem *aconf, struct Client *by)
     client_p = make_client(NULL);
 
     /* Copy in the server, hostname, fd */
-    strlcpy(client_p->name, aconf->name, HOSTLEN);
-    strlcpy(client_p->host, aconf->host, HOSTLEN);
+    strlcpy(client_p->name, aconf->name, HOSTLEN + 1);
+    strlcpy(client_p->host, aconf->host, HOSTLEN + 1);
     inetntop(DEF_FAM, &IN_ADDR(aconf->ipnum), client_p->localClient->sockhost, HOSTIPLEN);
     client_p->localClient->fd = fd;
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kick.c,v 1.2 2002/08/14 06:01:55 fishwaldo Exp $
+ *  $Id: m_kick.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -37,6 +37,7 @@
 #include "modules.h"
 #include "parse.h"
 #include "hash.h"
+#include "packet.h"
 
 
 static void m_kick(struct Client*, struct Client*, int, char**);
@@ -59,7 +60,7 @@ _moddeinit(void)
   mod_del_cmd(&kick_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 /*
 ** m_kick
@@ -92,15 +93,21 @@ static void m_kick(struct Client *client_p,
       return;
     }
 
+  if(MyClient(source_p) && !IsFloodDone(source_p))
+    flood_endgrace(source_p);
+
   comment = (BadPtr(parv[3])) ? parv[2] : parv[3];
   if (strlen(comment) > (size_t) TOPICLEN)
     comment[TOPICLEN] = '\0';
 
   *buf = '\0';
-  if( (p = strchr(parv[1],',')) )
-    *p = '\0';
-
   name = parv[1];
+  while (*name == ',')
+    name++;
+  if((p = strchr(name,',')) != NULL)
+    *p = '\0';
+  if (!*name)
+    return;
 
   chptr = hash_find_channel(name);
   if (!chptr)
@@ -165,10 +172,13 @@ static void m_kick(struct Client *client_p,
        */
     }
 
-  if( (p = strchr(parv[2],',')) )
+  user = parv[2];
+  while (*user == ',')
+    user++;
+  if((p = strchr(user,',')) != NULL)
     *p = '\0';
-
-  user = parv[2]; /* strtoken(&p2, parv[2], ","); */
+  if (!*user)
+    return;
 
   if (!(who = find_chasing(source_p, user, &chasing)))
     {
@@ -177,15 +187,17 @@ static void m_kick(struct Client *client_p,
 
   if (IsMember(who, chptr))
     {
-      /* half ops cannot kick full chanops */
-#ifdef HALFOPS
-      if (is_half_op(chptr,source_p) && is_any_op(chptr,who))
+      /* half ops cannot kick other halfops on private channels */
+      if (is_half_op(chptr,source_p))
+      {
+	if (((chptr->mode.mode & MODE_PRIVATE) && is_any_op(chptr, who)) ||
+             is_chan_op(chptr, who))
 	{
           sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
                      me.name, parv[0], name);
 	  return;
 	}
-#endif
+      }
       /* jdc
        * - In the case of a server kicking a user (i.e. CLEARCHAN),
        *   the kick should show up as coming from the server which did
@@ -198,7 +210,6 @@ static void m_kick(struct Client *client_p,
         sendto_channel_local(ALL_MEMBERS, chptr, ":%s KICK %s %s :%s",
           source_p->name, name, who->name, comment);
       }
-#ifdef ANONOPS
       else if(chptr->mode.mode & MODE_HIDEOPS)
 	{
 	  /* jdc -- Non-chanops get kicked from me.name, not
@@ -218,7 +229,6 @@ static void m_kick(struct Client *client_p,
 			       who->name, comment);
 	}
       else
-#endif
 	{
 	  sendto_channel_local(ALL_MEMBERS, chptr,
 			       ":%s!%s@%s KICK %s %s :%s",

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_bsd.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: s_bsd.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -472,8 +472,8 @@ void error_exit_client(struct Client* client_p, int error)
   }
   else
   {
-    ircsprintf(errmsg, "Read error: %d (%s)", 
-               current_error, strerror(current_error));
+    ircsprintf(errmsg, "Read error: %s", 
+               strerror(current_error));
   }
   fd_close(client_p->localClient->fd);
   client_p->localClient->fd = -1;

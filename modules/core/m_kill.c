@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kill.c,v 1.2 2002/08/14 06:01:55 fishwaldo Exp $
+ *  $Id: m_kill.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -64,7 +64,7 @@ _moddeinit(void)
   mod_del_cmd(&kill_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 /*
 ** mo_kill
@@ -83,9 +83,9 @@ static void mo_kill(struct Client *client_p, struct Client *source_p,
   user = parv[1];
   reason = parv[2]; /* Either defined or NULL (parc >= 2!!) */
 
-  if (!IsOperGlobalKill(source_p))
+  if (!IsOperK(source_p))
     {
-      sendto_one(source_p,":%s NOTICE %s :You need global_kill = yes;",me.name,parv[0]);
+      sendto_one(source_p,":%s NOTICE %s :You need kline = yes;",me.name,parv[0]);
       return;
     }
 
@@ -258,11 +258,15 @@ static void ms_kill(struct Client *client_p, struct Client *source_p,
 
   /* Be warned, this message must be From %s, or it confuses clients
    * so dont change it to From: or the case or anything! -- fl -- db */
+  /* path must contain at least 2 !'s, or bitchx falsely declares it
+   * local --fl
+   */
   if (IsOper(source_p)) /* send it normally */
     {
       sendto_realops_flags(FLAGS_ALL, L_ALL,
-			   "Received KILL message for %s. From %s Path: %s %s",
-			   target_p->name, parv[0], source_p->user->server, reason);
+		"Received KILL message for %s. From %s Path: %s!%s!%s!%s %s",
+		target_p->name, parv[0], source_p->user->server, 
+                source_p->host, source_p->username, source_p->name, reason);
     }
   else
     {

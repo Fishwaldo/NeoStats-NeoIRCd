@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.c,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
+ *  $Id: send.c,v 1.4 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -532,18 +532,11 @@ sendto_channel_butone(struct Client *one, struct Client *from,
   sendto_list_anywhere(one, from, &chptr->chanops,
                        &local_linebuf, &remote_linebuf, &uid_linebuf);
 
-#ifdef REQUIRE_OANDV
-  sendto_list_anywhere(one, from, &chptr->chanops_voiced,
-                       &local_linebuf, &remote_linebuf, &uid_linebuf);
-#endif
-
   sendto_list_anywhere(one, from, &chptr->voiced,
                        &local_linebuf, &remote_linebuf, &uid_linebuf);
 
-#ifdef HALFOPS
   sendto_list_anywhere(one, from, &chptr->halfops,
                        &local_linebuf, &remote_linebuf, &uid_linebuf);
-#endif
 
   sendto_list_anywhere(one, from, &chptr->peons,
                        &local_linebuf, &remote_linebuf, &uid_linebuf);
@@ -742,12 +735,7 @@ sendto_common_channels_local(struct Client *user, const char *pattern, ...)
       chptr = ptr->data;
 
       sendto_list_local(&chptr->locchanops, &linebuf);
-#ifdef REQUIRE_OANDV
-      sendto_list_local(&chptr->locchanops_voiced, &linebuf);
-#endif
-#ifdef HALFOPS
       sendto_list_local(&chptr->lochalfops, &linebuf);
-#endif
       sendto_list_local(&chptr->locvoiced, &linebuf);
       sendto_list_local(&chptr->locpeons, &linebuf);
       sendto_list_local(&chptr->locchanadmins, &linebuf);
@@ -799,15 +787,10 @@ sendto_channel_local(int type,
       sendto_list_local(&chptr->locpeons, &linebuf);
     case ONLY_CHANOPS_HALFOPS_VOICED:
       sendto_list_local(&chptr->locvoiced, &linebuf);
-#ifdef HALFOPS
     case ONLY_CHANOPS_HALFOPS:
       sendto_list_local(&chptr->lochalfops, &linebuf);
-#endif
     case ONLY_CHANOPS:
       sendto_list_local(&chptr->locchanops, &linebuf);
-#ifdef REQUIRE_OANDV
-      sendto_list_local(&chptr->locchanops_voiced, &linebuf);
-#endif
     case ONLY_CHANADMIN:
       sendto_list_local(&chptr->locchanadmins, &linebuf);
   }
@@ -857,16 +840,10 @@ sendto_channel_remote(struct Client *one,
       sendto_list_remote(one, from, &chptr->peons, caps, nocaps, &linebuf);
     case ONLY_CHANOPS_HALFOPS_VOICED:
       sendto_list_remote(one, from, &chptr->voiced, caps, nocaps, &linebuf);
-#ifdef HALFOPS
     case ONLY_CHANOPS_HALFOPS:
       sendto_list_remote(one, from, &chptr->halfops, caps, nocaps, &linebuf);
-#endif
     case ONLY_CHANOPS:
       sendto_list_remote(one, from, &chptr->chanops, caps, nocaps, &linebuf);
-#ifdef REQUIRE_OANDV
-      sendto_list_remote(one, from, &chptr->chanops_voiced, caps, nocaps,
-                         &linebuf);
-#endif
    case ONLY_CHANADMIN:
       sendto_list_remote(one, from, &chptr->chanadmins, caps, nocaps, &linebuf);
   }

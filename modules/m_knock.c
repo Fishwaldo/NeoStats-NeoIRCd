@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_knock.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_knock.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -81,7 +81,7 @@ _moddeinit(void)
   mod_del_cmd(&knockll_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 /* m_knock
@@ -109,13 +109,6 @@ static void m_knock(struct Client *client_p,
 {
   char *sockhost = NULL;
   
-  if((ConfigChannel.use_knock == 0) && MyClient(source_p))
-    {
-      sendto_one(source_p, form_str(ERR_KNOCKDISABLED),
-		 me.name, source_p->name);
-      return;
-    }
-
   /* a remote KNOCKLL request, check we're capable of handling it.. */
   if(!MyConnect(source_p))
   {
@@ -411,7 +404,6 @@ static void send_knock(struct Client *client_p, struct Client *source_p,
 
   if(source_p->user != NULL)
     {
-      if(ConfigChannel.use_knock)
         sendto_channel_local(ONLY_CHANOPS_HALFOPS,
   			     chptr,
   			     form_str(RPL_KNOCK),
@@ -481,7 +473,7 @@ static int check_banned_knock(struct Channel *chptr, struct Client *who,
       actualBan = NULL;
   }
 
-  if ((actualBan != NULL) && ConfigChannel.use_except)
+  if (actualBan != NULL)
   {
     for (except = chptr->exceptlist.head; except; except = except->next)
     {

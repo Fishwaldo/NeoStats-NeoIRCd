@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_lexer.l,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: ircd_lexer.l,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 %option case-insensitive
@@ -56,11 +56,14 @@
 
 int lineno=1;
 char linebuf[IRCD_BUFSIZE];
+char conffilebuf[IRCD_BUFSIZE];
 int include_stack_ptr=0;
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
 int lineno_stack[MAX_INCLUDE_DEPTH];
 FBFILE* inc_fbfile_in[MAX_INCLUDE_DEPTH];
+char conffile_stack[MAX_INCLUDE_DEPTH][IRCD_BUFSIZE];
 void ccomment(void);
+void hashcomment(void);
 void cinclude(void);
 int ieof(void);
 %}
@@ -78,16 +81,53 @@ include   \.include{ws}(\<.*\>|\".*\")
 \n.*	        { strcpy(linebuf, yytext+1); lineno++; yyless(1); }
 
 {ws}            ;
-{comment}       ;
+{comment}       { hashcomment(); }
 
 {digit}+        { yylval.number = atoi(yytext); return NUMBER; }
 
-{qstring}	{ yylval.string = yytext+1;
-		  if(yylval.string[yyleng-2] != '"')
-		    ilog(L_ERROR, "Unterminated character string");
+{qstring}	{ if(yytext[yyleng-2] == '\\')
+		    {
+		      yyless(yyleng-1); /* return last quote */
+		      yymore();		/* append next string */
+		    }
 		  else
-		    yylval.string[yyleng-2] = '\0'; /* remove close quote */
-		  return QSTRING;
+		    {
+		      yylval.string = yytext+1;
+		      if(yylval.string[yyleng-2] != '"')
+			ilog(L_ERROR, "Unterminated character string");
+		      else
+			{
+			  int i,j;
+
+			  yylval.string[yyleng-2] = '\0'; /* remove close
+							   *  quote 
+							   */
+			  
+			  for (j=i=0 ;yylval.string[i] != '\0'; i++,j++)
+			    {
+			      if (yylval.string[i] != '\\')
+				{
+				  yylval.string[j] = yylval.string[i];
+				}
+			      else
+				{
+				  i++;
+				  if (yylval.string[i] == '\0') /* XXX 
+								 * should not
+								 * happen
+								 */
+				    {
+				      ilog(L_ERROR,
+					   "Unterminated character string");
+				      break;
+				    }
+				  yylval.string[j] = yylval.string[i];
+				}
+			    }
+			  yylval.string[j] = '\0';
+			  return QSTRING;
+			}
+		    }
 		}
 
 accept_password { return ACCEPT_PASSWORD; }
@@ -361,6 +401,17 @@ void ccomment(void)
   }
 }
 
+/* #-comment style, look for #include */
+#define INCLUDE "#include"
+void hashcomment(void) 
+{
+  if (strlen(yytext) < strlen(INCLUDE))
+    return;
+
+  if ( !strncasecmp(yytext, INCLUDE, strlen(INCLUDE)) ) 
+      yyerror("You probably meant '.include', skipping");
+}
+
 /* C-style .includes. This function will properly swap input conf buffers,
  * and lineno -kre */
 void cinclude(void)
@@ -396,8 +447,10 @@ void cinclude(void)
     lineno_stack[include_stack_ptr] = lineno;
     lineno = 1;
     inc_fbfile_in[include_stack_ptr] = conf_fbfile_in;
+    strlcpy(conffile_stack[include_stack_ptr], conffilebuf, IRCD_BUFSIZE);
     include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
     conf_fbfile_in = tmp_fbfile_in;
+    sprintf(conffilebuf, "%s", c);
     yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
   }
 }
@@ -424,6 +477,7 @@ int ieof(void)
   yy_delete_buffer(YY_CURRENT_BUFFER);
   lineno = lineno_stack[include_stack_ptr];
   conf_fbfile_in = inc_fbfile_in[include_stack_ptr];
+  strlcpy(conffilebuf, conffile_stack[include_stack_ptr], IRCD_BUFSIZE); 
   yy_switch_to_buffer(include_stack[include_stack_ptr]);
   return 0;
 }

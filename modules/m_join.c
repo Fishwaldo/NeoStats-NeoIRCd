@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
+ *  $Id: m_join.c,v 1.4 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -65,7 +65,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&join_msgtab);
 }
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 
 #endif
 static void do_join_0(struct Client *client_p, struct Client *source_p);
@@ -188,7 +188,10 @@ m_join(struct Client *client_p,
       /* look for the channel */
       if((chptr = hash_find_channel(name)) != NULL)
 	{
-	  if(splitmode && (*name != '&') && ConfigChannel.no_join_on_split)
+          if(IsMember(source_p, chptr))
+            return;
+	  if(splitmode && !IsOper(source_p) && (*name != '&') && 
+             ConfigChannel.no_join_on_split)
 	  {
 	    sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
                        me.name, source_p->name, name);
@@ -222,7 +225,7 @@ m_join(struct Client *client_p,
 	}
       else
 	{
-	  if(splitmode && (*name != '&') && 
+	  if(splitmode && !IsOper(source_p) && (*name != '&') && 
             (ConfigChannel.no_create_on_split || ConfigChannel.no_join_on_split))
 	  {
 	    sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
@@ -259,18 +262,13 @@ m_join(struct Client *client_p,
       if(flags == 0)        /* if channel doesn't exist, don't penalize */
 	successful_join_count++;
 
-      if(!chptr)        /* If I already have a chptr, no point doing this */
+      if(chptr == NULL)     /* If I already have a chptr, no point doing this */
 	{
 	  chptr = get_or_create_channel(source_p, name, NULL);
 	  root_chptr = chptr;
 	}
       
-      if(chptr)
-	{
-	  if (IsMember(source_p, chptr))    /* already a member, ignore this */
-	    continue;
-	}
-      else
+      if(chptr == NULL)
 	{
 	  sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
 		     me.name, parv[0], name);

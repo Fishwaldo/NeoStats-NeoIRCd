@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: hostmask.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: hostmask.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -38,12 +38,14 @@ static unsigned long hash_ipv6(struct irc_inaddr *, int);
 static int try_parse_v4_netmask(const char *, struct irc_inaddr *, int *);
 static unsigned long hash_ipv4(struct irc_inaddr *, int);
 
-#define DigitParse(ch) if (ch >= '0' && ch <= '9') \
+#define DigitParse(ch) do { \
+                       if (ch >= '0' && ch <= '9') \
                          ch = ch - '0'; \
                        else if (ch >= 'A' && ch <= 'F') \
-                         ch = ch - 'A' + '0'; \
+                         ch = ch - 'A' + 10; \
                        else if (ch >= 'a' && ch <= 'f') \
-                         ch = ch - 'a' + '0';
+                         ch = ch - 'a' + 10; \
+                       } while(0);
 
 /* The mask parser/type determination code... */
 
@@ -54,6 +56,10 @@ static unsigned long hash_ipv4(struct irc_inaddr *, int);
  * Side effects: None
  * Comments: Called from parse_netmask
  */
+/* Fixed so ::/0 (any IPv6 address) is valid 
+   Also a bug in DigitParse above.
+   -Gozem 2002-07-19 gozem@linux.nu
+*/
 #ifdef IPV6
 static int
 try_parse_v6_netmask(const char *text, struct irc_inaddr *addr, int *b)
@@ -103,10 +109,8 @@ try_parse_v6_netmask(const char *text, struct irc_inaddr *addr, int *b)
 
       d[dp] = d[dp] >> 4 * nyble;
       dp++;
-      if (p > text && *(p - 1) == ':')
-        return HM_HOST;
       bits = strtoul(p + 1, &after, 10);
-      if (bits == 0 || *after)
+      if (bits < 0 || *after)
         return HM_HOST;
       if (bits > dp * 4 && !(finsert >= 0 && bits <= 128))
         return HM_HOST;
@@ -120,8 +124,6 @@ try_parse_v6_netmask(const char *text, struct irc_inaddr *addr, int *b)
     dp++;
   if (finsert < 0 && bits == 0)
     bits = dp * 16;
-  else if (bits == 0)
-    bits = 128;
   /* How many words are missing? -A1kmm */
   deficit = bits / 16 + ((bits % 16) ? 1 : 0) - dp;
   /* Now fill in the gaps(from ::) in the copied table... -A1kmm */
@@ -676,11 +678,11 @@ show_iline_prefix(struct Client *sptr, struct ConfItem *aconf, char *name)
     *prefix_ptr++ = '%';
   if (IsConfDoSpoofIp(aconf))
     *prefix_ptr++ = '=';
-  if (IsOper(sptr) && IsConfExemptKline(aconf))
+  if (MyOper(sptr) && IsConfExemptKline(aconf))
     *prefix_ptr++ = '^';
-  if (IsOper(sptr) && IsConfExemptLimits(aconf))
+  if (MyOper(sptr) && IsConfExemptLimits(aconf))
     *prefix_ptr++ = '>';
-  if (IsOper(sptr) && IsConfIdlelined(aconf))
+  if (MyOper(sptr) && IsConfIdlelined(aconf))
     *prefix_ptr++ = '<';
   *prefix_ptr = '\0';
   strncpy(prefix_ptr, name, USERLEN);
@@ -707,11 +709,7 @@ report_auth(struct Client *client_p)
       {
         aconf = arec->aconf;
 
-#ifndef HIDE_SPOOF_IPS
-        if (!IsOperAdmin(client_p) && IsConfDoSpoofIp(aconf))
-#else
-        if(IsConfDoSpoofIp(aconf))
-#endif
+        if (!MyOper(client_p) && IsConfDoSpoofIp(aconf))
           continue;
 
         get_printable_conf(aconf, &name, &host, &pass, &user, &port,
@@ -723,6 +721,9 @@ report_auth(struct Client *client_p)
         sendto_one(client_p, form_str(RPL_STATSILINE), me.name,
                    client_p->name, (IsConfRestricted(aconf)) ? 'i' : 'I', name,
                    show_iline_prefix(client_p, aconf, user),
+#ifdef HIDE_SPOOF_IPS
+                   IsConfDoSpoofIp(aconf) ? "255.255.255.255" :
+#endif
                    host, port, classname);
       }
 }

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: parse.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: parse.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -55,8 +55,8 @@ static  void    remove_unknown (struct Client *, char *, char *);
 static  void    do_numeric (char [], struct Client *,
                             struct Client *, int, char **);
 
-static  void    handle_command(struct Message *, struct Client *,
-                               struct Client *, int, char **);
+static  int    handle_command(struct Message *, struct Client *,
+			      struct Client *, int, char **);
 
 static int hash(char *p);
 static struct Message *hash_parse(char *);
@@ -120,7 +120,8 @@ string_to_array(char *string, char *parv[MAXPARA])
  *
  * NOTE: parse() should not be called recusively by any other functions!
  */
-void parse(struct Client *client_p, char *pbuffer, char *bufend)
+void
+parse(struct Client *client_p, char *pbuffer, char *bufend)
 {
   struct Client*  from = client_p;
   char*           ch;
@@ -150,9 +151,9 @@ void parse(struct Client *client_p, char *pbuffer, char *bufend)
       ch++;
 
       /*
-      ** Copy the prefix to 'sender' assuming it terminates
-      ** with SPACE (or NULL, which is an error, though).
-      */
+       * Copy the prefix to 'sender' assuming it terminates
+       * with SPACE (or NULL, which is an error, though).
+       */
 
       sender = ch;
 
@@ -217,14 +218,12 @@ void parse(struct Client *client_p, char *pbuffer, char *bufend)
     }
 
   /*
-  ** Extract the command code from the packet.  Point s to the end
-  ** of the command code and calculate the length using pointer
-  ** arithmetic.  Note: only need length for numerics and *all*
-  ** numerics must have parameters and thus a space after the command
-  ** code. -avalon
-  *
-  * ummm????
-  */
+   * Extract the command code from the packet.  Point s to the end
+   * of the command code and calculate the length using pointer
+   * arithmetic.  Note: only need length for numerics and *all*
+   * numerics must have parameters and thus a space after the command
+   * code. -avalon
+   */
 
   /* EOB is 3 chars long but is not a numeric */
 
@@ -250,16 +249,16 @@ void parse(struct Client *client_p, char *pbuffer, char *bufend)
       if (!mptr || !mptr->cmd)
         {
           /*
-          ** Note: Give error message *only* to recognized
-          ** persons. It's a nightmare situation to have
-          ** two programs sending "Unknown command"'s or
-          ** equivalent to each other at full blast....
-          ** If it has got to person state, it at least
-          ** seems to be well behaving. Perhaps this message
-          ** should never be generated, though...  --msa
-          ** Hm, when is the buffer empty -- if a command
-          ** code has been found ?? -Armin
-          */
+	   * Note: Give error message *only* to recognized
+	   * persons. It's a nightmare situation to have
+	   * two programs sending "Unknown command"'s or
+	   * equivalent to each other at full blast....
+	   * If it has got to person state, it at least
+	   * seems to be well behaving. Perhaps this message
+	   * should never be generated, though...  --msa
+	   * Hm, when is the buffer empty -- if a command
+	   * code has been found ?? -Armin
+	   */
           if (pbuffer[0] != '\0')
             {
               if (IsPerson(from))
@@ -289,21 +288,56 @@ void parse(struct Client *client_p, char *pbuffer, char *bufend)
 
   i = 0;
   
-  if (s)
+  if (s != NULL)
     i = string_to_array(s, para);
+
   if (mptr == (struct Message *)NULL)
     {
       do_numeric(numeric, client_p, from, i, para);
       return;
     }
 
-  handle_command(mptr, client_p, from, i, para);
+  if (handle_command(mptr, client_p, from, i, para) < -1) 
+    {
+      char *p;
+      for (p = pbuffer; p <= end; p +=8)
+	{
+	  /* HACK HACK */
+	  /* Its expected this nasty code can be removed
+	   * or rewritten later if still needed.
+	   */
+	  if ((unsigned long)(p+8) > (unsigned long) end)
+	    {
+	       for(;p <= end; p++)
+		 {
+		    ilog(L_CRIT, "%02x |%c", p[0], p[0]);
+		 }
+	    }
+	  else
+            ilog(L_CRIT,
+	       "%02x %02x %02x %02x %02x %02x %02x %02x |%c%c%c%c%c%c%c%c",
+	       p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+	       p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+	}
+    }
+
 #ifdef INTENSIVE_DEBUG
   do_channel_integrity_check();
 #endif
 }
 
-static void 
+/*
+ * handle_command
+ *
+ * inputs	- pointer to message block
+ *		- pointer to client
+ *		- pointer to client message is from
+ *		- count of number of args
+ *		- pointer to argv[] array
+ * output	- -1 if error from server
+ * side effects	-
+ */
+static int
 handle_command(struct Message *mptr, struct Client *client_p,
                struct Client *from, int i, char *hpara[MAXPARA])
 {
@@ -326,7 +360,7 @@ handle_command(struct Message *mptr, struct Client *client_p,
       if((IsHandshake(client_p) || IsConnecting(client_p)
           || IsServer(client_p))
 	 && !(mptr->flags & MFLG_UNREG))
-	return;
+	return(1);
     }
 
   handler = mptr->handlers[client_p->handler];
@@ -334,22 +368,35 @@ handle_command(struct Message *mptr, struct Client *client_p,
   /* check right amount of params is passed... --is */
   if (i < mptr->parameters)
     {
-      if(IsServer(client_p))
-         sendto_realops_flags(FLAGS_ALL, L_ALL, 
-                "Not enough parameters for command %s from servers %s! (%d < %d)",
-                mptr->cmd, client_p->name, i, mptr->parameters);
-       sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
-                  me.name, BadPtr(hpara[0]) ? "*" : hpara[0], mptr->cmd);
-       return;
+      if (!IsServer(client_p))
+	{
+	  sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
+		     me.name, BadPtr(hpara[0]) ? "*" : hpara[0], mptr->cmd);
+	  if (MyClient(client_p))
+	    return(1);
+	  else
+	    return(-1);
+	}
+
+      sendto_realops_flags(FLAGS_ALL, L_ALL, 
+			   "Dropping server %s due to (invalid) command '%s'"
+			   "with only %d arguments (expecting %d).",
+			   client_p->name, mptr->cmd, i, mptr->parameters);
+      ilog(L_CRIT, "Insufficient parameters (%d) for command '%s' from %s.",
+           i, mptr->cmd, client_p->name);
+      
+      exit_client(client_p, client_p, client_p,
+		  "Not enough arguments to server command.");
+      return(-1);
     }
 
   (*handler)(client_p, from, i, hpara);
-  return;
+  return(1);
 }
 
 
 /*
- * init_hash_parse()
+ * clear_hash_parse()
  *
  * inputs       -
  * output       - NONE
@@ -357,7 +404,8 @@ handle_command(struct Message *mptr, struct Client *client_p,
  *                any other keyword hash routine is used.
  *
  */
-void clear_hash_parse()
+void
+clear_hash_parse()
 {
   memset(msg_hash_table,0,sizeof(msg_hash_table));
 }
@@ -414,7 +462,8 @@ mod_add_cmd(struct Message *msg)
  * output	- none
  * side effects - unload this one command name
  */
-void mod_del_cmd(struct Message *msg)
+void
+mod_del_cmd(struct Message *msg)
 {
   struct MessageHash *ptr;
   struct MessageHash *last_ptr = NULL;
@@ -448,7 +497,8 @@ void mod_del_cmd(struct Message *msg)
  * output	- pointer to struct Message
  * side effects - 
  */
-static struct Message *hash_parse(char *cmd)
+static struct Message *
+hash_parse(char *cmd)
 {
   struct MessageHash *ptr;
   int    msgindex;
@@ -495,7 +545,8 @@ hash(char *p)
  * output	- NONE
  * side effects	- NONE
  */
-void report_messages(struct Client *source_p)
+void
+report_messages(struct Client *source_p)
 {
   int i;
   struct MessageHash *ptr;
@@ -556,15 +607,15 @@ cancel_clients(struct Client *client_p, struct Client *source_p, char *cmd)
    */
 
   /*
-  ** with TS, fake prefixes are a common thing, during the
-  ** connect burst when there's a nick collision, and they
-  ** must be ignored rather than killed because one of the
-  ** two is surviving.. so we don't bother sending them to
-  ** all ops everytime, as this could send 'private' stuff
-  ** from lagged clients. we do send the ones that cause
-  ** servers to be dropped though, as well as the ones from
-  ** non-TS servers -orabidoo
-  */
+   * with TS, fake prefixes are a common thing, during the
+   * connect burst when there's a nick collision, and they
+   * must be ignored rather than killed because one of the
+   * two is surviving.. so we don't bother sending them to
+   * all ops everytime, as this could send 'private' stuff
+   * from lagged clients. we do send the ones that cause
+   * servers to be dropped though, as well as the ones from
+   * non-TS servers -orabidoo
+   */
   /*
    * Incorrect prefix for a server from some connection.  If it is a
    * client trying to be annoying, just QUIT them, if it is a server
@@ -609,11 +660,11 @@ cancel_clients(struct Client *client_p, struct Client *source_p, char *cmd)
   if (IsServer(client_p))
    {
     /*
-    ** If the fake prefix is coming from a TS server, discard it
-    ** silently -orabidoo
-    **
-    ** all servers must be TS these days --is
-    */
+     * If the fake prefix is coming from a TS server, discard it
+     * silently -orabidoo
+     *
+     * all servers must be TS these days --is
+     */
 	   if (source_p->user)
 	   {
 	     sendto_realops_flags(FLAGS_DEBUG, L_ADMIN,
@@ -639,9 +690,8 @@ cancel_clients(struct Client *client_p, struct Client *source_p, char *cmd)
  * output	- 
  * side effects	- 
  */
-static  void    remove_unknown(struct Client *client_p,
-                               char *lsender,
-                               char *lbuffer)
+static void
+remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
 {
   if (!IsRegistered(client_p))
     return;
@@ -690,20 +740,21 @@ static  void    remove_unknown(struct Client *client_p,
 
 
 /*
-**
-**      parc    number of arguments ('sender' counted as one!)
-**      parv[0] pointer to 'sender' (may point to empty string) (not used)
-**      parv[1]..parv[parc-1]
-**              pointers to additional parameters, this is a NULL
-**              terminated list (parv[parc] == NULL).
-**
-** *WARNING*
-**      Numerics are mostly error reports. If there is something
-**      wrong with the message, just *DROP* it! Don't even think of
-**      sending back a neat error message -- big danger of creating
-**      a ping pong error message...
-*/
-static void do_numeric(char numeric[],
+ *
+ *      parc    number of arguments ('sender' counted as one!)
+ *      parv[0] pointer to 'sender' (may point to empty string) (not used)
+ *      parv[1]..parv[parc-1]
+ *              pointers to additional parameters, this is a NULL
+ *              terminated list (parv[parc] == NULL).
+ *
+ * *WARNING*
+ *      Numerics are mostly error reports. If there is something
+ *      wrong with the message, just *DROP* it! Don't even think of
+ *      sending back a neat error message -- big danger of creating
+ *      a ping pong error message...
+ */
+static void
+do_numeric(char numeric[],
                        struct Client *client_p,
                        struct Client *source_p,
                        int parc,
@@ -720,12 +771,12 @@ static void do_numeric(char numeric[],
     numeric[0] = '1';
 
   /*
-  ** Prepare the parameter portion of the message into 'buffer'.
-  ** (Because the buffer is twice as large as the message buffer
-  ** for the socket, no overflow can occur here... ...on current
-  ** assumptions--bets are off, if these are changed --msa)
-  ** Note: if buffer is non-empty, it will begin with SPACE.
-  */
+   * Prepare the parameter portion of the message into 'buffer'.
+   * (Because the buffer is twice as large as the message buffer
+   * for the socket, no overflow can occur here... ...on current
+   * assumptions--bets are off, if these are changed --msa)
+   * Note: if buffer is non-empty, it will begin with SPACE.
+   */
   if (parc > 1)
   {
     char *t = buffer; /* Current position within the buffer */
@@ -756,6 +807,10 @@ static void do_numeric(char numeric[],
        * unfortunately, as we cant guarantee other servers will do the
        * "right thing" on a nick collision, we have to keep both kills.  
        * ergo we need to ignore ERR_NOSUCHNICK. --fl_
+       */
+      /* quick comment. This _was_ tried. i.e. assume the other servers
+       * will do the "right thing" and kill a nick that is colliding.
+       * unfortunately, it did not work. --Dianora
        */
       if(atoi(numeric) != ERR_NOSUCHNICK)
         sendto_realops_flags(FLAGS_ALL, L_ADMIN,
@@ -797,14 +852,16 @@ static void do_numeric(char numeric[],
  * output	-
  * side effects	- just returns a nastyogram to given user
  */
-void m_not_oper(struct Client* client_p, struct Client* source_p,
+void
+m_not_oper(struct Client* client_p, struct Client* source_p,
                 int parc, char* parv[])
 {
   sendto_one(source_p, form_str(ERR_NOPRIVILEGES), me.name, parv[0]);
 }
 
-void m_unregistered(struct Client* client_p, struct Client* source_p,
-                    int parc, char* parv[])
+void
+m_unregistered(struct Client* client_p, struct Client* source_p,
+	       int parc, char* parv[])
 {
   /* bit of a hack.
    * I don't =really= want to waste a bit in a flag
@@ -820,14 +877,16 @@ void m_unregistered(struct Client* client_p, struct Client* source_p,
     }
 }
 
-void m_registered(struct Client* client_p, struct Client* source_p,
+void
+m_registered(struct Client* client_p, struct Client* source_p,
                   int parc, char* parv[])
 {
   sendto_one(client_p, form_str(ERR_ALREADYREGISTRED),   
              me.name, parv[0]); 
 }
 
-void m_ignore(struct Client* client_p, struct Client* source_p,
+void
+m_ignore(struct Client* client_p, struct Client* source_p,
               int parc, char* parv[])
 {
   return;

@@ -25,7 +25,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: balloc.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: balloc.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 /* 
@@ -370,7 +370,7 @@ BlockHeapAlloc(BlockHeap * bh)
     assert(bh != NULL);
     if (bh == NULL)
       {
-        return(NULL);
+	outofmemory();
       }
 
     if (bh->freeElems == 0)
@@ -405,7 +405,7 @@ BlockHeapAlloc(BlockHeap * bh)
 	  }
       }
     assert(0 == 1);
-    return(NULL);     /* If you get here, something bad happened ! */
+    outofmemory();
 }
 
 

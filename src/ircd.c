@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: ircd.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -364,8 +364,8 @@ static void initialize_global_set_options(void)
   else
     GlobalSetOptions.floodcount = 10;
 
-  split_users = ConfigChannel.default_split_server_count;
-  split_servers = ConfigChannel.default_split_user_count;
+  split_servers = ConfigChannel.default_split_server_count;
+  split_users = ConfigChannel.default_split_user_count;
 
   if(split_users && split_servers && (ConfigChannel.no_create_on_split ||
      ConfigChannel.no_join_on_split))
@@ -408,16 +408,8 @@ static void initialize_message_files(void)
  */
 static void initialize_server_capabs(void)
 {
-  /* If halfops support is disabled, remove the capab from the list. */
-  if (ConfigChannel.use_halfops == 0)
-  {
-    default_server_capabs &= ~CAP_HOPS;
-  }
-
-  if(ConfigChannel.use_anonops == 0)
-    default_server_capabs &= ~CAP_AOPS;
-  
-  default_server_capabs &= ~CAP_ZIP;
+/* right now, we don't do anything - fish */
+return;
 }
 
 

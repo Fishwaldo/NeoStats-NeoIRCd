@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.4 2002/08/14 06:32:53 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.5 2002/08/16 12:05:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 
 /*
@@ -326,8 +326,26 @@ static void ms_nick(struct Client *client_p, struct Client *source_p,
   }
 
   /* parc == 3 on nickchange, parc == 9 on new nick */
-  if((parc != 3) && (parc != 9))
+  if((IsClient(source_p) && (parc != 3)) || (IsServer(source_p) && (parc != 9)))
+  {
+    char tbuf[BUFSIZE] = { 0 };
+    int j;
+
+    for(j = 0; j < parc; j++)
+    {
+      strcat(tbuf, parv[j]);
+      strcat(tbuf, " ");
+    }
+
+    sendto_realops_flags(FLAGS_ALL, L_ALL,
+                         "Dropping server %s due to (invalid) command 'NICK' "
+                         "with only %d arguments.  (Buf: '%s')",
+                         client_p->name, parc, tbuf);
+    ilog(L_CRIT, "Insufficient parameters (%d) for command 'NICK' from %s.  Buf: %s",
+         parc, client_p->name, tbuf);
+    exit_client(client_p, client_p, client_p, "Not enough arguments to server command.");
     return;
+  }
 
   /* fix the length of the nick */
   strlcpy(nick, parv[1], NICKLEN);

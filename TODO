@@ -1,6 +1,8 @@
-$Id: TODO,v 1.7 2002/09/13 16:30:02 fishwaldo Exp $
+$Id: TODO,v 1.8 2002/09/21 06:26:12 fishwaldo Exp $
 
 NeoStats HostServ should accept /privmsg hostserv login <username> <password> for NeoIRCD vhost support!
+
+*Services (+S) can bypass +g
 
 POST 1.0
 *Umode +b (Bots) to identify bots (iEf2002)
@@ -8,3 +10,6 @@ POST 1.0
 *Umode +a (Services Root) and +N (Network Admin)
 *SSL Client Support (Still not sure how to do this)
 *Implement servlink so it can either be a seperate process, or linked to the ircd. (for shells with a process limit, its baaaad)
+*Channel mode +M (un-registered users can't talk)
+*channel modes in /list
+*add IsMyAdmin to replace IsAdmin (currently server admins have admin axs to all servers)

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: numeric.h,v 1.8 2002/09/19 05:41:10 fishwaldo Exp $
+ *  $Id: numeric.h,v 1.9 2002/09/21 06:26:12 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_numeric_h
@@ -377,7 +377,7 @@ extern const char* form_str(int);
 #define ERR_YOUREBANNEDCREEP 465
 #define ERR_YOUWILLBEBANNED  466
 #define ERR_KEYSET           467
-/* 	ERR_ONLYSERVERSCANCHANGE 468	   Dalnet,unreal */
+#define	ERR_ONLYSERVERSCANCHANGE 468
 /*	ERR_LINKSET	     469	unreal */
 /*	ERR_LINKCHANNEL	     470	unreal */
 /*      ERR_KICKEDFROMCHAN   470         aircd */

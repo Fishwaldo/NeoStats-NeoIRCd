@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.16 2002/09/19 05:41:11 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.17 2002/09/21 06:26:13 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1074,6 +1074,12 @@ chm_admin(struct Client *client_p, struct Client *source_p,
     *errors |= SM_ERR_NOTONCHANNEL;
     return;
   }
+  if (IsServices(targ_p) && (!IsUlined(source_p)))
+  {
+     sendto_one(source_p, ":%s NOTICE %s :Access Denied. Services Client (%s)", me.name, source_p->name, targ_p->name);
+     *errors |= SM_ERR_NOOPS;
+     return;
+  }
   if (((dir == MODE_ADD) && t_admin) || ((dir == MODE_DEL) && !t_admin))
     return;
 
@@ -1207,6 +1213,12 @@ chm_op(struct Client *client_p, struct Client *source_p,
                  source_p->name, chname, opnick);
     *errors |= SM_ERR_NOTONCHANNEL;
     return;
+  }
+  if (IsServices(targ_p) && !IsUlined(source_p))
+  {
+     sendto_one(source_p, ":%s NOTICE %s :Access Denied. Services Client (%s)", me.name, source_p->name, targ_p->name);
+     *errors |= SM_ERR_NOOPS;
+     return;
   }
 
   mode_get_status(chptr, targ_p, &t_op, &t_hop, &t_voice, &t_admin, 1);
@@ -1356,6 +1368,12 @@ chm_halfop(struct Client *client_p, struct Client *source_p,
   {
     return;
   }
+  if (IsServices(targ_p) && !IsUlined(source_p))
+  {
+     sendto_one(source_p, ":%s NOTICE %s :Access Denied. Services Client (%s)", me.name, source_p->name, targ_p->name);
+     *errors |= SM_ERR_NOOPS;
+     return;
+  }
 
   mode_get_status(chptr, targ_p, &t_op, &t_hop, &t_voice, &t_admin, 1);
 
@@ -1457,6 +1475,12 @@ chm_voice(struct Client *client_p, struct Client *source_p,
                  source_p->name, chname, opnick);
     *errors |= SM_ERR_NOTONCHANNEL;
     return;
+  }
+  if (IsServices(targ_p) && !IsUlined(source_p))
+  {
+     sendto_one(source_p, ":%s NOTICE %s :Access Denied. Services Client (%s)", me.name, source_p->name, targ_p->name);
+     *errors |= SM_ERR_NOOPS;
+     return;
   }
 
   mode_get_status(chptr, targ_p, &t_op, &t_hop, &t_voice, &t_admin, 1);

@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab,v 1.6 2002/09/19 05:41:11 fishwaldo Exp $
+ *   $Id: messages.tab,v 1.7 2002/09/21 06:26:13 fishwaldo Exp $
  */
 
 static  char *  replies[] = {
@@ -493,7 +493,7 @@ static  char *  replies[] = {
 /* 465 ERR_YOUREBANNEDCREEP, */ ":%s 465 %s :You are banned from this server- %s",
 /* 466 ERR_YOUWILLBEBANNED, */  NULL,
 /* 467 ERR_KEYSET, */           ":%s 467 %s %s :Channel key already set",
-/* 468 */       NULL,
+/* 468 ERR_ONLYSERVERSCANCHANGE*/NULL,
 /* 469 */       NULL,
 /* 470 */       NULL,
 /* 471 ERR_CHANNELISFULL, */    ":%s 471 %s %s :Cannot join channel (+l)",

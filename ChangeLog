@@ -4,6 +4,7 @@ Symbols are:
 (F)	- Fish (fish@dynam.ac)
 (S)	- Shmad (shmad@#neostats.net)
 (HP)	- Hybrid Team Patches to Hybrid Source
+
 * NeoIRCd Version 0.9.3 - 19th Sept, 2002 - Fish
 (HP)	- Merged in Hybrid rc4 Patches (including Rc3 and Rc3 fixes)
 (F)	- Fixed up Persistant Channels.
@@ -11,6 +12,10 @@ Symbols are:
 (F)	- Fixed up services problem 
 (F)	- Fixed up aliases
 (F)	- Fixed up a /who bug after the merge of HybirdRC4
+(F)	- Services can send through +g usermode
+(F)	- Services can set topics or kick
+(F)	- you can not deop/admin/voice/halfop a services client regardless of who you are.
+(F)	- /userhost displays your vhost, not real host..
 
 * NeoIRCd Version 0.9.2 - 17th Sept, 2002 - Fish
 (F)	- Fixed a problem with servers setting modes

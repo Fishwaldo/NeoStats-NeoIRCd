@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: cloak.c,v 1.5 2002/10/18 04:28:18 fishwaldo Exp $
+ *  $Id: cloak.c,v 1.6 2002/10/19 02:33:11 fishwaldo Exp $
  */
 /*
 **
@@ -210,8 +210,8 @@ make_virthost (char *curr, char *host, char *new)
   unsigned long hash[8];
 
   /* Paranoia. curr & host are pointers */
-  strncpy (s, curr, HOSTLEN);
-  strncpy (s2, host, HOSTLEN);
+  strncpy (s2, curr, HOSTLEN);
+  strncpy (s, host, HOSTLEN);
 
   parc = str2arr (parv, s, ".");
   parc2 = str2arr (parv2, s2, ".");

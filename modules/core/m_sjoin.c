@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c,v 1.1 2002/08/14 05:47:41 fishwaldo Exp $
+ *  $Id: m_sjoin.c,v 1.2 2002/08/14 06:01:55 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ _moddeinit(void)
   mod_del_cmd(&sjoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 /*
  * ms_sjoin
@@ -579,7 +579,7 @@ static void ms_sjoin(struct Client *client_p,
 	      sendto_channel_local(ALL_MEMBERS,chptr, ":%s!%s@%s JOIN :%s",
 				   target_p->name,
 				   target_p->username,
-				   target_p->host,
+				   target_p->vhost,
 				   top_chptr->chname);
 	    }
 	  else
@@ -588,7 +588,7 @@ static void ms_sjoin(struct Client *client_p,
 	      sendto_channel_local(ALL_MEMBERS,chptr, ":%s!%s@%s JOIN :%s",
 				   target_p->name,
 				   target_p->username,
-				   target_p->host,
+				   target_p->vhost,
 				   parv[2]);
 	    }
 	}

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kick.c,v 1.1 2002/08/14 05:47:41 fishwaldo Exp $
+ *  $Id: m_kick.c,v 1.2 2002/08/14 06:01:55 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -59,7 +59,7 @@ _moddeinit(void)
   mod_del_cmd(&kick_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 /*
 ** m_kick
@@ -213,7 +213,7 @@ static void m_kick(struct Client *client_p,
 			       ":%s!%s@%s KICK %s %s :%s",
 			       source_p->name,
 			       source_p->username,
-			       source_p->host,
+			       source_p->vhost,
 			       name,
 			       who->name, comment);
 	}
@@ -224,7 +224,7 @@ static void m_kick(struct Client *client_p,
 			       ":%s!%s@%s KICK %s %s :%s",
 			       source_p->name,
 			       source_p->username,
-			       source_p->host,
+			       source_p->vhost,
 			       name, who->name, comment);
 	}
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_part.c,v 1.1 2002/08/14 05:47:41 fishwaldo Exp $
+ *  $Id: m_part.c,v 1.2 2002/08/14 06:01:55 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&part_msgtab);
 }
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 static void part_one_client(struct Client *client_p,
@@ -181,7 +181,7 @@ static void part_one_client(struct Client *client_p,
                            chptr, ":%s!%s@%s PART %s :%s",
                            source_p->name,
                            source_p->username,
-                           source_p->host,
+                           source_p->vhost,
                            bchan->chname,
                            reason);
     }
@@ -195,7 +195,7 @@ static void part_one_client(struct Client *client_p,
                            chptr, ":%s!%s@%s PART %s",
                            source_p->name,
                            source_p->username,
-                           source_p->host,
+                           source_p->vhost,
                            bchan->chname);
     }
   remove_user_from_channel(chptr, source_p);

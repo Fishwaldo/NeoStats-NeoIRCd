@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kill.c,v 1.1 2002/08/14 05:47:41 fishwaldo Exp $
+ *  $Id: m_kill.c,v 1.2 2002/08/14 06:01:55 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -64,7 +64,7 @@ _moddeinit(void)
   mod_del_cmd(&kill_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 /*
 ** mo_kill
@@ -129,7 +129,7 @@ static void mo_kill(struct Client *client_p, struct Client *source_p,
 
   if(MyConnect(target_p))
     sendto_one(target_p, ":%s!%s@%s KILL %s :%s", 
-	       source_p->name, source_p->username, source_p->host,
+	       source_p->name, source_p->username, source_p->vhost,
 	       target_p->name, reason);
 
   /* Do not change the format of this message.  There's no point in changing messages
@@ -252,7 +252,7 @@ static void ms_kill(struct Client *client_p, struct Client *source_p,
     }
     else
       sendto_one(target_p, ":%s!%s@%s KILL %s :%s",
-		 source_p->name, source_p->username, source_p->host,
+		 source_p->name, source_p->username, source_p->vhost,
 		 target_p->name, reason);
   }
 
@@ -354,7 +354,7 @@ static void relay_kill(struct Client *one, struct Client *source_p,
       {
         sendto_one(client_p, ":%s KILL %s :%s!%s!%s!%s (%s)",
                    source_p->name, user,
-                   me.name, source_p->host, source_p->username,
+                   me.name, source_p->vhost, source_p->username,
                    source_p->name, reason);
       }
     else

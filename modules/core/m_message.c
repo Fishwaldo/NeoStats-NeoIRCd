@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_message.c,v 1.1 2002/08/14 05:47:41 fishwaldo Exp $
+ *  $Id: m_message.c,v 1.2 2002/08/14 06:01:55 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -123,7 +123,7 @@ _moddeinit(void)
   mod_del_cmd(&notice_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 /*
@@ -548,7 +548,7 @@ msg_channel_flags(int p_or_n, char *command, struct Client *client_p,
 
   sendto_channel_local(type, vchan, ":%s!%s@%s %s %c%s :%s",
                        source_p->name, source_p->username,
-                       source_p->host, command, c, chname, text);
+                       source_p->vhost, command, c, chname, text);
 
   if (chptr->chname[0] == '&')
     return;
@@ -603,7 +603,7 @@ msg_client(int p_or_n, char *command,
         sendto_one(target_p, ":%s!%s@%s %s %s :%s",
                    source_p->name,
                    source_p->username,
-                   source_p->host, command, target_p->name, text);
+                   source_p->vhost, command, target_p->name, text);
       }
       else
       {
@@ -624,7 +624,7 @@ msg_client(int p_or_n, char *command,
           sendto_one(target_p,
                      ":%s NOTICE %s :*** Client %s [%s@%s] is messaging you and you are +g",
                      me.name, target_p->name,
-                     source_p->name, source_p->username, source_p->host);
+                     source_p->name, source_p->username, source_p->vhost);
 
           target_p->localClient->last_caller_id_time = CurrentTime;
 
@@ -697,7 +697,7 @@ flood_attack_client(int p_or_n, struct Client *source_p,
         sendto_realops_flags(FLAGS_BOTS, L_ALL,
                              "Possible Flooder %s [%s@%s] on %s target: %s",
                              source_p->name, source_p->username,
-                             source_p->host,
+                             source_p->vhost,
                              source_p->user->server, target_p->name);
         target_p->localClient->flood_noticed = 1;
         /* add a bit of penalty */
@@ -753,7 +753,7 @@ flood_attack_channel(int p_or_n, struct Client *source_p,
         sendto_realops_flags(FLAGS_BOTS, L_ALL,
                              "Possible Flooder %s [%s@%s] on %s target: %s",
                              source_p->name, source_p->username,
-                             source_p->host,
+                             source_p->vhost,
                              source_p->user->server, chptr->chname);
         chptr->flood_noticed = 1;
 
@@ -919,7 +919,7 @@ find_userhost(char *user, char *host, int *count)
 	{
 	  if (!MyClient(c2ptr)) /* implies mine and an user */
 	    continue;
-	  if ((!host || match(host, c2ptr->host)) &&
+	  if ((!host || match(host, c2ptr->host) || match(host, c2ptr->vhost)) &&
 	      irccmp(user, c2ptr->username) == 0)
 	    {
 	      (*count)++;

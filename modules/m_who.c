@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_who.c,v 1.8 2002/09/13 16:30:04 fishwaldo Exp $
+ *  $Id: m_who.c,v 1.9 2002/09/14 17:03:00 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -60,7 +60,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&who_msgtab);
 }
-const char *_version = "$Revision: 1.8 $";
+const char *_version = "$Revision: 1.9 $";
 #endif
 static void do_who_on_channel(struct Client *source_p,
 			      struct Channel *chptr, char *real_name,
@@ -207,7 +207,7 @@ static void m_who(struct Client *client_p,
 	  else if(is_voiced(chptr,target_p))
 	    do_who(source_p, target_p, chname, flags[2]);
 	  else if(is_chan_admin(chptr, target_p))
-	    do_who(source_p, target_p, chname, flags[5]);
+	    do_who(source_p, target_p, chname, flags[4]);
 	  else
 	    do_who(source_p, target_p, chname, "");
 	}
@@ -373,7 +373,7 @@ static void do_who_on_channel(struct Client *source_p,
               flags[0],
               flags[1],
               flags[2],
-              flags[5],
+              flags[4],
               chname, member);
 
 }
@@ -434,7 +434,7 @@ static void do_who_list(struct Client *source_p, struct Channel *chptr,
         {
           target_p = chanadmins_ptr->data;
           if(member || !IsInvisible(target_p))
-            do_who(source_p, target_p, chname, "@");
+            do_who(source_p, target_p, chname, admins_flag);
           chanadmins_ptr = chanadmins_ptr->next;
         }
       else

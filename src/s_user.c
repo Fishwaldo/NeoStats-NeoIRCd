@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.28 2002/09/26 11:50:07 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.29 2002/09/26 11:54:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1205,20 +1205,7 @@ send_umode_out(struct Client *source_p, struct Client *client_p,
   dlink_node *ptr;
 
   send_umode(target_p, target_p, old, ALL_UMODES, buf);
-
-  for(ptr = serv_list.head; ptr; ptr = ptr->next)
-    {
-      starget_p = ptr->data;
-
-      if((starget_p != client_p) && (*buf))
-        {
-          if((!(ServerInfo.hub && IsCapable(starget_p, CAP_LL)))
-             || (starget_p->localClient->serverMask &
-                 target_p->lazyLinkClientExists)) 
-            sendto_one(starget_p, ":%s MODE %s :%s",
-                       (IsUlined(source_p)) ? source_p->name : target_p->servptr->name, target_p->name, buf);
-        }
-    }
+  sendto_server(client_p, target_p, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s MDOE %s :%s", IsUlined(source_p) ? source_p->name : target_p->servptr->name, target_p->name, buf);
 
   if (client_p && MyClient(target_p))
     send_umode(client_p, target_p, old, ALL_UMODES, buf);

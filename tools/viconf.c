@@ -1,7 +1,7 @@
 /*
  * viconf.c
  *
- * $Id: viconf.c,v 1.1 2002/08/13 14:36:50 fishwaldo Exp $
+ * $Id: viconf.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 #include <stdio.h>
 #include <unistd.h>

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whois.c,v 1.1 2002/08/13 14:36:11 fishwaldo Exp $
+ *  $Id: m_whois.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -76,7 +76,7 @@ _moddeinit(void)
   mod_del_cmd(&whois_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 /*
 ** m_whois
@@ -319,7 +319,7 @@ static int single_whois(struct Client *source_p,struct Client *target_p,
     {
       sendto_one(source_p, form_str(RPL_WHOISUSER), me.name,
 		 source_p->name, name,
-		 target_p->username, target_p->host, target_p->info);
+		 target_p->username, target_p->vhost, target_p->info);
 	  sendto_one(source_p, form_str(RPL_WHOISSERVER),
 		 me.name, source_p->name, name, "<Unknown>",
 		 "*Not On This Net*");
@@ -375,6 +375,7 @@ static void whois_person(struct Client *source_p,struct Client *target_p, int gl
   int tlen;
   int reply_to_send = NO;
   struct hook_mfunc_data hd;
+  char ubuf[12];
 #ifdef VCHANS
   struct Channel *bchan;
 #endif
@@ -383,7 +384,7 @@ static void whois_person(struct Client *source_p,struct Client *target_p, int gl
           
   sendto_one(source_p, form_str(RPL_WHOISUSER), me.name,
 	 source_p->name, target_p->name,
-	 target_p->username, target_p->host, target_p->info);
+	 target_p->username, target_p->vhost, target_p->info);
   server_name = (char *)target_p->user->server;
 
   ircsprintf(buf, form_str(RPL_WHOISCHANNELS),
@@ -461,6 +462,23 @@ static void whois_person(struct Client *source_p,struct Client *target_p, int gl
 	sendto_one(source_p, form_str(RPL_WHOISADMIN),
 		   me.name, source_p->name, target_p->name);
     }
+  if (IsServices(target_p))
+  	sendto_one(source_p, form_str(RPL_WHOISSERVICES),
+  		   me.name, source_p->name, target_p->name);
+  if (IsOper(source_p))
+    {
+      send_umode(NULL, target_p, 0, ALL_UMODES, ubuf);
+      if (!*ubuf)
+      {
+            ubuf[0] = '+';
+            ubuf[1] = '\0';
+      }
+      sendto_one(source_p, form_str(RPL_WHOISMODES),
+      		   me.name, source_p->name, target_p->name, ubuf);
+      	   
+      sendto_one(source_p, form_str(RPL_WHOISREALHOST),
+      		   me.name, source_p->name, target_p->name, target_p->host);
+    }  	
 
   if ( (glob == 1) || (MyConnect(target_p) && (IsOper(source_p) ||
        !ConfigServerHide.hide_servers)) || (target_p == source_p) )

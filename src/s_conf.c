@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c,v 1.1 2002/08/13 14:36:39 fishwaldo Exp $
+ *  $Id: s_conf.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -274,7 +274,6 @@ report_configured_links(struct Client* source_p, int mask)
   char*              name;
   char*		     classname;
   int                port;
-
   for (tmp = ConfigItemList; tmp; tmp = tmp->next) {
     if (tmp->status & mask)
       {
@@ -286,8 +285,7 @@ report_configured_links(struct Client* source_p, int mask)
 	  return;
 
         get_printable_conf(tmp, &name, &host, &pass, &user, &port,&classname);
-
-        if(mask & CONF_SERVER)
+        if (mask & CONF_SERVER)
           {
             char c;
 	    char buf[20];
@@ -295,7 +293,6 @@ report_configured_links(struct Client* source_p, int mask)
 	    
 	    buf[0] = '\0';
             c = p->conf_char;
-	    
 	    if (tmp->flags & CONF_FLAGS_ALLOW_AUTO_CONN)
 	      *s++ = 'A';
 	    if (tmp->flags & CONF_FLAGS_CRYPTLINK)
@@ -304,6 +301,8 @@ report_configured_links(struct Client* source_p, int mask)
 	      *s++ = 'L';
 	    if (tmp->flags & CONF_FLAGS_COMPRESSED)
 	      *s++ = 'Z';
+	    if (tmp->flags & CONF_FLAGS_ULINED)
+	      *s++ = 'U';
 	    if (tmp->fakename)
 	      *s++ = 'M';
 	    

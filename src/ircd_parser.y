@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.1 2002/08/13 14:36:28 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
  */
 
 %{
@@ -280,6 +280,8 @@ int   class_redirport_var;
 %token  VHOST6
 %token  WARN
 %token  WARN_NO_NLINE
+%token  ULINE_SERVER
+
 
 %type   <string>   QSTRING
 %type   <number>   NUMBER
@@ -1482,7 +1484,7 @@ connect_item:   connect_name | connect_host | connect_send_password |
 		connect_leaf_mask | connect_class | connect_auto | 
 		connect_encrypted | connect_compressed | connect_cryptlink |
 		connect_rsa_public_key_file | connect_cipher_preference |
-                error;
+                connect_set_uline | error;
 
 connect_name:   NAME '=' QSTRING ';'
   {
@@ -1496,6 +1498,15 @@ connect_name:   NAME '=' QSTRING ';'
     DupString(yy_aconf->name, yylval.string);
   };
 
+connect_set_uline:    ULINE_SERVER '=' TYES ';'
+  {
+    yy_aconf->flags |= CONF_FLAGS_ULINED;
+  }
+                        |
+                        ULINE_SERVER '=' TNO ';'
+  {
+    yy_aconf->flags &= ~CONF_FLAGS_ULINED;
+  }; 
 connect_host:   HOST '=' QSTRING ';' 
   {
     MyFree(yy_aconf->host);

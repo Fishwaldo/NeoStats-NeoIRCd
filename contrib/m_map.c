@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_map.c,v 1.1 2002/08/13 14:35:16 fishwaldo Exp $
+ *  $Id: m_map.c,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -54,7 +54,7 @@ void _moddeinit(void)
   mod_del_cmd(&map_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 static char buf[BUFSIZE];

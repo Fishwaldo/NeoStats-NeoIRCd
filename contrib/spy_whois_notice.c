@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: spy_whois_notice.c,v 1.1 2002/08/13 14:35:17 fishwaldo Exp $
+ *  $Id: spy_whois_notice.c,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "modules.h"
@@ -43,7 +43,7 @@ _moddeinit(void)
   hook_del_hook("doing_whois", (hookfn *)show_notice);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 
 /* show a whois notice
    source_p does a /whois on client_p */

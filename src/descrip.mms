@@ -1,6 +1,6 @@
 # MMS/MMK Makefile for OpenVMS
 # Copyright (c) 2001 Edward Brocklesby
-# $Id: descrip.mms,v 1.1 2002/08/13 14:36:22 fishwaldo Exp $
+# $Id: descrip.mms,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
 
 CC=	CC
 CFLAGS=/INCLUDE_DIRECTORY=([-.INCLUDE],[-.ADNS])/STANDARD=ISOC94/NOWARN -

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_invite.c,v 1.1 2002/08/13 14:36:01 fishwaldo Exp $
+ *  $Id: m_invite.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ _moddeinit(void)
   mod_del_cmd(&invite_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 /*
@@ -216,7 +216,7 @@ m_invite(struct Client *client_p,
     if (chop)
       add_invite(vchan, target_p);
     sendto_one(target_p, ":%s!%s@%s INVITE %s :%s", source_p->name,
-               source_p->username, source_p->host, target_p->name,
+               source_p->username, source_p->vhost, target_p->name,
                chptr->chname);
   }
 

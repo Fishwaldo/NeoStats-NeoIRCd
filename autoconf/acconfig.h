@@ -1,5 +1,5 @@
 /*
- * $Id: acconfig.h,v 1.1 2002/08/13 14:35:09 fishwaldo Exp $
+ * $Id: acconfig.h,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
  */
 
 /* Define if you have the poll() system call.  */

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.1 2002/08/13 14:36:16 fishwaldo Exp $
+ *  $Id: channel.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ static void delete_members(struct Channel *chptr, dlink_list * list);
 static void send_mode_list(struct Client *client_p, char *chname,
                            dlink_list *top, char flag, int clear);
 static int check_banned(struct Channel *chptr, struct Client *who,
-                                                char *s, char *s2);
+                                                char *s, char *s2, char *s3);
 
 static char buf[BUFSIZE];
 static char modebuf[MODEBUFLEN], parabuf[MODEBUFLEN];
@@ -1077,6 +1077,7 @@ is_banned(struct Channel *chptr, struct Client *who)
 {
   char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
   char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
+  char src_vhost[NICKLEN + USERLEN + HOSTLEN + 6];
 
   if (!IsPerson(who))
     return (0);
@@ -1084,8 +1085,8 @@ is_banned(struct Channel *chptr, struct Client *who)
   ircsprintf(src_host,"%s!%s@%s", who->name, who->username, who->host);
   ircsprintf(src_iphost,"%s!%s@%s", who->name, who->username,
 	     who->localClient->sockhost);
-
-  return (check_banned(chptr, who, src_host, src_iphost));
+  ircsprintf(src_vhost, "%s!%s@%s", who->name, who->username, who->vhost);
+  return (check_banned(chptr, who, src_host, src_iphost, src_vhost));
 }
 
 /*
@@ -1095,6 +1096,7 @@ is_banned(struct Channel *chptr, struct Client *who)
  *              - pointer to client to check access fo
  *              - pointer to pre-formed nick!user@host
  *              - pointer to pre-formed nick!user@ip
+ * 		- pointer to pre-formed nick!user@vhost
  * output       - returns an int 0 if not banned,
  *                CHFL_BAN if banned
  *
@@ -1104,7 +1106,7 @@ is_banned(struct Channel *chptr, struct Client *who)
  * +e code from orabidoo
  */
 static int
-check_banned(struct Channel *chptr, struct Client *who, char *s, char *s2)
+check_banned(struct Channel *chptr, struct Client *who, char *s, char *s2, char *s3)
 {
   dlink_node *ban;
   dlink_node *except;
@@ -1114,7 +1116,7 @@ check_banned(struct Channel *chptr, struct Client *who, char *s, char *s2)
   for (ban = chptr->banlist.head; ban; ban = ban->next)
   {
     actualBan = ban->data;
-    if (match(actualBan->banstr, s) || match(actualBan->banstr, s2))
+    if (match(actualBan->banstr, s) || match(actualBan->banstr, s2) || match(actualBan->banstr, s3))
       break;
     else
       actualBan = NULL;
@@ -1126,7 +1128,7 @@ check_banned(struct Channel *chptr, struct Client *who, char *s, char *s2)
     {
       actualExcept = except->data;
 
-      if (match(actualExcept->banstr, s) || match(actualExcept->banstr, s2))
+      if (match(actualExcept->banstr, s) || match(actualExcept->banstr, s2) || match(actualExcept->banstr, s3))
       {
         return CHFL_EXCEPTION;
       }
@@ -1153,15 +1155,18 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
   struct Ban *invex = NULL;
   char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
   char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
-
+  char src_vhost[NICKLEN + USERLEN + HOSTLEN +6];
+  
   assert(source_p->localClient != NULL);
 
   ircsprintf(src_host,
 	     "%s!%s@%s", source_p->name, source_p->username, source_p->host);
   ircsprintf(src_iphost,"%s!%s@%s", source_p->name, source_p->username,
 	     source_p->localClient->sockhost);
+  ircsprintf(src_vhost, "%s!%s@%s", source_p->name, source_p->username,
+             source_p->vhost);
 
-  if ((check_banned(chptr, source_p, src_host, src_iphost)) == CHFL_BAN)
+  if ((check_banned(chptr, source_p, src_host, src_iphost, src_vhost)) == CHFL_BAN)
     return (ERR_BANNEDFROMCHAN);
 
   if (chptr->mode.mode & MODE_INVITEONLY)

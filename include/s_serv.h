@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.h,v 1.1 2002/08/13 14:35:48 fishwaldo Exp $
+ *  $Id: s_serv.h,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_serv_h
@@ -74,12 +74,13 @@ struct Capability
 
 #define CAP_TBURST	0x00040000   /* supports TBURST */
 #define CAP_PARA	0x00080000   /* supports invite broadcasting for +p */
+#define CAP_MODEX	0x00100000   /* Supports ModeX */
 
 #define CAP_MASK        (CAP_QS  | CAP_EX   | CAP_CHW  | \
                          CAP_IE  | CAP_EOB  | CAP_KLN  | \
                          CAP_GLN | CAP_HOPS | CAP_AOPS | \
                          CAP_UID | CAP_ZIP  | CAP_ENC | \
-                         CAP_KNOCK  | CAP_PARA)
+                         CAP_KNOCK  | CAP_PARA | CAP_MODEX)
 
 #ifdef HAVE_LIBZ
 #define CAP_ZIP_SUPPORTED       CAP_ZIP

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: mtree.c,v 1.1 2002/08/13 14:35:39 fishwaldo Exp $
+ *   $Id: mtree.c,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
  */
 
 /*

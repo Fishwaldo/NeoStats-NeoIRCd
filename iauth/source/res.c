@@ -4,7 +4,7 @@
  * shape or form. The author takes no responsibility for any damage or loss
  * of property which results from the use of this software.
  *
- * $Id: res.c,v 1.1 2002/08/13 14:35:40 fishwaldo Exp $
+ * $Id: res.c,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
  *
  * July 1999 - Rewrote a bunch of stuff here. Change hostent builder code,
  *     added callbacks and reference counting of returned hostents.

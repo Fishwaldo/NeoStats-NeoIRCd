@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: log.h,v 1.1 2002/08/13 14:35:35 fishwaldo Exp $
+ *   $Id: log.h,v 1.2 2002/08/13 14:45:09 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_log_h

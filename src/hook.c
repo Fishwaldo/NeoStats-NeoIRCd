@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: hook.c,v 1.1 2002/08/13 14:36:23 fishwaldo Exp $
+ *  $Id: hook.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
  */
 
 /* hooks are used by modules to hook into events called by other parts of

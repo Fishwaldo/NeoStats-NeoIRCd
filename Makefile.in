@@ -16,7 +16,7 @@
 #*   along with this program; if not, write to the Free Software
 #*   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #*
-#*   $Id: Makefile.in,v 1.1 2002/08/13 14:34:56 fishwaldo Exp $
+#*   $Id: Makefile.in,v 1.2 2002/08/13 14:44:59 fishwaldo Exp $
 #*/
 
 RM=@RM@

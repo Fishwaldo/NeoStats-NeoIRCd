@@ -672,7 +672,7 @@ diff -urN --exclude=CVS ircd-hybrid-7/modules/m_unkline.c ircd-hybrid-7+lmh/modu
     {m_unregistered, m_not_oper, m_error, mo_undline}}, 
    {"UNGLINE", 0, 0, 2, 0, MFLG_SLOW, 0,
 @@ -76,8 +78,10 @@
- const char *_version = "$Revision: 1.1 $";
+ const char *_version = "$Revision: 1.2 $";
  #endif
  
 +static void remove_permkline_match(struct Client *, char *, char *);
@@ -971,7 +971,7 @@ diff -urN --exclude=CVS ircd-hybrid-7/modules/m_xline.c ircd-hybrid-7+lmh/module
 + * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 + * POSSIBILITY OF SUCH DAMAGE.
 + *
-+ * $Id: lmh.diff,v 1.1 2002/08/13 14:35:14 fishwaldo Exp $
++ * $Id: lmh.diff,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
 + */
 +
 +#include "stdinc.h"
@@ -1016,7 +1016,7 @@ diff -urN --exclude=CVS ircd-hybrid-7/modules/m_xline.c ircd-hybrid-7+lmh/module
 +  mod_del_cmd(&xline_msgtab);
 +}
 +
-+char *_version = "$Revision: 1.1 $";
++char *_version = "$Revision: 1.2 $";
 +
 +/* m_xline()
 + *

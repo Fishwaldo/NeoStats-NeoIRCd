@@ -25,7 +25,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: convertilines.c,v 1.1 2002/08/13 14:36:50 fishwaldo Exp $
+ * $Id: convertilines.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 
 #include <stdio.h>

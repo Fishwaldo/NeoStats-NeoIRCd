@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.1 2002/08/13 14:36:43 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -104,6 +104,7 @@ struct Capability captab[] = {
   { "ZIP",   CAP_ZIP },
   { "TBURST", CAP_TBURST },
   { "PARA",  CAP_PARA },
+  { "MX",    CAP_MODEX},
   { 0,           0 }
 };
 
@@ -725,6 +726,10 @@ int check_server(const char *name, struct Client* client_p, int cryptlink)
   if( !(server_aconf->flags & CONF_FLAGS_CRYPTLINK) )
     ClearCap(client_p,CAP_ENC);
 
+  if( !(server_aconf->flags & CONF_FLAGS_ULINED) ) {
+    SetUlined(client_p);
+  }
+
   /*
    * Don't unset CAP_HUB here even if the server isn't a hub,
    * it only indicates if the server thinks it's lazylinks are
@@ -847,6 +852,9 @@ void sendnick_TS(struct Client *client_p, struct Client *target_p)
 				 ubuf,
 				 target_p->username, target_p->host,
 				 target_p->user->server, target_p->info);
+
+  if (IsHidden(target_p) && IsCapable(client_p, CAP_MODEX)) sendto_one(client_p, ":%s SETHOST %s :%s", target_p->name, target_p->name, target_p->vhost);					
+
 }
 
 /*
@@ -1088,6 +1096,12 @@ int server_estab(struct Client *client_p)
   client_p->firsttime = CurrentTime;
   /* fixing eob timings.. -gnp */
 
+  if (aconf->flags & CONF_FLAGS_ULINED) {
+  	SetUlined(client_p);
+  	sendto_realops_flags(FLAGS_ALL, L_ALL, "In-Comming Link with %s is Ulined", inpath_ip);
+  	ilog(L_NOTICE, "In-Comming link with %s is Ulined", inpath_ip);
+  }
+
   /* Show the real host/IP to admins */
   sendto_realops_flags(FLAGS_ALL, L_ADMIN,
 			"Link with %s established: (%s) link",
@@ -1139,9 +1153,10 @@ int server_estab(struct Client *client_p)
       if ((aconf = target_p->serv->sconf) &&
           match(my_name_for_link(me.name, aconf), client_p->name))
         continue;
-      sendto_one(target_p,":%s SERVER %s 2 :%s%s", 
+      sendto_one(target_p,":%s SERVER %s 2 :%s%s%s", 
                  me.name, client_p->name,
 		 client_p->hidden_server ? "(H) " : "",
+	 	 IsUlined(client_p) ? "(U) " : "",
                  client_p->info);
     }
 
@@ -1174,10 +1189,11 @@ int server_estab(struct Client *client_p)
         {
           if (match(my_name_for_link(me.name, aconf), target_p->name))
             continue;
-          sendto_one(client_p, ":%s SERVER %s %d :%s%s", 
+          sendto_one(client_p, ":%s SERVER %s %d :%s%s%s", 
 	             target_p->serv->up,
                      target_p->name, target_p->hopcount+1, 
 		     target_p->hidden_server ? "(H) " : "",
+	     	     IsUlined(target_p) ? "(U) " : "",
 		     target_p->info);
         }
     }

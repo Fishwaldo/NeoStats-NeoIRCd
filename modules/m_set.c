@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_set.c,v 1.1 2002/08/13 14:36:07 fishwaldo Exp $
+ *  $Id: m_set.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
  */
 
 /* rewritten by jdc */
@@ -64,7 +64,7 @@ _moddeinit(void)
   mod_del_cmd(&set_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 /* Structure used for the SET table itself */
 struct SetStruct

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: config.h,v 1.1 2002/08/13 14:35:43 fishwaldo Exp $
+ *  $Id: config.h,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_config_h
@@ -27,7 +27,7 @@
 
 #include "setup.h"
 
-
+#define DEBUG
 /*
  * IRCD-HYBRID-7 COMPILE TIME CONFIGURATION OPTIONS
  *
@@ -345,7 +345,7 @@
  * to make your client server very sluggish.
  * You usually shouldn't need this. -Dianora
 */
-#undef  DEBUGMODE               /* define DEBUGMODE to enable debugging mode.*/
+#define  DEBUGMODE               /* define DEBUGMODE to enable debugging mode.*/
 
 /*
  * this checks for various things that should never happen, but

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: whowas.c,v 1.1 2002/08/13 14:36:48 fishwaldo Exp $
+ *  $Id: whowas.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -37,6 +37,7 @@
 #include "send.h"
 #include "s_conf.h"
 #include "memory.h"
+
 
 /* internally defined function */
 static void add_whowas_to_clist(struct Whowas **, struct Whowas *);
@@ -84,6 +85,7 @@ void add_history(struct Client* client_p, int online)
   strlcpy(who->name, client_p->name, NICKLEN);
   strcpy(who->username, client_p->username);
   strcpy(who->hostname, client_p->host);
+  strcpy(who->vhostname, client_p->vhost);
   strcpy(who->realname, client_p->info);
 
   who->servername = client_p->user->server;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whowas.c,v 1.1 2002/08/13 14:36:12 fishwaldo Exp $
+ *  $Id: m_whowas.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -61,7 +61,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&whowas_msgtab);
 }
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 static int whowas_do(struct Client *client_p, struct Client *source_p,
                      int parc, char *parv[]);
@@ -149,7 +149,7 @@ static int whowas_do(struct Client *client_p, struct Client *source_p,
           sendto_one(source_p, form_str(RPL_WHOWASUSER),
                      me.name, parv[0], temp->name,
                      temp->username,
-                     temp->hostname,
+                     IsOper(source_p) ? temp->hostname : temp->vhostname,
                      temp->realname);
 
           if (ConfigServerHide.hide_servers && !IsOper(source_p))

@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: match.c,v 1.1 2002/08/13 14:36:31 fishwaldo Exp $
+ * $Id: match.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
  *
  */
 #include "stdinc.h"

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c,v 1.1 2002/08/13 14:36:25 fishwaldo Exp $
+ *  $Id: ircd.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -114,7 +114,7 @@ static const char * pidFileName = PPATH;
 
 char**  myargv;
 int     dorehash   = 0;
-int     debuglevel = -1;        /* Server debug level */
+int     debuglevel = 10;        /* Server debug level */
 char*   debugmode  = "";        /*  -"-    -"-   -"-  */
 time_t  nextconnect = 1;        /* time for next try_connections call */
 
@@ -483,7 +483,7 @@ static void check_pidfile(const char *filename)
 	    {
 	      /* log(L_ERROR, "Server is already running"); */
 	      printf("ircd: daemon is already running\n");
-	      exit(-1);
+//	      exit(-1);
 	    }
 	}
       fbclose(fb);

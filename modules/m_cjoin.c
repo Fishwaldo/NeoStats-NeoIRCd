@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_cjoin.c,v 1.1 2002/08/13 14:35:58 fishwaldo Exp $
+ *  $Id: m_cjoin.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -69,7 +69,7 @@ _moddeinit(void)
 #endif
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif /* STATIC_MODULES */
 
 #ifdef VCHANS
@@ -192,7 +192,7 @@ static void m_cjoin(struct Client *client_p,
 			":%s!%s@%s JOIN :%s",
 			source_p->name,
 			source_p->username,
-			source_p->host,
+			source_p->vhost,
 			root_vchan->chname);
 
   sendto_server(client_p, NULL, chptr, NOCAPS, NOCAPS, NOFLAGS,

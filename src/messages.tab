@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab,v 1.1 2002/08/13 14:36:32 fishwaldo Exp $
+ *   $Id: messages.tab,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 
 static  char *  replies[] = {
@@ -640,9 +640,9 @@ static  char *  replies[] = {
 /* 610 */	NULL,
 /* 611 */	NULL,
 /* 612 */	NULL,
-/* 613 */	NULL,
+/* 613 */	":%s 613 %s %s :is a Services Client",
 /* 614 */	NULL,
-/* 615 */	NULL,
+/* 615 */	":%s 615 %s %s :is using Modes [%s]",
 /* 616 */	NULL,
 /* 617 */	NULL,
 /* 618 */	NULL,
@@ -697,7 +697,7 @@ static  char *  replies[] = {
 /* 667 */	NULL,
 /* 668 */	NULL,
 /* 669 */	NULL,
-/* 670 */	NULL,
+/* 670 */	":%s 670 %s %s :Real Hostname %s",
 /* 671 */	NULL,
 /* 672 */	NULL,
 /* 673 */	NULL,

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_gline.c,v 1.1 2002/08/13 14:36:41 fishwaldo Exp $
+ *  $Id: s_gline.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -81,6 +81,7 @@ find_gkill(struct Client* client_p, char* username)
   assert(NULL != client_p);
   if(client_p == NULL)
     return NULL;
+  if(IsServices(client_p)) return 0;
   return (IsExemptKline(client_p)) ? 0 : find_is_glined(client_p->host, username);
 }
 

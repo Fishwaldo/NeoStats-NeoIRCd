@@ -9,7 +9,7 @@
 ** VMS support by Edward Brocklesby, crypt.c implementation
 ** phk@login.dknet.dk
 **
-** $Id: mkpasswd.c,v 1.1 2002/08/13 14:36:50 fishwaldo Exp $
+** $Id: mkpasswd.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
 */
 #include <stdio.h>
 #include <string.h>

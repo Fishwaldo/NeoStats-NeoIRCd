@@ -137,4 +137,4 @@ We hope that these goals are obtained.
 
 --
 W. Campbell
-$Id: modeg.txt,v 1.1 2002/08/13 14:35:21 fishwaldo Exp $
+$Id: modeg.txt,v 1.2 2002/08/13 14:45:01 fishwaldo Exp $

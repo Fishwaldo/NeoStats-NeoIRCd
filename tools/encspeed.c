@@ -2,7 +2,7 @@
  * encspeed.c - originally written by einride
  *            - modified for ircd-hybrid-7 by davidt
  *
- * $Id: encspeed.c,v 1.1 2002/08/13 14:36:50 fishwaldo Exp $
+ * $Id: encspeed.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 
 #include "../include/setup.h"

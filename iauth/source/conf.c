@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: conf.c,v 1.1 2002/08/13 14:35:37 fishwaldo Exp $
+ *   $Id: conf.c,v 1.2 2002/08/13 14:45:09 fishwaldo Exp $
  */
 
 #include <stdio.h>

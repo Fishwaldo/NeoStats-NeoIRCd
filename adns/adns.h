@@ -51,7 +51,7 @@
  *  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- *  $Id: adns.h,v 1.1 2002/08/13 14:35:04 fishwaldo Exp $
+ *  $Id: adns.h,v 1.2 2002/08/13 14:44:59 fishwaldo Exp $
  */
 
 #ifndef ADNS_H_INCLUDED

@@ -8,7 +8,7 @@
 # $ COPY [.include]setup.h_vms [.include]setup.h
 # $ MMS IRCD.EXE
 #
-# $Id: descrip.mms,v 1.1 2002/08/13 14:35:04 fishwaldo Exp $
+# $Id: descrip.mms,v 1.2 2002/08/13 14:44:59 fishwaldo Exp $
 
 CC=	CC
 CFLAGS=	/INCLUDE_DIRECTORY=([-.INCLUDE],[])/STANDARD=ISOC94

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_bsd_sigio.c,v 1.1 2002/08/13 14:36:40 fishwaldo Exp $
+ *  $Id: s_bsd_sigio.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 
 #ifndef _GNU_SOURCE

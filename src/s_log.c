@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_log.c,v 1.1 2002/08/13 14:36:41 fishwaldo Exp $
+ *  $Id: s_log.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -133,6 +133,9 @@ ilog(int priority, const char* fmt, ...)
 #ifdef USE_SYSLOG  
   if (priority <= L_DEBUG)
     syslog(sysLogLevel[priority], "%s", buf);
+#endif
+#ifdef DEBUG
+    printf("%s\n", buf);
 #endif
 #if defined(USE_LOGFILE) 
   write_log(buf);

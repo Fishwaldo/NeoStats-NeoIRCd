@@ -105,6 +105,6 @@ TBD. What to do if a dronebot net is programmed to /suspend as many
 as possible, in order to eat up memory in a DDoS attempt. One of the
 same criticisms against vchans actually.
 
-$Id: Persistent_Clients.txt,v 1.1 2002/08/13 14:35:26 fishwaldo Exp $
+$Id: Persistent_Clients.txt,v 1.2 2002/08/13 14:45:04 fishwaldo Exp $
 
 

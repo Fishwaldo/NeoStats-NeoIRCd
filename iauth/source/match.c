@@ -22,7 +22,7 @@
  * Cleanup of collapse and match
  * Moved static calls variable to match
  * Added asserts for null pointers
- * $Id: match.c,v 1.1 2002/08/13 14:35:38 fishwaldo Exp $
+ * $Id: match.c,v 1.2 2002/08/13 14:45:09 fishwaldo Exp $
  *
  */
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.1 2002/08/13 14:36:44 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -73,6 +73,7 @@ struct flag_item
 
 static struct flag_item user_modes[] =
 {
+  {FLAGS_SERVICES, 'S'},
   {FLAGS_ADMIN, 'a'},
   {FLAGS_BOTS,  'b'},
   {FLAGS_CCONN, 'c'},
@@ -84,13 +85,14 @@ static struct flag_item user_modes[] =
   {FLAGS_LOCOPS, 'l'},
   {FLAGS_NCHANGE, 'n'},
   {FLAGS_OPER, 'o'},
-  {FLAGS_REJ, 'r'},
+  {FLAGS_REJ, 'R'},
   {FLAGS_SERVNOTICE, 's'},
   {FLAGS_UNAUTH, 'u'},
   {FLAGS_WALLOP, 'w'},
-  {FLAGS_EXTERNAL, 'x'},
+  {FLAGS_EXTERNAL, 'X'},
   {FLAGS_SPY, 'y'},
   {FLAGS_OPERWALL, 'z'},
+  {FLAGS_HIDDEN, 'x'},
   {0, 0}
 };
 
@@ -120,13 +122,13 @@ int user_modes_from_c_to_bitmask[] =
   0,            /* O */
   0,            /* P */
   0,            /* Q */
-  0,            /* R */
-  0,            /* S */
+  FLAGS_REJ,            /* R */
+  FLAGS_SERVICES,	/* S */
   0,            /* T */
   0,            /* U */
   0,            /* V */
   0,            /* W */
-  0,            /* X */
+  FLAGS_EXTERNAL,            /* X */
   0,            /* Y */
   0,            /* Z 0x5A */
   0, 0, 0, 0, 0, /* 0x5F */ 
@@ -148,13 +150,13 @@ int user_modes_from_c_to_bitmask[] =
   FLAGS_OPER,   /* o */
   0,               /* p */
   0,            /* q */
-  FLAGS_REJ,    /* r */
+  0,    /* r */
   FLAGS_SERVNOTICE, /* s */
   0,            /* t */
   FLAGS_UNAUTH, /* u */
   0,            /* v */
   FLAGS_WALLOP, /* w */
-  FLAGS_EXTERNAL, /* x */
+  FLAGS_HIDDEN, /* x */
   FLAGS_SPY,    /* y */
   FLAGS_OPERWALL, /* z 0x7A */
   0,0,0,0,0,     /* 0x7B - 0x7F */
@@ -294,7 +296,6 @@ int register_local_user(struct Client *client_p, struct Client *source_p,
   
   if(!MyConnect(source_p))
     return -1;
-
   if(ConfigFileEntry.ping_cookie)
   {
   	if(!(source_p->flags & FLAGS_PINGSENT) && source_p->localClient->random_ping == 0)
@@ -324,7 +325,7 @@ int register_local_user(struct Client *client_p, struct Client *source_p,
     {
       sendto_one(source_p,":%s NOTICE %s :*** Notice -- You have an illegal character in your hostname", 
 		 me.name, source_p->name );
-      strncpy(source_p->host,source_p->localClient->sockhost,HOSTIPLEN+1);
+	      strncpy(source_p->host,source_p->localClient->sockhost,HOSTIPLEN+1);
     }
 
   ptr = source_p->localClient->confs.head;
@@ -451,6 +452,11 @@ int register_local_user(struct Client *client_p, struct Client *source_p,
   
   source_p->umodes |= FLAGS_INVISIBLE;
 
+
+
+  SetHidden(source_p);
+  make_virthost(source_p->host, source_p->vhost, 0);
+  
   Count.invisi++;
 
   if ((++Count.local) > Count.max_loc)
@@ -489,8 +495,10 @@ int register_local_user(struct Client *client_p, struct Client *source_p,
      return CLIENT_EXITED;
   }
   user_welcome(source_p);
+  introduce_client(client_p, source_p, user, nick);
+  if (IsHidden(source_p)) sendto_server(NULL, source_p, NULL, CAP_MODEX, 0, LL_ICLIENT, ":%s SETHOST %s :%s", source_p->name, source_p->name, source_p->vhost);					
 
-  return (introduce_client(client_p, source_p, user, nick));
+  return (0);
 }
 
 /*
@@ -603,7 +611,6 @@ introduce_client(struct Client *client_p, struct Client *source_p,
       ubuf[0] = '+';
       ubuf[1] = '\0';
     }
-
   /* arghhh one could try not introducing new nicks to ll leafs
    * but then you have to introduce them "on the fly" in SJOIN
    * not fun.
@@ -883,6 +890,7 @@ int do_remote_user(char* nick, struct Client* client_p, struct Client* source_p,
    */
   user->server = find_or_add(server);
   strlcpy(source_p->host, host, HOSTLEN); 
+  strlcpy(source_p->vhost, host, HOSTLEN);
   strlcpy(source_p->info, realname, REALLEN);
   if (id)
 	  strcpy(source_p->user->id, id);
@@ -911,7 +919,6 @@ int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *
   struct ConfItem *aconf;
 
   what = MODE_ADD;
-
   if (parc < 2)
     {
       sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
@@ -1031,6 +1038,31 @@ int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *
                 }
             }
           break;
+	/* user is setting/unsetting +x (hiddenhost) */
+
+	case 'x' :
+		if (what == MODE_ADD) {
+			/* if they are already hidden, don't hide them again 
+			 * of they are not a local client 
+			 */
+			SetHidden(source_p);
+			if (!MyClient(source_p)) {
+				ilog(L_WARN, "set exit");
+				break;
+			}
+			make_virthost(source_p->host, source_p->vhost, 0);
+		} else {
+			ClearHidden(source_p);
+			if (!MyClient(source_p)) {
+				ilog(L_WARN, "exit");
+				break;
+			}
+			strncpy(source_p->vhost, source_p->host, HOSTLEN);
+		}
+	break;
+
+
+
 
           /* we may not get these,
            * but they shouldnt be in default
@@ -1074,14 +1106,20 @@ int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *
                  me.name,parv[0]);
       source_p->umodes &= ~FLAGS_NCHANGE; /* only tcm's really need this */
     }
-
+  
   if (MyConnect(source_p) && (source_p->umodes & FLAGS_ADMIN) && !IsOperAdmin(source_p))
     {
       sendto_one(source_p,":%s NOTICE %s :*** You need oper and A flag for +a",
                  me.name, parv[0]);
       source_p->umodes &= ~FLAGS_ADMIN;
     }
-
+  if (!IsUlined(source_p->from) && (source_p->umodes & FLAGS_SERVICES))
+    { 
+      sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +S", 
+      		me.name, parv[0]);
+      sendto_realops_flags(FLAGS_ALL, L_ALL, "Warning Non-Ulined Server |%s| tried to set %s as Services", source_p->from->name, source_p->name);
+      source_p->umodes &= ~FLAGS_SERVICES;
+    }
 
   if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(source_p))
     ++Count.invisi;
@@ -1093,13 +1131,21 @@ int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *
    */
   send_umode_out(client_p, source_p, setflags);
 
+  /* 
+   * only send out a sethost if +x mode was added
+   */
+  if (!(setflags & FLAGS_HIDDEN) && IsHidden(source_p)) {
+  	sendto_server(NULL, source_p, NULL, CAP_MODEX, 0, LL_ICLIENT, ":%s SETHOST %s :%s", source_p->name, source_p->name, source_p->vhost);					
+  	ilog(L_WARN, "Sending sethost for %s", source_p->name);
+  }	
+
   return 0;
 }
         
 /*
  * send the MODE string for user (user) to connection client_p
  * -avalon
- */
+ */	
 void send_umode(struct Client *client_p, struct Client *source_p, int old, 
 		int sendmask,  char *umode_buf)
 {
@@ -1118,8 +1164,8 @@ void send_umode(struct Client *client_p, struct Client *source_p, int old,
   for (i = 0; user_modes[i].letter; i++ )
     {
       flag = user_modes[i].mode;
-
       if (MyClient(source_p) && !(flag & sendmask))
+ 
         continue;
       if ((flag & old) && !(source_p->umodes & flag))
         {
@@ -1134,9 +1180,10 @@ void send_umode(struct Client *client_p, struct Client *source_p, int old,
         }
       else if (!(flag & old) && (source_p->umodes & flag))
         {
-          if (what == MODE_ADD)
+        
+          if (what == MODE_ADD) {
             *m++ = user_modes[i].letter;
-          else
+          } else
             {
               what = MODE_ADD;
               *m++ = '+';
@@ -1183,6 +1230,7 @@ void send_umode_out(struct Client *client_p,
 
   if (client_p && MyClient(client_p))
     send_umode(client_p, source_p, old, ALL_UMODES, buf);
+
 }
 
 /* 

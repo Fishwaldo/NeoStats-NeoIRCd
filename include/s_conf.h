@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h,v 1.1 2002/08/13 14:35:47 fishwaldo Exp $
+ *  $Id: s_conf.h,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -88,6 +88,7 @@ struct ConfItem
 #define CONF_SERVER             0x0004
 #define CONF_OPERATOR           0x0010
 #define CONF_KILL               0x0040
+#define CONF_USERVER		0x0080
 
 #define CONF_CLASS              0x0400
 #define CONF_LEAF               0x0800
@@ -130,6 +131,7 @@ struct ConfItem
 #define CONF_FLAGS_COMPRESSED           0x00020000
 #define CONF_FLAGS_TEMPORARY            0x00040000
 #define CONF_FLAGS_CRYPTLINK            0x00080000
+#define CONF_FLAGS_ULINED		0x00100000
 /* Macros for struct ConfItem */
 
 #define IsLimitIp(x)            ((x)->flags & CONF_FLAGS_LIMIT_IP)
@@ -149,7 +151,7 @@ struct ConfItem
 #define IsConfEncrypted(x)      ((x)->flags & CONF_FLAGS_ENCRYPTED)
 #define IsConfCompressed(x)     ((x)->flags & CONF_FLAGS_COMPRESSED)
 #define IsConfCryptLink(x)      ((x)->flags & CONF_FLAGS_CRYPTLINK)
-
+#define IsConfUlined(x)		((x)->flags & CONF_FLAGS_ULINED)
 /* port definitions for Opers */
 
 #define CONF_OPER_GLOBAL_KILL   0x0001

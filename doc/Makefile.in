@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.1 2002/08/13 14:35:18 fishwaldo Exp $
+# $Id: Makefile.in,v 1.2 2002/08/13 14:45:01 fishwaldo Exp $
 CC		= @CC@
 INSTALL		= @INSTALL@
 INSTALL_BIN	= @INSTALL_PROGRAM@

@@ -1,4 +1,4 @@
-$! $Id: clean.com,v 1.1 2002/08/13 14:34:56 fishwaldo Exp $
+$! $Id: clean.com,v 1.2 2002/08/13 14:44:59 fishwaldo Exp $
 $! yes, its a hack. this needs to be merged into make.com.
 $! (well, really, into a top-level descrip.mms.. one day).
 $

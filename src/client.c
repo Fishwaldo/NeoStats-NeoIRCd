@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c,v 1.1 2002/08/13 14:36:20 fishwaldo Exp $
+ *  $Id: client.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -971,7 +971,7 @@ static void exit_one_client(struct Client *client_p,
       sendto_common_channels_local(source_p, ":%s!%s@%s QUIT :%s",
 				   source_p->name,
 				   source_p->username,
-				   source_p->host,
+				   source_p->vhost,
 				   comment);
 
       for (lp = source_p->user->channel.head; lp; lp = next_lp)
@@ -1167,7 +1167,7 @@ void dead_link(struct Client *client_p)
 		         "Closing link to %s: %s",
                          get_client_name(client_p, MASK_IP), notice);
   }
-  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(to, HIDE_IP), notice));
+//  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(to, HIDE_IP), notice));
   assert(dlinkFind(&abort_list, client_p) == NULL);
   m = make_dlink_node();
   dlinkAdd(client_p, m, &abort_list);
@@ -1330,10 +1330,10 @@ int exit_client(
 	{
 	  if (client_p != NULL && source_p != client_p)
 	    sendto_one(source_p, "ERROR :Closing Link: %s %s (%s)",
-		       source_p->host, source_p->name, comment);
+		       source_p->vhost, source_p->name, comment);
 	  else
 	    sendto_one(source_p, "ERROR :Closing Link: %s (%s)",
-		       source_p->host, comment);
+		       source_p->vhost, comment);
 	}
       /*
       ** Currently only server connections can have
@@ -1628,7 +1628,7 @@ int change_local_nick(struct Client *client_p, struct Client *source_p,
 			   source_p->host);
 
       sendto_common_channels_local(source_p, ":%s!%s@%s NICK :%s",
-				   source_p->name, source_p->username, source_p->host,
+				   source_p->name, source_p->username, source_p->vhost,
 				   nick);
       if (source_p->user)
 	{

@@ -1,7 +1,7 @@
 $ WRITE SYS$OUTPUT "Commencing build of ircd-hybrid-7 for VMS..."
 $ WRITE SYS$OUTPUT "Examining source directory..."
 $
-$! $Id: make.com,v 1.1 2002/08/13 14:35:01 fishwaldo Exp $
+$! $Id: make.com,v 1.2 2002/08/13 14:44:59 fishwaldo Exp $
 $! Don't have to do this any more - we now depend on
 $! bison/flex to build.
 $! FILE_SIZE = "NOSUCHFILE"

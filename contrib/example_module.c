@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: example_module.c,v 1.1 2002/08/13 14:35:11 fishwaldo Exp $
+ *   $Id: example_module.c,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -121,7 +121,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 /*

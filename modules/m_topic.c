@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_topic.c,v 1.1 2002/08/13 14:36:09 fishwaldo Exp $
+ *  $Id: m_topic.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ _moddeinit(void)
   mod_del_cmd(&topic_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 /*
  * m_topic
@@ -138,7 +138,7 @@ static void m_topic(struct Client *client_p,
 	    {
 	      char topic_info[USERHOST_REPLYLEN]; 
               ircsprintf(topic_info, "%s!%s@%s",
-			 source_p->name, source_p->username, source_p->host);
+			 source_p->name, source_p->username, source_p->vhost);
               set_channel_topic(chptr, parv[2], topic_info, CurrentTime);
 	      
 	      sendto_server(client_p, NULL, chptr, NOCAPS, NOCAPS, NOFLAGS,
@@ -151,7 +151,7 @@ static void m_topic(struct Client *client_p,
 				       chptr, ":%s!%s@%s TOPIC %s :%s",
 				       source_p->name,
 				       source_p->username,
-				       source_p->host,
+				       source_p->vhost,
 				       root_chan->chname,
 				       chptr->topic == NULL ? "" : chptr->topic);
 
@@ -167,7 +167,7 @@ static void m_topic(struct Client *client_p,
 				       chptr, ":%s!%s@%s TOPIC %s :%s",
 				       source_p->name,
 				       source_p->username,
-				       source_p->host,
+				       source_p->vhost,
 				       root_chan->chname, chptr->topic == NULL ? "" : chptr->topic);
 		}
 	    }

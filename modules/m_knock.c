@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_knock.c,v 1.1 2002/08/13 14:36:04 fishwaldo Exp $
+ *  $Id: m_knock.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -54,7 +54,7 @@ static void send_knock(struct Client *, struct Client *,
 
 static int is_banned_knock(struct Channel *, struct Client *, char *);
 static int check_banned_knock(struct Channel *, struct Client *,
-                              char *, char *);
+                              char *, char *, char *);
 
 struct Message knock_msgtab = {
   "KNOCK", 0, 0, 2, 0, MFLG_SLOW, 0,
@@ -81,7 +81,7 @@ _moddeinit(void)
   mod_del_cmd(&knockll_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 /* m_knock
@@ -420,7 +420,7 @@ static void send_knock(struct Client *client_p, struct Client *source_p,
 			     name,
 			     source_p->name,
 			     source_p->username,
-			     source_p->host);
+			     source_p->vhost);
       
       sendto_server(client_p, source_p, chptr, CAP_KNOCK, NOCAPS, LL_ICLIENT,
                     ":%s KNOCK %s %s",
@@ -443,14 +443,15 @@ static int is_banned_knock(struct Channel *chptr, struct Client *who,
 {
   char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
   char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
+  char src_vhost[NICKLEN + USERLEN + HOSTLEN +6];
 
   if(!IsPerson(who))
     return 0;
 
   ircsprintf(src_host,"%s!%s@%s", who->name, who->username, who->host);
   ircsprintf(src_iphost,"%s!%s@%s", who->name, who->username, sockhost);
-
-  return (check_banned_knock(chptr, who, src_host, src_iphost));
+  ircsprintf(src_vhost, "%s!%s@vhost", who->name, who->username, who->vhost);
+  return (check_banned_knock(chptr, who, src_host, src_iphost, src_vhost));
 }
 
 /* check_banned_knock()
@@ -463,7 +464,7 @@ static int is_banned_knock(struct Channel *chptr, struct Client *who,
  * side effects - return CHFL_EXCEPTION, CHFL_BAN or 0
  */
 static int check_banned_knock(struct Channel *chptr, struct Client *who,
-                              char *s, char *s2)
+                              char *s, char *s2, char *s3)
 {
   dlink_node *ban;
   dlink_node *except;
@@ -474,7 +475,7 @@ static int check_banned_knock(struct Channel *chptr, struct Client *who,
   {
     actualBan = ban->data;
 
-    if (match(actualBan->banstr, s) || match(actualBan->banstr, s2))
+    if (match(actualBan->banstr, s) || match(actualBan->banstr, s2) || match(actualBan->banstr, s3))
       break;
     else
       actualBan = NULL;
@@ -486,7 +487,7 @@ static int check_banned_knock(struct Channel *chptr, struct Client *who,
     {
       actualExcept = except->data;
 
-      if (match(actualExcept->banstr, s) || match(actualExcept->banstr, s2))
+      if (match(actualExcept->banstr, s) || match(actualExcept->banstr, s2) || match(actualBan->banstr, s3))
         return CHFL_EXCEPTION;
     }
   }

@@ -26,7 +26,7 @@
  *  along with this program; if not, write to the Free Software Foundation,
  *  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * $Id: internal.h,v 1.1 2002/08/13 14:35:06 fishwaldo Exp $
+ * $Id: internal.h,v 1.2 2002/08/13 14:44:59 fishwaldo Exp $
  */
 
 #ifndef ADNS_INTERNAL_H_INCLUDED

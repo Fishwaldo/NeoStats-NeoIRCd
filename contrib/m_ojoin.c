@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_ojoin.c,v 1.1 2002/08/13 14:35:16 fishwaldo Exp $
+ *   $Id: m_ojoin.c,v 1.2 2002/08/13 14:45:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -58,7 +58,7 @@ _moddeinit(void)
   mod_del_cmd(&ojoin_msgtab);
 }
 
-char *_version = "$Revision: 1.1 $";
+char *_version = "$Revision: 1.2 $";
 
 /*
 ** mo_ojoin

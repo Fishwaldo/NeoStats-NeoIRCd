@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.1 2002/08/13 14:36:19 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -252,9 +252,9 @@ add_id(struct Client *client_p, struct Channel *chptr, char *banid, int type)
     actualBan->who =
       (char *)MyMalloc(strlen(client_p->name) +
                        strlen(client_p->username) +
-                       strlen(client_p->host) + 3);
+                       strlen(client_p->vhost) + 3);
     ircsprintf(actualBan->who, "%s!%s@%s",
-               client_p->name, client_p->username, client_p->host);
+               client_p->name, client_p->username, client_p->vhost);
   }
   else
   {
@@ -2221,7 +2221,7 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
     mbl = ircsprintf(modebuf, ":%s MODE %s ", me.name, chname);
   else
     mbl = ircsprintf(modebuf, ":%s!%s@%s MODE %s ", source_p->name,
-                     source_p->username, source_p->host, chname);
+                     source_p->username, source_p->vhost, chname);
 
   pbl = 0;
   parabuf[0] = '\0';
@@ -2257,7 +2257,7 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
         mbl = ircsprintf(modebuf, ":%s MODE %s -", me.name, chname);
       else
         mbl = ircsprintf(modebuf, ":%s!%s@%s MODE %s -", source_p->name,
-                   source_p->username, source_p->host, chname);
+                   source_p->username, source_p->vhost, chname);
 
       pbl = 0;
       parabuf[0] = '\0';
@@ -2308,7 +2308,7 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
         mbl = ircsprintf(modebuf, ":%s MODE %s +", me.name, chname);
       else
         mbl = ircsprintf(modebuf, ":%s!%s@%s MODE %s +", source_p->name,
-                   source_p->username, source_p->host, chname);
+                   source_p->username, source_p->vhost, chname);
 
       pbl = 0;
       parabuf[0] = '\0';

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.6 2002/09/17 06:09:35 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.7 2002/09/17 07:08:56 fishwaldo Exp $
  */
 
 %{
@@ -1899,23 +1899,21 @@ general_failed_oper_notice:   FAILED_OPER_NOTICE '=' TYES ';'
 
 general_oper_autojoin:	   OPERAUTOJOIN '=' QSTRING ';'
   {
-    if (strlen(yylval.string) > CHANNELLEN) {
-	sendto_realops_flags(FLAGS_ALL, L_ALL, "Invalid autojoin Channel %s", yylval.string);
-	ilog(L_ERROR, "Invalid autojoin channel '%s'", yylval.string);
-	return;
-    }
-    if (!check_channel_name(yylval.string) || !IsChannelName(yylval.string)) {
-	sendto_realops_flags(FLAGS_ALL, L_ALL, "Invalid Autojoin Channelname %s", yylval.string);
-	ilog(L_ERROR, "Invalid autojoin Channelname %s", yylval.string);
-	return;
-    }
-    if (*yylval.string == '&') {
-	sendto_realops_flags(FLAGS_ALL, L_ALL, "Cannot set Autojoin Channel to a local channel");
-	ilog(L_ERROR, "Cannot set Autojoin Channel to a local channel");
-	return;
-    }
     strlcpy(ConfigFileEntry.operautojoin, yylval.string,
               CHANNELLEN);
+
+    if (!check_channel_name(ConfigFileEntry.operautojoin) || !IsChannelName(ConfigFileEntry.operautojoin)) {
+	sendto_realops_flags(FLAGS_ALL, L_ALL, "Invalid Autojoin Channelname %s", ConfigFileEntry.operautojoin);
+	ilog(L_ERROR, "Invalid autojoin Channelname %s", ConfigFileEntry.operautojoin);
+	strlcpy(ConfigFileEntry.operautojoin, "#ircop", CHANNELLEN);
+	return;
+    }
+    if (ConfigFileEntry.operautojoin[0] == '&') {
+	sendto_realops_flags(FLAGS_ALL, L_ALL, "Cannot set Autojoin Channel to a local channel");
+	ilog(L_ERROR, "Cannot set Autojoin Channel to a local channel");
+	strlcpy(ConfigFileEntry.operautojoin, "#ircop", CHANNELLEN);
+	return;
+    }
   } ;
 
 general_anti_nick_flood:   ANTI_NICK_FLOOD '=' TYES ';'

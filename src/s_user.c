@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.27 2002/09/26 11:26:20 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.28 2002/09/26 11:50:07 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -957,7 +957,6 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
   ** and the prefix isn't from the clients server, then its a error
   */
 
-sendto_realops_flags(FLAGS_ALL, L_ALL, "source: %s client %s target %s", source_p->name, client_p->name, target_p->name);
 
   if (IsServer(source_p) && (target_p->servptr != client_p) && !IsUlined(source_p))
     {
@@ -985,6 +984,7 @@ sendto_realops_flags(FLAGS_ALL, L_ALL, "source: %s client %s target %s", source_
       sendto_one(source_p, form_str(RPL_UMODEIS), me.name, parv[0], buf);
       return 0;
     }
+sendto_realops_flags(FLAGS_ALL, L_ALL, "source: %s client %s target %s mode %s", source_p->name, client_p->name, target_p->name, parv[2]);
 
   /* find flags already set for user */
   setflags = target_p->umodes;
@@ -1210,11 +1210,11 @@ send_umode_out(struct Client *source_p, struct Client *client_p,
     {
       starget_p = ptr->data;
 
-      if((starget_p != client_p) && (starget_p != client_p) && (*buf))
+      if((starget_p != client_p) && (*buf))
         {
           if((!(ServerInfo.hub && IsCapable(starget_p, CAP_LL)))
              || (starget_p->localClient->serverMask &
-                 target_p->lazyLinkClientExists))
+                 target_p->lazyLinkClientExists)) 
             sendto_one(starget_p, ":%s MODE %s :%s",
                        (IsUlined(source_p)) ? source_p->name : target_p->servptr->name, target_p->name, buf);
         }

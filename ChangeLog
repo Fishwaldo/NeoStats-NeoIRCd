@@ -23,3 +23,4 @@ Symbols are:
 (F)	- Moved AnonOps Mode char to +A
 (F)	- Only allow channel admins to set +A (anonops)
 (F)	- Channel Mode +O (opers only)
+(HP)	- Added Patch to fix hardcoded timeouts in s_serv.c

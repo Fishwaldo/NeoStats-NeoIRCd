@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.29 2002/09/26 11:54:36 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.30 2002/09/26 12:14:03 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1205,10 +1205,8 @@ send_umode_out(struct Client *source_p, struct Client *client_p,
   dlink_node *ptr;
 
   send_umode(target_p, target_p, old, ALL_UMODES, buf);
-  sendto_server(client_p, target_p, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s MDOE %s :%s", IsUlined(source_p) ? source_p->name : target_p->servptr->name, target_p->name, buf);
-
-  if (client_p && MyClient(target_p))
-    send_umode(client_p, target_p, old, ALL_UMODES, buf);
+  sendto_server(IsServer(client_p) ? client_p : NULL, target_p, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s MDOE %s :%s", IsUlined(source_p) ? source_p->name : target_p->servptr->name, target_p->name, buf);
+  sendto_realops_flags(FLAGS_ALL, L_ALL, "sending client %s (from %s) source %s target %s mode %s", client_p->name, IsUlined(source_p) ? source_p->name : target_p->servptr->name, source_p->name, target_p->name, buf);
 }
 
 /* 
@@ -1394,7 +1392,7 @@ oper_up( struct Client *source_p, struct ConfItem *aconf )
   sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 		       "%s (%s@%s) is now an %s", source_p->name,
 		       source_p->username, source_p->host, (IsOperAdmin(source_p) ? "Administrator" : "Operator"));
-  send_umode_out(source_p, source_p, source_p, old);
+  send_umode_out(source_p->servptr, source_p, source_p, old);
   sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
   sendto_one(source_p, ":%s NOTICE %s :*** Oper privs are %s", me.name,
              source_p->name, operprivs);

@@ -385,6 +385,7 @@ modules/m_user.c -text
 modules/m_userhost.c -text
 modules/m_users.c -text
 modules/m_version.c -text
+modules/m_vhost.c -text
 modules/m_wallops.c -text
 modules/m_who.c -text
 modules/m_whois.c -text

@@ -1,7 +1,13 @@
-$Id: TODO,v 1.4 2002/09/02 04:10:59 fishwaldo Exp $
+$Id: TODO,v 1.5 2002/09/12 07:15:57 fishwaldo Exp $
 
-invites and exception list (and invite exception lists) should
-override a oper only channel :)
+NeoStats HostServ should accept /privmsg hostserv login <username> <password> for NeoIRCD vhost support!
 
+Does Glines get propogated to new servers that have just joined the network? I don't think so, but have to confirm.
 
-server<->server channel modes... Do they work?
+SQlines etc need to be propogated
+
+/nickserv /chanserv etc need to be added (dynamically!)
+
+sendto_realops and sendto_realops_flags needs ability to send network wide (not just server wide)
+
+update SERVER command, so Hidden, or Dynamic U-lined servers are introduced in a nicer way (Not via Server info line, as its done now)

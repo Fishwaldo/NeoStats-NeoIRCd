@@ -34,3 +34,4 @@ Symbols are:
 (F)	- Added Chanmode +R and username +r for registered channels and registered users 
 (F)	- No more need for 3 opers to vote on a Gline. One oper does it now. 
 (F)	- Moved ungline to m_gline, and unkline, undline to m_kline. removed m_unkline now.
+(F)	- Added /vhost as a alias for hostserv (From NeoStats). Have to get Shmad to update hostserv. (:fish PRIVMSG HostServ!services@stats.dynam.ac :login username password) is the syntax.

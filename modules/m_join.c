@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_join.c,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -65,7 +65,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&join_msgtab);
 }
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 
 #endif
 static void do_join_0(struct Client *client_p, struct Client *source_p);
@@ -216,7 +216,7 @@ m_join(struct Client *client_p,
           }
           
 	  if (chptr->users == 0)
-	    flags = CHFL_CHANOP;
+	    flags = CHFL_ADMIN;
 	  else
 	    flags = 0;
 	}
@@ -230,7 +230,7 @@ m_join(struct Client *client_p,
 	    continue;
 	  }
 	  
-	  flags = CHFL_CHANOP;
+	  flags = CHFL_ADMIN;
 	  if(!ServerInfo.hub)
 	    {
 	      /* LazyLinks */
@@ -312,7 +312,7 @@ m_join(struct Client *client_p,
       **  Set timestamp if appropriate, and propagate
       */
 
-      if (flags & CHFL_CHANOP)
+      if (flags & CHFL_ADMIN)
 	{
 	  chptr->channelts = CurrentTime;
 
@@ -374,7 +374,7 @@ m_join(struct Client *client_p,
 			   source_p->vhost,
 			   root_chptr->chname);
       
-      if( flags & CHFL_CHANOP )
+      if( flags & CHFL_ADMIN )
 	{
 	  chptr->mode.mode |= MODE_TOPICLIMIT;
 	  chptr->mode.mode |= MODE_NOPRIVMSGS;
@@ -399,7 +399,7 @@ m_join(struct Client *client_p,
 		     parv[0], root_chptr->chname, chptr->topic);
 
           if (!(chptr->mode.mode & MODE_HIDEOPS) ||
-              (flags & CHFL_CHANOP) || (flags & CHFL_HALFOP))
+              (flags & CHFL_CHANOP) || (flags & CHFL_HALFOP) || (flags & CHFL_ADMIN))
             {
               sendto_one(source_p, form_str(RPL_TOPICWHOTIME),
                          me.name, parv[0], root_chptr->chname,

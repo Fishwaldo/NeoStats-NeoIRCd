@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_who.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: m_who.c,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -61,7 +61,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&who_msgtab);
 }
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 static void do_who_on_channel(struct Client *source_p,
 			      struct Channel *chptr, char *real_name,
@@ -75,10 +75,12 @@ static void do_who_list(struct Client *source_p, struct Channel *chptr,
 #ifdef HALFOPS
                         dlink_list *halfops_list, 
 #endif
+			dlink_list *chanadmins_list, 
 			dlink_list *voiced_list,
                         char *chanop_flag,
 			char *halfop_flag,
 			char *voiced_flag,
+			char *chanadmin_flag,
                         char *chname, int member);
 
 static void who_global(struct Client *source_p, char *mask, int server_oper);
@@ -255,6 +257,8 @@ static void m_who(struct Client *client_p,
 #endif
 	  else if(is_voiced(chptr,target_p))
 	    do_who(source_p, target_p, chname, flags[2]);
+	  else if(is_chan_admin(chptr, target_p))
+	    do_who(source_p, target_p, chname, flags[5]);
 	  else
 	    do_who(source_p, target_p, chname, "");
 	}
@@ -416,7 +420,6 @@ static void do_who_on_channel(struct Client *source_p,
 
   /* jdc -- Check is_any_op() for +o > +h > +v priorities */
   set_channel_mode_flags( flags, chptr, source_p );
-
   do_who_list(source_p, chptr,
               &chptr->peons,
               &chptr->chanops,
@@ -426,10 +429,12 @@ static void do_who_on_channel(struct Client *source_p,
 #ifdef HALFOPS
               &chptr->halfops,
 #endif
+	      &chptr->chanadmins,
               &chptr->voiced,
               flags[0],
               flags[1],
               flags[2],
+              flags[5],
               chname, member);
 
 }
@@ -443,10 +448,12 @@ static void do_who_list(struct Client *source_p, struct Channel *chptr,
 #ifdef HALFOPS
 			dlink_list *halfops_list,
 #endif
+			dlink_list *chanadmins_list,
 			dlink_list *voiced_list,
 			char *chanop_flag,
 			char *halfop_flag,
 			char *voiced_flag,
+			char *admins_flag,
 			char *chname, int member)
 {
   struct Client *target_p;
@@ -461,6 +468,7 @@ static void do_who_list(struct Client *source_p, struct Channel *chptr,
 #ifdef HALFOPS
   dlink_node *halfops_ptr;
 #endif
+  dlink_node *chanadmins_ptr;
   int done=0;
 
   peons_ptr   = peons_list->head;
@@ -472,6 +480,7 @@ static void do_who_list(struct Client *source_p, struct Channel *chptr,
 #ifdef REQUIRE_OANDV
   chanops_voiced_ptr = chanops_voiced_list->head;
 #endif
+  chanadmins_ptr = chanadmins_list->head;
 
   while (done != NUMLISTS)
     {
@@ -495,6 +504,16 @@ static void do_who_list(struct Client *source_p, struct Channel *chptr,
           if(member || !IsInvisible(target_p))
             do_who(source_p, target_p, chname, chanop_flag);
           chanops_ptr = chanops_ptr->next;
+        }
+      else
+        done++;
+ilog(1, "chanadmin1 %s", admins_flag);        
+      if(chanadmins_ptr != NULL)
+        {
+          target_p = chanadmins_ptr->data;
+          if(member || !IsInvisible(target_p))
+            do_who(source_p, target_p, chname, admins_flag);
+          chanadmins_ptr = chanadmins_ptr->next;
         }
       else
         done++;
@@ -572,6 +591,13 @@ static void do_who_list(struct Client *source_p, struct Channel *chptr,
         do_who(source_p, target_p, chname, chanop_flag);
     }
 #endif
+    for(ptr = chanadmins_list->head; ptr; ptr = ptr->next)
+    {
+      target_p = ptr->data;
+ilog(1, "doadmin %s", admins_flag);      
+      if(member || !IsInvisible(target_p))
+        do_who(source_p, target_p, chname, admins_flag);
+    }
 
     for(ptr = chanops_list->head; ptr; ptr = ptr->next)
     {
@@ -600,7 +626,6 @@ static void do_who(struct Client *source_p,
                    char *op_flags)
 {
   char  status[5];
-
   ircsprintf(status,"%c%s%s", 
 	     target_p->user->away ? 'G' : 'H',
 	     IsOper(target_p) ? "*" : "", op_flags );

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_invite.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_invite.c,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ _moddeinit(void)
   mod_del_cmd(&invite_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 /*
@@ -174,7 +174,7 @@ m_invite(struct Client *client_p,
     return;
   }
 
-  chop = is_chan_op(chptr, source_p);
+  chop = is_chan_op(chptr, source_p) || is_chan_admin(chptr, source_p);
 
   if (chptr && (vchan->mode.mode & MODE_INVITEONLY))
   {
@@ -187,6 +187,7 @@ m_invite(struct Client *client_p,
     }
   }
   else
+    if (!(vchan->mode.mode * MODE_OPERSONLY))
     /* Don't save invite even if from an op otherwise... */
     chop = 0;
 

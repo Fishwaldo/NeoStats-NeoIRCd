@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c,v 1.3 2002/08/14 03:14:27 fishwaldo Exp $
+ *  $Id: client.c,v 1.4 2002/08/14 16:52:02 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -1159,7 +1159,7 @@ void dead_link(struct Client *client_p)
 
   /* Mark it dead before sending out any notices, just in case this ever goes
    * global */    	
-  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(to, HIDE_IP), 
+  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(client_p, HIDE_IP), 
       notice));
   assert(dlinkFind(&abort_list, client_p) == NULL);
   m = make_dlink_node();

@@ -19,3 +19,7 @@ Symbols are:
 	  user removes -x then, vhost is set to real host. 
 (F)	- Added Setulined to conf file for locally linked servers. 
 (HP)	- Added Patch to fix race condition in dead_link
+(F)	- Added Channel Admins (+a) 
+(F)	- Moved AnonOps Mode char to +A
+(F)	- Only allow channel admins to set +A (anonops)
+(F)	- Channel Mode +O (opers only)

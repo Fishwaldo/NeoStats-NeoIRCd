@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.h,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
+ *  $Id: channel.h,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_channel_h
@@ -66,7 +66,7 @@ struct Channel
   struct Channel  *root_chptr;		/* pointer back to root if vchan */
   dlink_list	  vchan_list;	        /* vchan sublist */
 #endif
-
+  dlink_list	  chanadmins;		/* list of Channel Admins */
   dlink_list      chanops;		/* lists of chanops etc. */
 #ifdef REQUIRE_OANDV
   dlink_list	  chanops_voiced;	/* UGH I'm sorry */
@@ -77,7 +77,8 @@ struct Channel
   dlink_list      voiced;
   dlink_list      peons;                /* non ops, just members */
   dlink_list	  deopped;              /* users deopped on sjoin */
-
+  
+  dlink_list	  locchanadmins;	/* local versions of the above */
   dlink_list      locchanops;           /* local versions of the above */
 #ifdef REQUIRE_OANDV
   dlink_list	  locchanops_voiced;	/* UGH I'm sorry */
@@ -114,6 +115,7 @@ extern int     is_banned (struct Channel *chptr, struct Client *who);
 extern int     can_join(struct Client *source_p, struct Channel *chptr,
                         char *key);
 extern int     is_chan_op (struct Channel *chptr,struct Client *who);
+extern int     is_chan_admin (struct Channel *chptr, struct Client *who);
 extern int     is_any_op (struct Channel *chptr,struct Client *who);
 #ifdef HALFOPS
 extern int     is_half_op (struct Channel *chptr,struct Client *who);
@@ -171,9 +173,9 @@ struct Ban          /* also used for exceptions -orabidoo */
 #define MAX_VCHAN_TIME (60*60)
 /* Number of chanops, peon, voiced, halfops sublists */
 #ifdef REQUIRE_OANDV
-#define NUMLISTS 5
+#define NUMLISTS 6
 #else
-#define NUMLISTS 4
+#define NUMLISTS 5
 #endif
 
 #ifdef INTENSIVE_DEBUG

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: channel.c,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -152,6 +152,11 @@ add_user_to_channel(struct Channel *chptr, struct Client *who, int flags)
 	  dlinkAdd(who, lptr, &chptr->locchanops);
 	break;
 #endif
+      case MODE_ADMIN:
+      	dlinkAdd(who, ptr, &chptr->chanadmins);
+      	if (MyClient(who))
+      	  dlinkAdd(who, lptr, &chptr->locchanadmins);
+      	break;
     }
 
     if(flags & MODE_DEOPPED)
@@ -209,6 +214,8 @@ remove_user_from_channel(struct Channel *chptr, struct Client *who)
   else if ((ptr = find_user_link(&chptr->halfops, who)))
     dlinkDelete(ptr, &chptr->halfops);
 #endif
+  else if ((ptr = find_user_link(&chptr->chanadmins, who)))
+    dlinkDelete(ptr, &chptr->chanadmins);
   else {
     assert(0 == 1); /* This ain't supposed to happen */
   }
@@ -237,6 +244,8 @@ remove_user_from_channel(struct Channel *chptr, struct Client *who)
     else if ((ptr = find_user_link(&chptr->locchanops_voiced, who)))
       dlinkDelete(ptr, &chptr->locchanops_voiced);
 #endif
+    else if ((ptr = find_user_link(&chptr->locchanadmins, who)))
+      dlinkDelete(ptr, &chptr->locchanadmins);
     else
       assert(1 == 0);
 
@@ -371,7 +380,7 @@ send_channel_modes(struct Client *client_p, struct Channel *chptr)
     send_members(client_p, modebuf, parabuf, chptr, &chptr->halfops, "@");
   }
 #endif
-
+  send_members(client_p, modebuf, parabuf, chptr, &chptr->chanadmins, "*");
   send_members(client_p, modebuf, parabuf, chptr, &chptr->voiced, "+");
   send_members(client_p, modebuf, parabuf, chptr, &chptr->peons, "");
 
@@ -642,7 +651,7 @@ destroy_channel(struct Channel *chptr)
    * persistent channels. In the case of a LL the channel need not
    * be empty, it only has to be empty of local users.
    */
-
+  delete_members(chptr, &chptr->chanadmins);
   delete_members(chptr, &chptr->chanops);
 #ifdef REQUIRE_OANDV
   delete_members(chptr, &chptr->chanops_voiced);
@@ -653,6 +662,7 @@ destroy_channel(struct Channel *chptr)
   delete_members(chptr, &chptr->halfops);
 #endif
 
+  delete_members(chptr, &chptr->locchanadmins);
   delete_members(chptr, &chptr->locchanops);
 #ifdef REQUIRE_OANDV
   delete_members(chptr, &chptr->locchanops_voiced);
@@ -801,7 +811,11 @@ channel_member_names(struct Client *source_p,
     members_ptr[3] = chptr->peons.head;
 #ifdef REQUIRE_OANDV
     members_ptr[4] = chptr->chanops_voiced.head;
+#else 
+    members_ptr[4] = NULL;
 #endif
+    members_ptr[5] = chptr->chanadmins.head;
+       
     is_member = IsMember(source_p, chptr);
 
     /* Note: This code will show one chanop followed by one voiced followed
@@ -889,7 +903,10 @@ channel_member_names(struct Client *source_p,
     ptr_list[3] = chptr->peons.head;
 #ifdef REQUIRE_OANDV
     ptr_list[4] = chptr->chanops_voiced.head;
+#else 
+    ptr_list[4] = NULL;
 #endif
+    ptr_list[5] = chptr->chanadmins.head;
 
     set_channel_mode_flags(ptr_flags, chptr, source_p);
 
@@ -1056,6 +1073,8 @@ channel_chanop_or_voice(struct Channel *chptr, struct Client *target_p)
   else if (find_user_link(&chptr->chanops_voiced, target_p))
     return ("@+");
 #endif
+  else if (find_user_link(&chptr->chanadmins, target_p))
+    return ("*");
   return ("");
 }
 
@@ -1181,7 +1200,7 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
       for (ptr = chptr->invexlist.head; ptr; ptr = ptr->next)
       {
         invex = ptr->data;
-        if (match(invex->banstr, src_host) || match(invex->banstr, src_iphost))
+        if (match(invex->banstr, src_host) || match(invex->banstr, src_iphost) || match(invex->banstr, src_vhost))
           break;
       }
       if (ptr == NULL)
@@ -1195,6 +1214,30 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
   if (chptr->mode.limit && chptr->users >= chptr->mode.limit)
     return (ERR_CHANNELISFULL);
 
+  if ((chptr->mode.mode & MODE_OPERSONLY) && !IsOper(source_p)) {
+    for (lp = source_p->user->invited.head; lp; lp = lp->next) {
+      if (lp->data == chptr)
+        break;
+    }
+    if (!lp)
+    {
+      if (!ConfigChannel.use_invex)
+        return (ERR_NOPRIVILEGES);
+      for (ptr = chptr->invexlist.head; ptr; ptr = ptr->next)
+      {
+        invex = ptr->data;
+        if (match(invex->banstr, src_host) || match(invex->banstr, src_iphost) || match(invex->banstr, src_vhost))
+          break;
+      }
+      if (ptr == NULL) 
+        return (ERR_NOPRIVILEGES);
+      else
+       return 0;
+    } else {
+      return 0;
+    }
+    return (ERR_NOPRIVILEGES);
+  }
   return 0;
 }
 
@@ -1221,10 +1264,30 @@ is_chan_op(struct Channel *chptr, struct Client *who)
   return 0;
 }
 
+
+/*
+ * is_chan_admin
+ *
+ * inputs	- Pointer to channel to check chanadmin on
+ *		- pointer to client struct being checked
+ * output	- yes if chanadmin, no if not
+ * side effects - 
+ */
+int
+is_chan_admin(struct Channel *chptr, struct Client *who)
+{
+  if (chptr)
+  {
+    if (find_user_link(&chptr->chanadmins, who) != NULL)
+      return 1;
+  }
+  return 0;
+}
+
 /*
  * is_any_op
  *
- * inputs       - pointer to channel to check for chanop or halfops on
+ * inputs       - pointer to channel to check for chanop or halfops or chanadmin on
  *              - pointer to client struct being checked
  * output       - yes if anyop no if not
  * side effects -
@@ -1240,6 +1303,8 @@ is_any_op(struct Channel *chptr, struct Client *who)
     if (find_user_link(&chptr->halfops, who) != NULL)
       return 1;
 #endif
+    if (find_user_link(&chptr->chanadmins, who) != NULL)
+      return 1;
 #ifdef REQUIRE_OANDV
     if (find_user_link(&chptr->chanops_voiced, who) != NULL)
       return 1;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.h,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
+ *  $Id: channel_mode.h,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
  */
 
 
@@ -80,6 +80,7 @@ extern void unset_chcap_usage_counts(struct Client *serv_p);
 #define CHFL_BAN        0x0010 /* ban channel flag */
 #define CHFL_EXCEPTION  0x0020 /* exception to ban channel flag */
 #define CHFL_INVEX      0x0080
+#define CHFL_ADMIN	0x0100 /* channel admins */
 
 /* Channel Visibility macros */
 
@@ -88,6 +89,7 @@ extern void unset_chcap_usage_counts(struct Client *serv_p);
 #define MODE_VOICE      CHFL_VOICE
 #define MODE_HALFOP	CHFL_HALFOP
 #define MODE_DEOPPED	CHFL_DEOPPED
+#define MODE_ADMIN	CHFL_ADMIN
 
 /* channel modes ONLY */
 #define MODE_PRIVATE    0x0008
@@ -100,6 +102,7 @@ extern void unset_chcap_usage_counts(struct Client *serv_p);
 #define MODE_EXCEPTION  0x0800
 #define MODE_INVEX	0x2000
 #define MODE_HIDEOPS    0x4000
+#define MODE_OPERSONLY  0x8000
 
 /*
  * mode flags which take another parameter (With PARAmeterS)
@@ -143,6 +146,7 @@ struct ChCapCombo
   int cap_no;
 };
 
+#define CHACCESS_ADMIN  4
 #define CHACCESS_CHANOP 3
 #define CHACCESS_HALFOP 2
 #define CHACCESS_VOICED 1

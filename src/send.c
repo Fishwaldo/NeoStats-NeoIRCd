@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: send.c,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -233,14 +233,14 @@ send_linebuf_remote(struct Client *to, struct Client *from,
     sendto_server(NULL, to, NULL, NOCAPS, NOCAPS, NOFLAGS,
                   ":%s KILL %s :%s (%s[%s@%s] Ghosted %s)",
                   me.name, to->name, me.name, to->name,
-                  to->username, to->host, to->from->name);
+                  to->username, to->vhost, to->from->name);
 
     to->flags |= FLAGS_KILLED;
 
     if (IsPerson(from))
       sendto_one(from, form_str(ERR_GHOSTEDCLIENT),
                  me.name, from->name, to->name, to->username,
-                 to->host, to->from);
+                 to->vhost, to->from);
 
     exit_client(NULL, to, &me, "Ghosted client");
 
@@ -516,7 +516,7 @@ sendto_channel_butone(struct Client *one, struct Client *from,
                    from->name, command, RootChan(chptr)->chname);
   else
     linebuf_putmsg(&local_linebuf, pattern, &args, ":%s!%s@%s %s %s ",
-                   from->name, from->username, from->host,
+                   from->name, from->username, from->vhost,
                    command, RootChan(chptr)->chname);
 
   linebuf_putmsg(&remote_linebuf, pattern, &args, ":%s %s %s ",
@@ -548,6 +548,9 @@ sendto_channel_butone(struct Client *one, struct Client *from,
   sendto_list_anywhere(one, from, &chptr->peons,
                        &local_linebuf, &remote_linebuf, &uid_linebuf);
 
+  sendto_list_anywhere(one, from, &chptr->chanadmins, 
+  		       &local_linebuf, &remote_linebuf, &uid_linebuf);
+  	       
   linebuf_donebuf(&local_linebuf);
   linebuf_donebuf(&remote_linebuf);
   linebuf_donebuf(&uid_linebuf);
@@ -747,6 +750,7 @@ sendto_common_channels_local(struct Client *user, const char *pattern, ...)
 #endif
       sendto_list_local(&chptr->locvoiced, &linebuf);
       sendto_list_local(&chptr->locpeons, &linebuf);
+      sendto_list_local(&chptr->locchanadmins, &linebuf);
     }
 
     if (MyConnect(user) && (user->serial != current_serial))
@@ -804,6 +808,8 @@ sendto_channel_local(int type,
 #ifdef REQUIRE_OANDV
       sendto_list_local(&chptr->locchanops_voiced, &linebuf);
 #endif
+    case ONLY_CHANADMIN:
+      sendto_list_local(&chptr->locchanadmins, &linebuf);
   }
   linebuf_donebuf(&linebuf);
 } /* sendto_channel_local() */
@@ -861,6 +867,8 @@ sendto_channel_remote(struct Client *one,
       sendto_list_remote(one, from, &chptr->chanops_voiced, caps, nocaps,
                          &linebuf);
 #endif
+   case ONLY_CHANADMIN:
+      sendto_list_remote(one, from, &chptr->chanadmins, caps, nocaps, &linebuf);
   }
   linebuf_donebuf(&linebuf);
 } /* sendto_channel_remote() */
@@ -1004,7 +1012,7 @@ sendto_match_butone(struct Client *one, struct Client *from,
 
   linebuf_putmsg(&remote_linebuf, pattern, &args, ":%s ", from->name);
   linebuf_putmsg(&local_linebuf, pattern, &args, ":%s!%s@%s ", from->name,
-		 from->username, from->host);
+		 from->username, from->vhost);
 
   va_end(args);
 
@@ -1091,7 +1099,7 @@ sendto_anywhere(struct Client *to, struct Client *from,
       linebuf_putmsg(&linebuf, pattern, &args, ":%s ", from->name);
     else
       linebuf_putmsg(&linebuf, pattern, &args, ":%s!%s@%s ", from->name,
-                     from->username, from->host);
+                     from->username, from->vhost);
   }
   else {
     if(IsCapable(to->from, CAP_UID))
@@ -1187,7 +1195,7 @@ sendto_wallops_flags(int flags, struct Client *source_p,
 
   if(IsPerson(source_p))
     linebuf_putmsg(&linebuf, pattern, &args, ":%s!%s@%s WALLOPS :",
-                   source_p->name, source_p->username, source_p->host);
+                   source_p->name, source_p->username, source_p->vhost);
   else
     linebuf_putmsg(&linebuf, pattern, &args, ":%s WALLOPS :", source_p->name);
 

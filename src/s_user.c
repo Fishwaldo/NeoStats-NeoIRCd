@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.30 2002/09/26 12:14:03 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.31 2002/09/26 12:17:45 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1205,7 +1205,7 @@ send_umode_out(struct Client *source_p, struct Client *client_p,
   dlink_node *ptr;
 
   send_umode(target_p, target_p, old, ALL_UMODES, buf);
-  sendto_server(IsServer(client_p) ? client_p : NULL, target_p, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s MDOE %s :%s", IsUlined(source_p) ? source_p->name : target_p->servptr->name, target_p->name, buf);
+  sendto_server(IsServer(client_p) ? client_p : NULL, target_p, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s MODE %s :%s", IsUlined(source_p) ? source_p->name : target_p->servptr->name, target_p->name, buf);
   sendto_realops_flags(FLAGS_ALL, L_ALL, "sending client %s (from %s) source %s target %s mode %s", client_p->name, IsUlined(source_p) ? source_p->name : target_p->servptr->name, source_p->name, target_p->name, buf);
 }
 

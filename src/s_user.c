@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.38 2002/10/16 05:33:22 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.39 2002/10/16 06:23:30 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1047,6 +1047,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 			 * of they are not a local client 
 			 */
 			if (IsHidden(target_p)) break;
+	
 			target_p->umodes |= FLAGS_HIDDEN;
 			if (MyClient(target_p)) {
 				make_virthost(target_p->host, target_p->localClient->sockhost, target_p->vhost);
@@ -1206,7 +1207,7 @@ send_umode_out(struct Client *source_p, struct Client *client_p,
   char buf[BUFSIZE];
 
   send_umode(target_p, target_p, old, ALL_UMODES, buf);
-  sendto_server(IsServer(client_p) ? client_p : NULL, target_p, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s MODE %s :%s", IsUlined(source_p) ? source_p->name : target_p->servptr->name, target_p->name, buf);
+  if (buf) sendto_server(IsServer(client_p) ? client_p : NULL, target_p, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s MODE %s :%s", IsUlined(source_p) ? source_p->name : target_p->servptr->name, target_p->name, buf);
 }
 
 /* 

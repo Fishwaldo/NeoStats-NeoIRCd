@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c,v 1.9 2002/09/16 09:35:43 fishwaldo Exp $
+ *  $Id: m_sjoin.c,v 1.10 2002/09/23 10:47:30 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ _moddeinit(void)
   mod_del_cmd(&sjoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.9 $";
+const char *_version = "$Revision: 1.10 $";
 #endif
 /*
  * ms_sjoin
@@ -371,7 +371,7 @@ static void ms_sjoin(struct Client *client_p,
 
       for (i = 0; i < 2; i++)
 	{
-	  if (*s == '¤')
+	  if (*s == '!')
 	    {
 	      fl |= MODE_ADMIN;
 	      if (keep_new_modes)

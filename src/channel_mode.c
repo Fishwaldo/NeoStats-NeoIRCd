@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.17 2002/09/21 06:26:13 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.18 2002/09/23 10:47:30 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -2125,7 +2125,7 @@ set_channel_mode_flags(char flags_ptr[NUMLISTS][2], struct Channel *chptr,
     flags_ptr[0][0] = '@';
     flags_ptr[1][0] = '%';
     flags_ptr[2][0] = '+';
-    flags_ptr[3][0] = '¤';
+    flags_ptr[3][0] = '!';
     flags_ptr[4][0] = '\0';
 
     flags_ptr[0][1] = '\0';

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.h,v 1.8 2002/09/13 09:17:13 fishwaldo Exp $
+ *  $Id: channel_mode.h,v 1.9 2002/09/23 10:47:29 fishwaldo Exp $
  */
 
 
@@ -41,6 +41,8 @@ extern void sync_channel_oplists(struct Channel *, int);
 extern void set_channel_mode_flags( char flags_ptr[4][2],
 				    struct Channel *chptr,
 				    struct Client *source_p);
+
+#define ADMIN_CHAR !
 
 /*
 ** Channel Related macros follow

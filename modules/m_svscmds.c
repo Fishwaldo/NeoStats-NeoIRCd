@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_svscmds.c,v 1.6 2002/09/23 04:39:32 fishwaldo Exp $
+ *   $Id: m_svscmds.c,v 1.7 2002/09/23 10:47:30 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -133,7 +133,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 
 /*
@@ -338,11 +338,11 @@ static void ms_svsjoin(struct Client *client_p, struct Client *source_p,
     return;
 
   /* select our modes from parv[2] if they exist... (chanop)*/
-  if(*parv[2] == '¤')
+  if(*parv[2] == '!')
   {
     type = CHFL_ADMIN;
     mode = 'a';
-    sjmode = '¤';
+    sjmode = '!';
   }
   if(*parv[2] == '@')
   {
@@ -454,7 +454,7 @@ static void ms_svsjoin(struct Client *client_p, struct Client *source_p,
       /* send out a join, make target_p join chptr */
       if (chptr->chname[0] != '&')
         sendto_server(target_p, target_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT,
-                      ":%s SJOIN %lu %s +nt :¤%s", me.name,
+                      ":%s SJOIN %lu %s +nt :!%s", me.name,
 		      (unsigned long) chptr->channelts, chptr->chname,
 		      target_p->name);
 

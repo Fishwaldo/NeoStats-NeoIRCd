@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: supported.h,v 1.5 2002/09/16 07:56:55 fishwaldo Exp $
+ *  $Id: supported.h,v 1.6 2002/09/23 10:47:29 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_supported_h
@@ -56,7 +56,7 @@
 		  " CALLERID"
 
 #define FEATURES2VALUES ConfigServerHide.disable_local_channels ? "#" : "#&", \
-                        "(aohv)¤@%+", "beI,k,l,imnpstArO", \
+                        "(aohv)!@%+", "beI,k,l,imnpstArO", \
 			ServerInfo.network_name, CASEMAP
                           
 /*

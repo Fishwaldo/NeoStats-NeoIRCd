@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_ojoin.c,v 1.1 2002/09/17 11:03:21 fishwaldo Exp $
+ *   $Id: m_ojoin.c,v 1.2 2002/09/23 10:47:30 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -57,7 +57,7 @@ _moddeinit(void)
   mod_del_cmd(&ojoin_msgtab);
 }
 
-char *_version = "$Revision: 1.1 $";
+char *_version = "$Revision: 1.2 $";
 
 /*
 ** mo_ojoin
@@ -79,7 +79,7 @@ static void mo_ojoin(struct Client *client_p, struct Client *source_p,
 
   /* XXX - we might not have CBURSTed this channel if we are a lazylink
    * yet. */
-  if (*parv[1] == '@' || *parv[1] == '%' || *parv[1] == '+' || *parv[1] == '¤')
+  if (*parv[1] == '@' || *parv[1] == '%' || *parv[1] == '+' || *parv[1] == '!')
     {
       parv[1]++;
       move_me = 1;
@@ -106,12 +106,12 @@ static void mo_ojoin(struct Client *client_p, struct Client *source_p,
   if (move_me == 1)
     parv[1]--;
 
-  if (*parv[1] == '¤') 
+  if (*parv[1] == '!') 
     {
        add_user_to_channel(chptr, source_p, CHFL_ADMIN);
        if (chptr->chname[0] != '&')
          sendto_server(client_p, source_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT, 
-                 ":%s SJOIN %lu %s + :¤%s", me.name, chptr->channelts,
+                 ":%s SJOIN %lu %s + :!%s", me.name, chptr->channelts,
                  chptr->chname, source_p->name);
        sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN %s",
                        source_p->name,

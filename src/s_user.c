@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.17 2002/09/23 04:39:32 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.18 2002/09/23 10:47:30 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1446,7 +1446,7 @@ oper_up( struct Client *source_p, struct ConfItem *aconf )
 
 	if (flags & CHFL_ADMIN)	{
 		chptr->channelts = CurrentTime;
-		sendto_server(NULL, source_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SJOIN %lu %s + :¤%s", me.name, (unsigned long) chptr->channelts, chptr->chname, source_p->name);
+		sendto_server(NULL, source_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SJOIN %lu %s + :!%s", me.name, (unsigned long) chptr->channelts, chptr->chname, source_p->name);
 	} else {
 		sendto_server(NULL, source_p, chptr, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SJOIN %lu %s + :%s", me.name, (unsigned long) chptr->channelts, chptr->chname, source_p->name);	
 	}

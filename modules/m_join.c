@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c,v 1.10 2002/09/19 05:41:10 fishwaldo Exp $
+ *  $Id: m_join.c,v 1.11 2002/09/23 10:47:30 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -64,7 +64,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&join_msgtab);
 }
-const char *_version = "$Revision: 1.10 $";
+const char *_version = "$Revision: 1.11 $";
 
 #endif
 static void do_join_0(struct Client *client_p, struct Client *source_p);
@@ -86,7 +86,6 @@ m_join(struct Client *client_p,
 {
   struct Channel *chptr = NULL;
   struct Channel *root_chptr = NULL;
-  int joining_vchan = 0;
   char  *name, *key = NULL;
   char *vkey = NULL; /* !key for vchans */
   int   i, flags = 0;
@@ -300,7 +299,7 @@ m_join(struct Client *client_p,
 
 	  sendto_server(client_p, source_p, chptr, NOCAPS, NOCAPS,
                         LL_ICLIENT,
-                        ":%s SJOIN %lu %s %s %s:¤%s",
+                        ":%s SJOIN %lu %s %s %s :!%s",
                         me.name, (unsigned long) chptr->channelts,
                         chptr->chname, modebuf, parabuf, parv[0]);
 	  /*

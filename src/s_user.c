@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.18 2002/09/23 10:47:30 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.19 2002/09/24 11:50:16 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -503,7 +503,6 @@ register_local_user(struct Client *client_p, struct Client *source_p,
   }
   user_welcome(source_p);
   introduce_client(client_p, source_p, user, nick);
-  if (IsHidden(source_p)) sendto_server(NULL, source_p, NULL, 0, 0, LL_ICLIENT, ":%s SETHOST %s :%s", me.name, source_p->name, source_p->vhost);					
 
   return (0);
 }
@@ -642,23 +641,25 @@ introduce_client(struct Client *client_p, struct Client *source_p,
     {
       if (IsCapable(uplink, CAP_UID) && HasID(source_p))
 	{
-	  sendto_one(uplink, "CLIENT %s %d %lu %s %s %s %s %s %lu :%s",
+	  sendto_one(uplink, "CLIENT %s %d %lu %s %s %s %s %s %s %lu :%s",
 		     nick,
 		     source_p->hopcount+1,
 		     (unsigned long) source_p->tsinfo,
 		     ubuf,
-		     source_p->username, source_p->host, user->server,
-		     user->id, source_p->svsid, source_p->info);
+		     source_p->username, source_p->host, 
+	     	     IsHidden(source_p) ? source_p->vhost : "*", 
+		     user->server, user->id, source_p->svsid, source_p->info);
 	}
       else
 	{
-	  sendto_one(uplink, "NICK %s %d %lu %s %s %s %s %lu :%s",
+	  sendto_one(uplink, "NICK %s %d %lu %s %s %s %s %s %lu :%s",
 		     nick,
 		     source_p->hopcount+1,
 		     (unsigned long) source_p->tsinfo,
 		     ubuf,
-		     source_p->username, source_p->host, user->server,
-		     source_p->svsid, source_p->info);
+		     source_p->username, source_p->host, 
+	     	     IsHidden(source_p) ? source_p->vhost : "*", 
+	     	     user->server, source_p->svsid, source_p->info);
 	}
     }
   else
@@ -671,21 +672,23 @@ introduce_client(struct Client *client_p, struct Client *source_p,
 	    continue;
 		  
 	  if (IsCapable(server, CAP_UID) && HasID(source_p))
-	    sendto_one(server, "CLIENT %s %d %lu %s %s %s %s %s %lu :%s",
+	    sendto_one(server, "CLIENT %s %d %lu %s %s %s %s %s %s %lu :%s",
 		       nick,
 		       source_p->hopcount+1,
 		       (unsigned long) source_p->tsinfo,
 		       ubuf,
-		       source_p->username, source_p->host, user->server,
-		       user->id, source_p->svsid, source_p->info);
+		       source_p->username, source_p->host, 
+	       	       IsHidden(source_p) ? source_p->vhost : "*", 
+	       	       user->server, user->id, source_p->svsid, source_p->info);
 	  else
-	    sendto_one(server, "NICK %s %d %lu %s %s %s %s %lu :%s",
+	    sendto_one(server, "NICK %s %d %lu %s %s %s %s %s %lu :%s",
 		       nick,
 		       source_p->hopcount+1,
 		       (unsigned long) source_p->tsinfo,
 		       ubuf,
-		       source_p->username, source_p->host, user->server,
-		       source_p->svsid, source_p->info);
+		       source_p->username, source_p->host, 
+	               IsHidden(source_p) ? source_p->vhost : "*", 
+	               user->server, source_p->svsid, source_p->info);
 	}
     }
   
@@ -1046,6 +1049,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 				break;
 			}
 			make_virthost(target_p->host, target_p->vhost, 0);
+ 		  	sendto_server(NULL, target_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SETHOST %s :%s", me.name, target_p->name, target_p->vhost);					
 		} else {
 			ClearHidden(target_p);
 			if (!MyClient(target_p)) {
@@ -1053,7 +1057,6 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 			}
 			strncpy(target_p->vhost, target_p->host, HOSTLEN);
 		}
-	  	sendto_server(NULL, target_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT, ":%s SETHOST %s :%s", me.name, target_p->name, target_p->vhost);					
 		break;
 
           /* we may not get these,

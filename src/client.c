@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c,v 1.9 2002/09/19 05:41:11 fishwaldo Exp $
+ *  $Id: client.c,v 1.10 2002/09/24 11:50:16 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -1154,10 +1154,10 @@ void dead_link(struct Client *client_p)
     	
   if (!IsPerson(client_p) && !IsUnknown(client_p) && !IsClosing(client_p))
   {
-    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
+    sendto_realops_flags(FLAGS_ALL, L_ADMIN,
 		         "Closing link to %s: %s",
                          get_client_name(client_p, HIDE_IP), notice);
-    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
+    sendto_realops_flags(FLAGS_ALL, L_OPER,
 		         "Closing link to %s: %s",
                          get_client_name(client_p, MASK_IP), notice);
   }

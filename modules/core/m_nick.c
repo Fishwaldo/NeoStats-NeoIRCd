@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.11 2002/09/20 09:10:39 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.12 2002/09/24 11:50:16 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.11 $";
+const char *_version = "$Revision: 1.12 $";
 #endif
 
 /*
@@ -311,9 +311,10 @@ mr_nick(struct Client *client_p, struct Client *source_p,
  *    parv[4] = umode
  *    parv[5] = username
  *    parv[6] = hostname
- *    parv[7] = server
- *    parv[8] = svsid
- *    parv[9] = ircname
+ *    parv[7] = vhost
+ *    parv[8] = server
+ *    parv[9] = svsid
+ *    parv[10] = ircname
  */
 static void
 ms_nick(struct Client *client_p, struct Client *source_p,
@@ -330,8 +331,8 @@ ms_nick(struct Client *client_p, struct Client *source_p,
     return;
   }
 
-  /* parc == 3 on nickchange, parc == 10 on new nick */
-  if((IsClient(source_p) && (parc != 3)) || (IsServer(source_p) && (parc != 10)))
+  /* parc == 3 on nickchange, parc == 11 on new nick */
+  if((IsClient(source_p) && (parc != 3)) || (IsServer(source_p) && (parc != 11)))
   {
     char tbuf[BUFSIZE] = { 0 };
     int j;
@@ -355,21 +356,21 @@ ms_nick(struct Client *client_p, struct Client *source_p,
   /* fix the length of the nick */
   strlcpy(nick, parv[1], NICKLEN);
 
-  if(check_clean_nick(client_p, source_p, nick, parv[1], parv[7]))
+  if(check_clean_nick(client_p, source_p, nick, parv[1], parv[8]))
     return;
 
-  if (parc == 10)
+  if (parc == 11)
     {
-      if (check_clean_user(client_p, nick, parv[5], parv[7]) ||
-          check_clean_host(client_p, nick, parv[6], parv[7]))
+      if (check_clean_user(client_p, nick, parv[5], parv[8]) ||
+          check_clean_host(client_p, nick, parv[6], parv[8]))
         return;
 
       /* check the length of the clients gecos */
-      if(strlen(parv[9]) > REALLEN)
+      if(strlen(parv[10]) > REALLEN)
         {
           sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Long realname from server %s for %s",
-                         parv[7], parv[1]);
-          parv[9][REALLEN] = '\0';
+                         parv[8], parv[1]);
+          parv[10][REALLEN] = '\0';
         }
 
       if (IsServer(source_p))
@@ -428,8 +429,8 @@ ms_client(struct Client *client_p, struct Client *source_p,
   char    *id;
   char    *name;
 
-  id = parv[8];
-  name = parv[9];
+  id = parv[9];
+  name = parv[10];
 
   /* XXX can this happen ? */
   if (BadPtr(parv[1]))
@@ -439,9 +440,9 @@ ms_client(struct Client *client_p, struct Client *source_p,
   strlcpy(nick, parv[1], NICKLEN);
 
   /* check the nicknames, usernames and hostnames are ok */
-  if(check_clean_nick(client_p, source_p, nick, parv[1], parv[7]) ||
-     check_clean_user(client_p, nick, parv[5], parv[7]) ||
-     check_clean_host(client_p, nick, parv[6], parv[7]))
+  if(check_clean_nick(client_p, source_p, nick, parv[1], parv[8]) ||
+     check_clean_user(client_p, nick, parv[5], parv[8]) ||
+     check_clean_host(client_p, nick, parv[6], parv[8]))
     return;
 
   /* check length of clients gecos */
@@ -727,6 +728,13 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
 	 if(!(source_p->umodes & FLAGS_OPER) && (flag & FLAGS_OPER))
 	   Count.oper++;
 
+	 if(!(source_p->umodes & FLAGS_HIDDEN) && (flag & FLAGS_HIDDEN)) {
+		if (parv[7][0] != '*') 
+			strncpy(source_p->vhost, parv[7], HOSTLEN +1);
+		else
+			make_virthost(source_p->host, source_p->vhost, 1);
+	 }
+
 	 /* we only allow Ulined Servers to set +s */
 	 if ((flag & FLAGS_SERVICES) && (!IsUlined(find_server(parv[7])))) {
 		sendto_one(source_p, ":%s NOTICE %s :*** Only Ulined Services can set +S", me.name, source_p->name);
@@ -740,7 +748,7 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
       }
 
       return do_remote_user(nick, client_p, source_p, parv[5], parv[6],
-                            parv[7], parv[9], NULL, atol(parv[8]));
+                            parv[8], parv[10], NULL, atol(parv[9]));
     }
   }
   else if(source_p->name[0])
@@ -788,8 +796,8 @@ client_from_server(struct Client *client_p, struct Client *source_p, int parc,
   int flag;
   char *m;
 
-  id = parv[8];
-  name = parv[10];
+  id = parv[9];
+  name = parv[11];
 
   source_p = make_client(client_p);
   add_client_to_list(source_p);
@@ -815,6 +823,21 @@ client_from_server(struct Client *client_p, struct Client *source_p, int parc,
       Count.invisi++;
     if(flag & FLAGS_OPER)
       Count.oper++;
+
+    if(!(source_p->umodes & FLAGS_HIDDEN) && (flag & FLAGS_HIDDEN)) {
+		if (parv[7][0] != '*') 
+			strncpy(source_p->vhost, parv[7], HOSTLEN +1);
+		else
+			make_virthost(source_p->host, source_p->vhost, 1);
+	 }
+
+    /* we only allow Ulined Servers to set +s */
+    if ((flag & FLAGS_SERVICES) && (!IsUlined(find_server(parv[7])))) {
+	sendto_one(source_p, ":%s NOTICE %s :*** Only Ulined Services can set +S", me.name, source_p->name);
+	sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Warning, Non-Ulined Server %s tried to set %s as +S", source_p->from->name, source_p->name);
+	/* we don't allow them to get +S, so do a continue */
+	continue;
+    }
 
     source_p->umodes |= flag & SEND_UMODES;
     m++;
@@ -901,9 +924,9 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
         target_p->flags |= FLAGS_KILLED;
 	(void)exit_client(client_p, target_p, &me, "Nick collision");
 	
-	if(parc == 9)
+	if(parc == 10)
 	  nick_from_server(client_p,source_p,parc,parv,newts,nick);
-	else if(parc == 10)
+	else if(parc == 11)
 	  client_from_server(client_p,source_p,parc,parv,newts,nick);
 	  
 	return 0;

@@ -4,6 +4,10 @@ Symbols are:
 (F)	- Fish (fish@dynam.ac)
 (S)	- Shmad (shmad@#neostats.net)
 (HP)	- Hybrid Team Patches to Hybrid Source
+* NeoIRCd Version 0.9.4 - 24th Sept, 2002 - Fish
+(F)	- Changed HiddenHost System to Use Ultimates version instead... 
+(F)	- Changed NICK and Client Messages to include vhost, so we dont have to burst SETHOST
+(F)	- Don't burst SETHOST when we remove -x
 
 * NeoIRCd Version 0.9.3 - 19th Sept, 2002 - Fish
 (HP)	- Merged in Hybrid rc4 Patches (including Rc3 and Rc3 fixes)

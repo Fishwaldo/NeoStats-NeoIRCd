@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.12 2002/09/23 03:14:21 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.13 2002/09/24 11:50:16 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -154,7 +154,7 @@ void slink_error(unsigned int rpl, unsigned int len, unsigned char *data,
   assert(len < 256);
   data[len-1] = '\0';
 
-  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "SlinkError for %s: %s",
+  sendto_realops_flags(FLAGS_ALL, L_ALL, "SlinkError for %s: %s",
                        server_p->name, data);
   exit_client(server_p, server_p, &me, "servlink error -- terminating link");
 }
@@ -828,23 +828,24 @@ void sendnick_TS(struct Client *client_p, struct Client *target_p)
   }
  
   if (HasID(target_p) && IsCapable(client_p, CAP_UID))
-	  sendto_one(client_p, "CLIENT %s %d %lu %s %s %s %s %s %lu :%s",
+	  sendto_one(client_p, "CLIENT %s %d %lu %s %s %s %s %s %s %lu :%s",
 				 target_p->name,
 				 target_p->hopcount + 1,
 				 (unsigned long) target_p->tsinfo,
 				 ubuf,
 				 target_p->username, target_p->host,
+		 		 IsHidden(target_p) ? target_p->vhost : "*", 
 				 target_p->user->server, target_p->user->id, target_p->svsid, target_p->info);
   else
-	  sendto_one(client_p, "NICK %s %d %lu %s %s %s %s %lu :%s",
+	  sendto_one(client_p, "NICK %s %d %lu %s %s %s %s %s %lu :%s",
 				 target_p->name, 
 				 target_p->hopcount + 1,
 				 (unsigned long) target_p->tsinfo,
 				 ubuf,
 				 target_p->username, target_p->host,
+		 		 IsHidden(target_p) ? target_p->vhost : "*", 
 				 target_p->user->server, target_p->svsid, target_p->info);
 
-  if (IsHidden(target_p)) sendto_one(client_p, ":%s SETHOST %s :%s", me.name, target_p->name, target_p->vhost);					
 
 }
 
@@ -952,7 +953,7 @@ int server_estab(struct Client *client_p)
                                CONF_SERVER)))
     {
      /* This shouldn't happen, better tell the ops... -A1kmm */
-     sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Warning: Lost connect{} block "
+     sendto_realops_flags(FLAGS_ALL, L_ALL, "Warning: Lost connect{} block "
        "for server %s(this shouldn't happen)!", host);
      return exit_client(client_p, client_p, client_p, "Lost connect{} block!");
     }
@@ -1023,11 +1024,11 @@ int server_estab(struct Client *client_p)
     {
       if (fork_server(client_p) < 0 )
       {
-        sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
+        sendto_realops_flags(FLAGS_ALL, L_ADMIN,
 	      "Warning: fork failed for server %s -- check servlink_path (%s)",
 	      get_client_name(client_p, HIDE_IP),
 	      ConfigFileEntry.servlink_path);
-        sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER, "Warning: fork failed for server "
+        sendto_realops_flags(FLAGS_ALL, L_OPER, "Warning: fork failed for server "
           "%s -- check servlink_path (%s)",
            get_client_name(client_p, MASK_IP),
            ConfigFileEntry.servlink_path);

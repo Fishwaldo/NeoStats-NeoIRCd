@@ -1,0 +1,2588 @@
+diff -urN --exclude=CVS ircd-hybrid-7/doc/Makefile.in ircd-hybrid-7+lmh/doc/Makefile.in
+--- ircd-hybrid-7/doc/Makefile.in	Tue Jul  9 20:05:48 2002
++++ ircd-hybrid-7+lmh/doc/Makefile.in	Fri Jul 12 15:31:51 2002
+@@ -30,7 +30,7 @@
+ MANPAGES        = ircd.8
+ 
+ CONFS		= example.conf example.efnet.conf
+-DEFAULTCONFS	= ircd.motd kline.conf dline.conf
++DEFAULTCONFS	= ircd.motd kline.conf dline.conf xline.conf
+ 
+ SSL_LIBS	= @SSL_LIBS@
+ SSL_INCLUDES	= @SSL_INCLUDES@
+@@ -62,6 +62,9 @@
+ 	done
+ 
+ 	@for i in $(DEFAULTCONFS); do \
++		if test ! -f $$i; then \
++			touch $$i; \
++		fi; \
+ 		if test ! -f $(sysconfdir)/$$i; then \
+ 			echo $(INSTALL_DATA) $$i $(sysconfdir); \
+ 			$(INSTALL_DATA) $$i $(sysconfdir); \
+diff -urN --exclude=CVS ircd-hybrid-7/include/class.h ircd-hybrid-7+lmh/include/class.h
+--- ircd-hybrid-7/include/class.h	Sat Mar  9 16:48:35 2002
++++ ircd-hybrid-7+lmh/include/class.h	Fri Jul 12 15:31:19 2002
+@@ -28,38 +28,47 @@
+ struct ConfItem;
+ struct Client;
+ 
+-struct Class {
+-  struct Class* next;     /* list node pointer */
+-  char*		className;
+-  int           type;
+-  int           conFreq;
+-  int           pingFreq;
+-  int           maxLinks;
+-  long          maxSendq;
+-  char*         servname;
+-  int           servport;
+-  int           links;
++struct Class
++{
++  struct Class *next;
++  char *class_name;
++  int max_total;
++  int max_local;
++  int max_global;
++  int max_ident;
++  int max_sendq;
++  int con_freq;
++  int ping_freq;
++  int total;
+ };
+ 
++struct Class *ClassList;
+ 
+-#define ClassName(x)	((x)->className)
+-#define ClassType(x)    ((x)->type)
+-#define ConFreq(x)      ((x)->conFreq)
+-#define PingFreq(x)     ((x)->pingFreq)
+-#define MaxLinks(x)     ((x)->maxLinks)
+-#define MaxSendq(x)     ((x)->maxSendq)
+-#define Links(x)        ((x)->links)
++#define ClassName(x)	((x)->class_name)
++#define ConFreq(x)      ((x)->con_freq)
++#define MaxLocal(x)	((x)->max_local)
++#define MaxGlobal(x)	((x)->max_global)
++#define MaxIdent(x)	((x)->max_ident)
++#define MaxUsers(x)	((x)->max_total)
++#define PingFreq(x)     ((x)->ping_freq)
++#define MaxSendq(x)     ((x)->max_sendq)
++#define CurrUsers(x)    ((x)->total)
+ 
+ #define ClassPtr(x)      ((x)->c_class)
+-#define ConfLinks(x)     (ClassPtr(x)->links)
+-#define ConfMaxLinks(x)  (ClassPtr(x)->maxLinks)
++
+ #define ConfClassName(x) (ClassPtr(x)->class_name)
+-#define ConfClassType(x) (ClassPtr(x)->type)
+-#define ConfConFreq(x)   (ClassPtr(x)->conFreq)
+-#define ConfPingFreq(x)  (ClassPtr(x)->pingFreq)
+-#define ConfSendq(x)     (ClassPtr(x)->maxSendq)
++#define ConfConFreq(x)   (ClassPtr(x)->con_freq)
++#define ConfMaxLocal(x)  (ClassPtr(x)->max_local)
++#define ConfMaxGlobal(x) (ClassPtr(x)->max_global)
++#define ConfMaxIdent(x)  (ClassPtr(x)->max_ident)
++#define ConfMaxUsers(x)  (ClassPtr(x)->max_total)
++#define ConfPingFreq(x)  (ClassPtr(x)->ping_freq)
++#define ConfMaxSendq(x)  (ClassPtr(x)->max_sendq)
++#define ConfCurrUsers(x) (ClassPtr(x)->total)
++
++void add_class(struct Class *);
+ 
+-extern struct Class* ClassList;  /* GLOBAL - class list */
++struct Class *make_class(void);
+ 
+ extern  long    get_sendq(struct Client *);
+ extern  int     get_con_freq(struct Class* );
+@@ -69,7 +78,6 @@
+ extern  void    check_class(void);
+ extern  void    initclass(void);
+ extern  void    free_class(struct Class* );
+-extern  void    add_class (char *, int, int, int, long);
+ extern  void    fix_class (struct ConfItem *, struct ConfItem *);
+ extern  void    report_classes (struct Client *);
+ 
+diff -urN --exclude=CVS ircd-hybrid-7/include/client.h ircd-hybrid-7+lmh/include/client.h
+--- ircd-hybrid-7/include/client.h	Thu Jul 11 20:43:19 2002
++++ ircd-hybrid-7+lmh/include/client.h	Fri Jul 12 15:31:19 2002
+@@ -127,6 +127,7 @@
+   struct Client*    prev;
+   struct Client*    hnext;
+   struct Client*    idhnext;
++  struct Client*    hostnext;
+ 	
+   struct Client*    lnext;      /* Used for Server->servers/users */
+   struct Client*    lprev;      /* Used for Server->servers/users */
+@@ -438,6 +439,8 @@
+ #define FLAGS2_OPER_DIE         0x0800  /* oper can die */
+ #define FLAGS2_OPER_REHASH      0x1000  /* oper can rehash */
+ #define FLAGS2_OPER_ADMIN       0x2000  /* oper can set umode +a */
++#define FLAGS2_OPER_XLINE       0x4000  /* oper can xline */
++#define FLAGS2_OPER_FLOOD_EXEMPT	0x8000	/* oper can flood freely */
+ #define FLAGS2_OPER_FLAGS       (FLAGS2_OPER_GLOBAL_KILL | \
+                                  FLAGS2_OPER_REMOTE | \
+                                  FLAGS2_OPER_UNKLINE | \
+@@ -446,6 +449,8 @@
+                                  FLAGS2_OPER_K | \
+                                  FLAGS2_OPER_DIE | \
+                                  FLAGS2_OPER_REHASH| \
++				 FLAGS2_OPER_XLINE | \
++				 FLAGS2_OPER_FLOOD_EXEMPT | \
+                                  FLAGS2_OPER_ADMIN)
+ 
+ #define FLAGS2_CBURST		0x10000  /* connection burst being sent */
+@@ -563,12 +568,16 @@
+ #define SetOperN(x)             ((x)->flags2 |= FLAGS2_OPER_N)
+ #define IsOperK(x)              ((x)->flags2 & FLAGS2_OPER_K)
+ #define SetOperK(x)             ((x)->flags2 |= FLAGS2_OPER_K)
++#define IsOperXline(x)          ((x)->flags2 & FLAGS2_OPER_XLINE)
++#define SetOperXline(x)         ((x)->flags2 |= FLAGS2_OPER_XLINE)
+ #define IsOperDie(x)            ((x)->flags2 & FLAGS2_OPER_DIE)
+ #define SetOperDie(x)           ((x)->flags2 |= FLAGS2_OPER_DIE)
+ #define IsOperRehash(x)         ((x)->flags2 & FLAGS2_OPER_REHASH)
+ #define SetOperRehash(x)        ((x)->flags2 |= FLAGS2_OPER_REHASH)
+ #define IsOperAdmin(x)          ((x)->flags2 & FLAGS2_OPER_ADMIN)
+ #define SetOperAdmin(x)         ((x)->flags2 |= FLAGS2_OPER_ADMIN)
++#define IsOperFloodExempt(x)	((x)->flags2 & FLAGS2_OPER_FLOOD_EXEMPT)
++#define SetOperFloodExempt(x)	((x)->flags2 |= FLAGS2_OPER_FLOOD_EXEMPT)
+ 
+ #define IsFloodDone(x)          ((x)->flags2 & FLAGS2_FLOODDONE)
+ #define SetFloodDone(x)         ((x)->flags2 |= FLAGS2_FLOODDONE)
+diff -urN --exclude=CVS ircd-hybrid-7/include/config.h ircd-hybrid-7+lmh/include/config.h
+--- ircd-hybrid-7/include/config.h	Tue Jul  9 20:05:51 2002
++++ ircd-hybrid-7+lmh/include/config.h	Fri Jul 12 15:31:19 2002
+@@ -102,6 +102,7 @@
+ #define CPATH   ETCPATH "IRCD.CONF"             /* config file */
+ #define KPATH   ETCPATH "KLINE.CONF"            /* kline file */
+ #define DLPATH  ETCPATH "DLINE.CONF"            /* dline file */
++#define XPATH	ETCPATH "XLINE.CONF"		/* xline file */
+ #define GPATH   LOGPATH "GLINE.LOG"             /* gline logfile */
+ #define RPATH   ETCPATH "IRCD.RSA"              /* RSA private key file */
+ #define MPATH   ETCPATH "IRCD.MOTD"             /* MOTD filename */
+@@ -148,6 +149,7 @@
+ #define CPATH   ETCPATH "/ircd.conf"            /* ircd.conf file */
+ #define KPATH   ETCPATH "/kline.conf"           /* kline file */
+ #define DLPATH  ETCPATH "/dline.conf"           /* dline file */
++#define XPATH	ETCPATH "/xline.conf"		/* xline file */
+ #define GPATH   LOGPATH "/gline.log"            /* gline logfile */
+ #define RPATH   ETCPATH "/ircd.rsa"             /* ircd rsa private keyfile */
+ #define MPATH   ETCPATH "/ircd.motd"            /* MOTD file */
+@@ -197,6 +199,18 @@
+  */
+ #undef TS5_ONLY
+ 
++/* USE_ASCII_CASEMAP
++ *
++ * Under rfc1459, the characters {}|~ are the lowercase of []\^ so a
++ * nick of [foo] is the same as {foo} and a channel #[] is the same as
++ * #{}.  If this is defined they will no longer be treated as lowercase
++ * of each other, so [foo] and {foo} could be two seperate people.
++ *
++ * Note: this must be the same network wide or you will have problems.
++ *       Your locale(1) must also be set to "C".
++ */
++#undef USE_ASCII_CASEMAP
++
+ /* USE_LOGFILE - log errors and such to LPATH
+  * If you wish to have the server send 'vital' messages about server
+  * to a logfile, define USE_LOGFILE.
+@@ -353,6 +367,9 @@
+  * these disabled, who knows. keep this enabled during development.
+  */
+ #define INVARIANTS
++
++#define RELNAME "+lmh4"
++#define IRCDNAME PATCHLEVEL RELNAME
+ 
+ #define CONFIG_H_LEVEL_7
+ 
+diff -urN --exclude=CVS ircd-hybrid-7/include/config.h.dist ircd-hybrid-7+lmh/include/config.h.dist
+--- ircd-hybrid-7/include/config.h.dist	Wed Jun 19 16:17:44 2002
++++ ircd-hybrid-7+lmh/include/config.h.dist	Fri Jul 12 15:31:19 2002
+@@ -187,6 +187,18 @@
+  */
+ #undef HIDE_SPOOF_IPS
+ 
++/* USE_ASCII_CASEMAP
++ *
++ * Under rfc1459, the characters {}|~ are the lowercase of []\^ so a
++ * nick of [foo] is the same as {foo} and a channel #[] is the same as
++ * #{}.  If this is defined they will no longer be treated as lowercase
++ * of each other, so [foo] and {foo} could be two seperate people.
++ *
++ * Note: this must be the same network wide or you will have problems.
++ *       Your locale(1) must also be set to "C".
++ */
++#undef USE_ASCII_CASEMAP
++
+ /* USE_LOGFILE - log errors and such to LPATH
+  * If you wish to have the server send 'vital' messages about server
+  * to a logfile, define USE_LOGFILE.
+diff -urN --exclude=CVS ircd-hybrid-7/include/handlers.h ircd-hybrid-7+lmh/include/handlers.h
+--- ircd-hybrid-7/include/handlers.h	Sat Jan  5 04:14:28 2002
++++ ircd-hybrid-7+lmh/include/handlers.h	Fri Jul 12 15:31:19 2002
+@@ -95,5 +95,9 @@
+ extern void m_unregistered(struct Client*, struct Client*, int, char**);
+ extern void m_unsupported(struct Client*, struct Client*, int, char**);
+ 
++#ifdef FL_DEBUG
++extern void mo_hash(struct Client*, struct Client*, int, char**);
++#endif
++
+ #endif /* INCLUDED_handlers_h */
+ 
+diff -urN --exclude=CVS ircd-hybrid-7/include/hash.h ircd-hybrid-7+lmh/include/hash.h
+--- ircd-hybrid-7/include/hash.h	Fri May 24 19:34:07 2002
++++ ircd-hybrid-7+lmh/include/hash.h	Fri Jul 12 15:31:19 2002
+@@ -39,6 +39,9 @@
+  */
+ #define CH_MAX 16384
+ 
++/* hostname hash table size */
++#define HOST_MAX 131072
++
+ /*
+  * RESV hash table size
+  *
+@@ -79,6 +82,10 @@
+ extern struct Client* find_client(const char* name);
+ extern struct Client* find_server(const char* name);
+ extern struct Client* hash_find_server(const char* name);
++
++struct Client *find_hostname(const char *);
++void del_from_hostname_hash_table(const char *, struct Client *);
++void add_to_hostname_hash_table(const char *, struct Client *);
+ 
+ extern void add_to_resv_hash_table(const char *name,
+                                    struct ResvChannel *resv_p);
+diff -urN --exclude=CVS ircd-hybrid-7/include/irc_string.h ircd-hybrid-7+lmh/include/irc_string.h
+--- ircd-hybrid-7/include/irc_string.h	Fri May 24 19:34:07 2002
++++ ircd-hybrid-7+lmh/include/irc_string.h	Fri Jul 12 15:31:19 2002
+@@ -115,11 +115,16 @@
+ /*
+  * character macros
+  */
++#ifndef USE_ASCII_CASEMAP
+ extern const unsigned char ToLowerTab[];
+ #define ToLower(c) (ToLowerTab[(unsigned char)(c)])
+ 
+ extern const unsigned char ToUpperTab[];
+ #define ToUpper(c) (ToUpperTab[(unsigned char)(c)])
++#else
++#define ToLower(c) tolower(c)
++#define ToUpper(c) toupper(c)
++#endif
+ 
+ extern const unsigned int CharAttrs[];
+ 
+diff -urN --exclude=CVS ircd-hybrid-7/include/modules.h ircd-hybrid-7+lmh/include/modules.h
+--- ircd-hybrid-7/include/modules.h	Fri May 24 21:38:09 2002
++++ ircd-hybrid-7+lmh/include/modules.h	Fri Jul 12 15:31:19 2002
+@@ -97,6 +97,9 @@
+ extern struct Message eob_msgtab;
+ extern struct Message error_msgtab;
+ extern struct Message gline_msgtab;
++#ifdef FL_DEBUG
++extern struct Message hash_msgtab;
++#endif
+ extern struct Message help_msgtab;
+ extern struct Message info_msgtab;
+ extern struct Message invite_msgtab;
+diff -urN --exclude=CVS ircd-hybrid-7/include/s_conf.h ircd-hybrid-7+lmh/include/s_conf.h
+--- ircd-hybrid-7/include/s_conf.h	Thu Jul 11 20:51:05 2002
++++ ircd-hybrid-7+lmh/include/s_conf.h	Fri Jul 12 15:32:42 2002
+@@ -161,6 +161,8 @@
+ #define CONF_OPER_REHASH        0x0040
+ #define CONF_OPER_DIE           0x0080
+ #define CONF_OPER_ADMIN         0x0100
++#define CONF_OPER_XLINE		0x0200
++#define CONF_OPER_FLOOD_EXEMPT	0x0400
+ 
+ struct config_file_entry
+ {
+@@ -168,6 +170,7 @@
+   char *configfile;
+   char *klinefile;
+   char *dlinefile;
++  char *xlinefile;
+ 
+   char *glinefile;
+ 
+@@ -230,6 +233,7 @@
+   int           throttle_time;
+   int           use_egd;
+   int		ping_cookie;
++  int           use_global_limits;
+   int           use_help;
+ #ifdef HAVE_LIBCRYPTO
+   struct EncCapability *default_cipher_preference;
+@@ -317,8 +321,15 @@
+ extern struct admin_info  AdminInfo;        /* defined in ircd.c */
+ /* End GLOBAL section */
+ 
+-dlink_list temporary_klines;
+-dlink_list temporary_ip_klines;
++#define TEMP_MIN	1
++#define TEMP_HOUR	2
++#define TEMP_DAY	3
++#define TEMP_WEEK	4
++
++dlink_list temporary_min;
++dlink_list temporary_hour;
++dlink_list temporary_day;
++dlink_list temporary_week;
+ 
+ extern void clear_ip_hash_table(void);
+ extern void iphash_stats(struct Client *,struct Client *,int,char **,FBFILE*);
+@@ -352,7 +363,7 @@
+ extern char *oper_flags_as_string(int);
+ extern char *oper_privs_as_string(struct Client *, int);
+ 
+-extern int find_u_conf(char*, char*, char *);
++extern int find_u_conf(char*, char*, char *, int);
+ extern struct ConfItem *find_x_conf(char*);
+ 
+ extern struct ConfItem* find_tkline(const char*, const char*, struct irc_inaddr *);
+@@ -378,9 +389,15 @@
+ 			       const char *oper_reason,
+ 			       const char *current_date, time_t cur_time );
+ extern  void    add_temp_kline(struct ConfItem *);
++extern void	add_temp_dline(struct ConfItem *);
+ extern  void    report_temp_klines(struct Client *);
+ extern  void    show_temp_klines(struct Client *, dlink_list *);
+-extern  void    cleanup_tklines(void *notused);
++
++extern void cleanup_temps_min(void *);
++extern void cleanup_temps_hour(void *);
++extern void cleanup_temps_day(void *);
++extern void cleanup_temps_week(void *);
++
+ 
+ extern  const   char *get_conf_name(KlineType);
+ extern  int     rehash (int);
+@@ -399,6 +416,7 @@
+ /* XXX consider moving these into kdparse.h */
+ extern void parse_k_file(FBFILE *fb);
+ extern void parse_d_file(FBFILE *fb);
++extern void parse_x_file(FBFILE *fb);
+ extern char *getfield(char *newline);
+ 
+ extern char *get_oper_name(struct Client *client_p);
+@@ -410,11 +428,11 @@
+ #define NOT_AUTHORIZED  (-1)
+ #define SOCKET_ERROR    (-2)
+ #define I_LINE_FULL     (-3)
+-#define TOO_MANY        (-4)
+-#define BANNED_CLIENT   (-5)
+-#define TOO_FAST        (-6)
+-
+-#define CLEANUP_TKLINES_TIME 60
++#define BANNED_CLIENT   (-4)
++#define TOO_FAST        (-5)
++#define TOO_MANY_LOCAL	(-6)
++#define TOO_MANY_GLOBAL (-7)
++#define TOO_MANY_IDENT	(-8)
+ 
+ #endif /* INCLUDED_s_conf_h */
+ 
+diff -urN --exclude=CVS ircd-hybrid-7/include/s_serv.h ircd-hybrid-7+lmh/include/s_serv.h
+--- ircd-hybrid-7/include/s_serv.h	Fri May 24 19:34:08 2002
++++ ircd-hybrid-7+lmh/include/s_serv.h	Fri Jul 12 15:31:19 2002
+@@ -74,12 +74,13 @@
+ 
+ #define CAP_TBURST	0x00040000   /* supports TBURST */
+ #define CAP_PARA	0x00080000   /* supports invite broadcasting for +p */
++#define CAP_UNKLN       0x00100000   /* supports remote unkline */
+ 
+ #define CAP_MASK        (CAP_QS  | CAP_EX   | CAP_CHW  | \
+                          CAP_IE  | CAP_EOB  | CAP_KLN  | \
+                          CAP_GLN | CAP_HOPS | CAP_AOPS | \
+                          CAP_UID | CAP_ZIP  | CAP_ENC | \
+-                         CAP_KNOCK  | CAP_PARA)
++                         CAP_KNOCK  | CAP_PARA | CAP_UNKLN)
+ 
+ #ifdef HAVE_LIBZ
+ #define CAP_ZIP_SUPPORTED       CAP_ZIP
+diff -urN --exclude=CVS ircd-hybrid-7/include/supported.h ircd-hybrid-7+lmh/include/supported.h
+--- ircd-hybrid-7/include/supported.h	Sun Apr 28 12:38:22 2002
++++ ircd-hybrid-7+lmh/include/supported.h	Fri Jul 12 15:31:19 2002
+@@ -29,6 +29,12 @@
+ #include "channel.h"
+ #include "ircd_defs.h"
+ 
++#ifndef USE_ASCII_CASEMAP
++#define CASEMAP "rfc1459"
++#else
++#define CASEMAP "ascii"
++#endif
++
+ #define FEATURES "WALLCHOPS"\
+                 "%s%s%s%s" \
+                 " MODES=%i" \
+@@ -51,14 +57,13 @@
+                   " PREFIX=%s" \
+ 		  " CHANMODES=%s" \
+ 		  " NETWORK=%s" \
+-		  " CHARSET=rfc1459" \
+-		  " CASEMAPPING=rfc1459" \
++		  " CASEMAPPING=%s" \
+ 		  " CALLERID"
+ 
+ #define FEATURES2VALUES ConfigServerHide.disable_local_channels ? "#" : "#&", \
+                         "(ohv)@%+", "beI,k,l,imnpsta", \
+-			ServerInfo.network_name
+-                          
++			ServerInfo.network_name, CASEMAP
++
+ /*
+  * - from mirc's versions.txt
+  *
+diff -urN --exclude=CVS ircd-hybrid-7/modules/Makefile.in ircd-hybrid-7+lmh/modules/Makefile.in
+--- ircd-hybrid-7/modules/Makefile.in	Sun Jun 16 12:31:25 2002
++++ ircd-hybrid-7+lmh/modules/Makefile.in	Fri Jul 12 15:31:19 2002
+@@ -103,7 +103,8 @@
+   m_wallops.c \
+   m_who.c \
+   m_whois.c \
+-  m_whowas.c 
++  m_whowas.c \
++  m_xline.c
+ 
+ ALL_SRCS = $(CORE_SRCS) \
+            $(SRCS)
+diff -urN --exclude=CVS ircd-hybrid-7/modules/m_kline.c ircd-hybrid-7+lmh/modules/m_kline.c
+--- ircd-hybrid-7/modules/m_kline.c	Thu Jul 11 23:29:55 2002
++++ ircd-hybrid-7+lmh/modules/m_kline.c	Fri Jul 12 15:31:19 2002
+@@ -90,12 +90,17 @@
+ static int valid_user_host(struct Client *source_p, char *user, char *host);
+ static int valid_wild_card(char *user, char *host);
+ static int already_placed_kline(struct Client*, char*, char*);
++
+ static void apply_kline(struct Client *source_p, struct ConfItem *aconf,
+                         const char *reason, const char *oper_reason,
+ 			const char *current_date, time_t cur_time);
+-
++static void apply_dline(struct Client *source_p, struct ConfItem *aconf,
++		        const char *reason, const char *oper_reason,
++			const char *current_date, time_t cur_time);
+ static void apply_tkline(struct Client *source_p, struct ConfItem *aconf,
+                          const char *current_date, int temporary_kline_time);
++static void apply_tdline(struct Client *source_p, struct ConfItem *aconf,
++		         const char *current_date, int temporary_kline_time);
+ 
+ 
+ char buffer[IRCD_BUFSIZE];
+@@ -315,7 +320,7 @@
+   tkline_time = atoi(parv[2]);
+ 
+   if (find_u_conf((char *)source_p->user->server,
+-		  source_p->username, source_p->host))
++		  source_p->username, source_p->host, CONF_OPER_K))
+     {
+       sendto_realops_flags(FLAGS_ALL, L_ALL,
+ 			   "*** Received K-Line for [%s@%s] [%s], from %s!%s@%s on %s",
+@@ -395,6 +400,43 @@
+   check_klines();
+ }
+ 
++/* apply_dline
++ *
++ * input	- dline info
++ * output	- none
++ * side effects - dline is added to hashtable
++ */
++static void apply_dline(struct Client *source_p, struct ConfItem *aconf,
++		        const char *reason, const char *oper_reason,
++			const char *current_date, time_t cur_time)
++{
++  add_conf_by_address(aconf->host, CONF_DLINE, NULL, aconf);
++  WriteKlineOrDline(DLINE_TYPE, source_p, NULL, aconf->host, reason,
++		    oper_reason, current_date, cur_time);
++}
++
++/* apply_tdline
++ *
++ * input	- dline info
++ * output	- none
++ * side effects - tdline is added
++ */
++static void apply_tdline(struct Client *source_p, struct ConfItem *aconf,
++		         const char *current_date, int tdline_time)
++{
++  aconf->hold = CurrentTime + tdline_time;
++  add_temp_dline(aconf);
++  sendto_realops_flags(FLAGS_ALL, L_ALL,
++		       "%s added temporary %d min. D-Line for [%s] [%s]",
++		       source_p->name, tdline_time/60, 
++		       aconf->host, aconf->passwd);
++
++  sendto_one(source_p, ":%s NOTICE %s :Added temporary %d min. D-Line for [%s]",
++             me.name, source_p->name, tdline_time/60, aconf->host);
++  ilog(L_TRACE, "%s added temporary %d min. D-Line for [%s] [%s]",
++       source_p->name, tdline_time/60, aconf->host, aconf->passwd);
++}
++
+ /*
+  * valid_tkline()
+  * 
+@@ -429,8 +471,8 @@
+   if(result == 0)
+     result = 1;
+ 
+-  if(result > (24*60))
+-    result = (24*60); /* Max it at 24 hours */
++  if(result > (24*60*7*4))
++    result = (24*60*7*4); /* Max it at 4 weeks */
+ 
+   result = (time_t)result * (time_t)60;  /* turn it into seconds */
+ 
+@@ -575,6 +617,8 @@
+   char dlbuffer[1024];
+   const char* current_date;
+   time_t cur_time;
++  time_t tdline_time = 0;
++  int loc = 0;
+ 
+   if (!IsOperK(source_p))
+     {
+@@ -583,7 +627,23 @@
+       return;
+     }
+ 
+-  dlhost = parv[1];
++  loc++;
++
++  tdline_time = valid_tkline(source_p, parv[loc]);
++
++  if(tdline_time == -1)
++    return;
++  else if(tdline_time) 
++    loc++;
++
++  if(parc < loc+1)
++  {
++    sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
++	       me.name, source_p->name, "DLINE");
++    return;
++  }
++  
++  dlhost = parv[loc];
+   strlcpy(cidr_form_host, dlhost, HOSTLEN);
+   cidr_form_host[HOSTLEN] = '\0';
+ 
+@@ -594,7 +654,7 @@
+               me.name, parv[0]);
+    return;
+ #else
+-      if (!(target_p = find_chasing(source_p, parv[1], NULL)))
++      if (!(target_p = find_chasing(source_p, parv[loc], NULL)))
+         return;
+ 
+       if(!target_p->user)
+@@ -660,14 +720,15 @@
+ #endif
+     }
+ 
++  loc++;
+ 
+-  if (parc > 2) /* host :reason */
++  if (parc >= loc+1) /* host :reason */
+     {
+-      if (valid_comment(source_p,parv[2]) == 0)
++      if (valid_comment(source_p,parv[loc]) == 0)
+ 	return;
+ 
+-      if(*parv[2])
+-        reason = parv[2];
++      if(*parv[loc])
++        reason = parv[loc];
+       else
+         reason = "No reason";
+     }
+@@ -735,18 +796,23 @@
+       oper_reason++;
+     }
+ 
+-  ircsprintf(dlbuffer, "%s (%s)",reason, current_date);
+-
+   aconf->status = CONF_DLINE;
+   DupString(aconf->host, dlhost);
+-  DupString(aconf->passwd, dlbuffer);
++  
++  if(tdline_time)
++  {
++    ircsprintf(dlbuffer, "Temporary D-line %d min. - %s (%s)",
++	       (int)(tdline_time/60), reason, current_date);
++    DupString(aconf->passwd, dlbuffer);
++    apply_tdline(source_p, aconf, current_date, tdline_time);
++  }
++  else
++  {
++    ircsprintf(dlbuffer, "%s (%s)",reason, current_date);
++    DupString(aconf->passwd, dlbuffer);
++    apply_dline(source_p, aconf, reason, oper_reason, current_date, cur_time);
++  }
+ 
+-  add_conf_by_address(aconf->host, CONF_DLINE, NULL, aconf);
+-  /*
+-   * Write dline to configuration file
+-   */
+-  WriteKlineOrDline(DLINE_TYPE, source_p, NULL, dlhost, reason,
+-		    oper_reason, current_date, cur_time);
+   check_klines();
+ } /* m_dline() */
+ 
+diff -urN --exclude=CVS ircd-hybrid-7/modules/m_trace.c ircd-hybrid-7+lmh/modules/m_trace.c
+--- ircd-hybrid-7/modules/m_trace.c	Sun Jul  7 01:45:08 2002
++++ ircd-hybrid-7+lmh/modules/m_trace.c	Fri Jul 12 15:31:19 2002
+@@ -278,9 +278,9 @@
+     }
+     
+   for (cltmp = ClassList; doall && cltmp; cltmp = cltmp->next)
+-    if (Links(cltmp) > 0)
++    if (CurrUsers(cltmp) > 0)
+       sendto_one(source_p, form_str(RPL_TRACECLASS), me.name,
+-                 parv[0], ClassName(cltmp), Links(cltmp));
++                 parv[0], ClassName(cltmp), CurrUsers(cltmp));
+ 		 
+   sendto_one(source_p, form_str(RPL_ENDOFTRACE),me.name, parv[0],tname);
+ }
+diff -urN --exclude=CVS ircd-hybrid-7/modules/m_unkline.c ircd-hybrid-7+lmh/modules/m_unkline.c
+--- ircd-hybrid-7/modules/m_unkline.c	Wed Jun 26 19:38:57 2002
++++ ircd-hybrid-7+lmh/modules/m_unkline.c	Fri Jul 12 15:31:19 2002
+@@ -42,15 +42,17 @@
+ #include "s_gline.h"
+ #include "parse.h"
+ #include "modules.h"
++#include "s_serv.h"
+ 
+ 
+ static void mo_unkline(struct Client*, struct Client*, int, char**);
++static void ms_unkline(struct Client*, struct Client*, int, char**);
+ static void mo_undline(struct Client*, struct Client*, int, char**);
+ static void mo_ungline(struct Client*, struct Client*, int, char**);
+ 
+ struct Message msgtabs[] = {
+   {"UNKLINE", 0, 0, 2, 0, MFLG_SLOW, 0,
+-   {m_unregistered, m_not_oper, m_error, mo_unkline}},
++   {m_unregistered, m_not_oper, ms_unkline, mo_unkline}},
+   {"UNDLINE", 0, 0, 2, 0, MFLG_SLOW, 0,
+    {m_unregistered, m_not_oper, m_error, mo_undline}}, 
+   {"UNGLINE", 0, 0, 2, 0, MFLG_SLOW, 0,
+@@ -76,8 +78,10 @@
+ const char *_version = "$Revision: 1.1 $";
+ #endif
+ 
++static void remove_permkline_match(struct Client *, char *, char *);
+ static int flush_write(struct Client *, FBFILE* , char *, char *);
+-static int remove_tkline_match(char *,char *);
++static int remove_temp_match(char *,char *);
++static int remove_temp_match_list(char *, char *, dlink_list *);
+ 
+ 
+ /*
+@@ -93,19 +97,14 @@
+ static void mo_unkline (struct Client *client_p,struct Client *source_p,
+                        int parc,char *parv[])
+ {
+-  FBFILE *in, *out;
+-  int pairme=0,error_on_write = NO;
+-  char buf[BUFSIZE], buff[BUFSIZE], temppath[BUFSIZE], *user, *host, *p;
+-  const char  *filename;                /* filename to use for unkline */
+-  mode_t oldumask;
++  char *user, *host;
+ 
+-  ircsprintf(temppath, "%s.tmp", ConfigFileEntry.klinefile);
+-  
+   if (!IsOperUnkline(source_p))
+     {
+       sendto_one(source_p,":%s NOTICE %s :You need unkline = yes;",me.name,parv[0]);
+       return;
+     }
++
+   if (parc < 2)
+     {
+       sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
+@@ -135,7 +134,21 @@
+       return;
+     }
+ 
+-  if (remove_tkline_match(host, user))
++  /* possible remote kline.. */
++  if(parc > 3)
++  {
++    if(irccmp(parv[2], "ON") == 0)
++    {
++      sendto_server(NULL, source_p, NULL, CAP_UNKLN, NOCAPS, LL_ICLIENT,
++		    ":%s UNKLINE %s %s %s",
++		    source_p->name, parv[3], user, host);
++      
++      if(match(parv[3], me.name) == 0)
++        return;
++    }
++  }
++
++  if(remove_temp_match(host, user))
+     {
+       sendto_one(source_p,
+ 		 ":%s NOTICE %s :Un-klined [%s@%s] from temporary k-lines",
+@@ -148,10 +161,92 @@
+       return;
+     }
+ 
++  remove_permkline_match(source_p, host, user);
++}
++
++/* ms_unkline()
++ *
++ * input	- pointer to servere
++ * 		- pointer to client
++ * 		- parm count
++ * 		- params
++ * output	- none
++ * side effects - kline is removed if matching shared {} is found.
++ */
++static void ms_unkline(struct Client *client_p, struct Client *source_p,
++		     int parc, char *parv[])
++{
++  char *kuser;
++  char *khost;
++  
++  if(parc != 4)
++    return;
++
++  /* parv[0]  parv[1]        parv[2]  parv[3]
++   * oper     target server  user     host    */
++  sendto_server(client_p, source_p, NULL, CAP_UNKLN, NOCAPS, LL_ICLIENT,
++		":%s UNKLINE %s %s %s",
++		parv[0], parv[1], parv[2], parv[3]);
++
++  kuser = parv[2];
++  khost = parv[3];
++
++  if(!match(parv[1], me.name))
++    return;
++
++  if(!IsPerson(source_p))
++    return;
++
++  if(find_u_conf((char *)source_p->user->server, source_p->username,
++                 source_p->host, CONF_OPER_UNKLINE))
++  {
++    sendto_realops_flags(FLAGS_ALL, L_ALL,
++	       "*** Received Un-kline for [%s@%s], from %s",
++	       kuser, khost, get_oper_name(source_p));
++
++    if(remove_temp_match(khost, kuser))
++    {
++      sendto_one(source_p,
++	         ":%s NOTICE %s :Un-klined [%s@%s] from temporary k-lines",
++		 me.name, parv[0],kuser, khost);
++
++      sendto_realops_flags(FLAGS_ALL, L_ALL,
++	                   "%s has removed the temporary K-Line for: [%s@%s]",
++			   get_oper_name(source_p), kuser, khost);
++
++      ilog(L_NOTICE, "%s removed temporary K-Line for [%s@%s]",
++	   source_p->name, kuser, khost);
++      return;
++    }
++
++    remove_permkline_match(source_p, khost, kuser);    
++  }
++}
++
++/* remove_permkline_match()
++ *
++ * hunts for a permanent kline, and removes it.
++ */
++static void remove_permkline_match(struct Client *source_p,
++	                           char *host, char *user)
++{
++  FBFILE *in, *out;
++  int pairme = 0;
++  int error_on_write = NO;
++  char buf[BUFSIZE];
++  char buff[BUFSIZE];
++  char temppath[BUFSIZE];
++  const char *filename;
++  mode_t oldumask;
++  char *p;
++  
++  ircsprintf(temppath, "%s.tmp", ConfigFileEntry.klinefile);
++  
+   filename = get_conf_name(KLINE_TYPE);
++
+   if ((in = fbopen(filename, "r")) == 0)
+     {
+-      sendto_one(source_p, ":%s NOTICE %s :Cannot open %s", me.name, parv[0],
++      sendto_one(source_p, ":%s NOTICE %s :Cannot open %s", me.name, source_p->name,
+ 		 filename);
+       return;
+     }
+@@ -159,8 +254,8 @@
+   oldumask = umask(0);
+   if ((out = fbopen(temppath, "w")) == 0)
+     {
+-      sendto_one(source_p, ":%s NOTICE %s :Cannot open %s", me.name, parv[0],
+-		 temppath);
++      sendto_one(source_p, ":%s NOTICE %s :Cannot open %s",
++	         me.name, source_p->name, temppath);
+       fbclose(in);
+       umask(oldumask);
+       return;
+@@ -231,6 +326,11 @@
+     {
+       sendto_one(source_p, ":%s NOTICE %s :No K-Line for %s@%s",
+                  me.name, source_p->name,user,host);
++
++      if(!MyClient(source_p))
++        sendto_realops_flags(FLAGS_ALL, L_ALL, 
++			"*** Remote Un-Kline for [%s@%s] is not K-Lined.",
++			user, host);
+       return;
+     }
+ 
+@@ -245,6 +345,8 @@
+   return; 
+ }
+ 
++    
++  
+ /*
+  * flush_write()
+  *
+@@ -287,30 +389,45 @@
+  * Side effects: Any matching tklines are removed.
+  */
+ static int
+-remove_tkline_match(char *host, char *user)
++remove_temp_match(char *host, char *user)
+ {
+-  struct ConfItem *tk_c;
+-  dlink_node *tk_n;
++  if(remove_temp_match_list(host, user, &temporary_hour) ||
++     remove_temp_match_list(host, user, &temporary_day) ||
++     remove_temp_match_list(host, user, &temporary_min) ||
++     remove_temp_match_list(host, user, &temporary_week))
++    return YES;
++
++  return NO;
++}
++
++static int
++remove_temp_match_list(char *host, char *user, dlink_list *temp_list)
++{
++  struct ConfItem *aconf;
++  dlink_node *ptr;
+   struct irc_inaddr addr, caddr;
+   int nm_t, cnm_t, bits, cbits;
+   nm_t = parse_netmask(host, &addr, &bits);
+ 
+-  for (tk_n=temporary_klines.head; tk_n; tk_n=tk_n->next)
++  for(ptr = temp_list->head; ptr; ptr = ptr->next)
+     {
+-      tk_c = (struct ConfItem*)tk_n->data;
+-      cnm_t = parse_netmask(tk_c->host, &caddr, &cbits);
+-      if (cnm_t != nm_t || irccmp(user, tk_c->user))
++      aconf = (struct ConfItem*)ptr->data;
++
++      cnm_t = parse_netmask(aconf->host, &caddr, &cbits);
++
++      if (cnm_t != nm_t || (user && irccmp(user, aconf->user)))
+ 	continue;
+-      if ((nm_t==HM_HOST && !irccmp(tk_c->host, host)) ||
++
++      if ((nm_t==HM_HOST && !irccmp(aconf->host, host)) ||
+ 	  (nm_t==HM_IPV4 && bits==cbits && match_ipv4(&addr, &caddr, bits))
+ #ifdef IPV6
+ 	  || (nm_t==HM_IPV6 && bits==cbits && match_ipv6(&addr, &caddr, bits))
+ #endif
+ 	  )
+ 	{
+-	  dlinkDelete(tk_n, &temporary_klines);
+-	  free_dlink_node(tk_n);
+-	  delete_one_address_conf(tk_c->host, tk_c);
++	  dlinkDelete(ptr, temp_list);
++	  free_dlink_node(ptr);
++	  delete_one_address_conf(aconf->host, aconf);
+ 	  return YES;
+ 	}
+     }
+@@ -333,7 +450,8 @@
+   FBFILE* in;
+   FBFILE* out;
+   char  buf[BUFSIZE], buff[BUFSIZE], temppath[BUFSIZE], *p;
+-  const char  *filename,*cidr, *found_cidr;
++  const char  *filename, *found_cidr;
++  char *cidr;
+   int pairme = NO, error_on_write = NO;
+   mode_t oldumask;
+ 
+@@ -356,6 +474,18 @@
+       return;
+     }
+ #endif
++
++  if(remove_temp_match(cidr, NULL))
++  {
++    sendto_one(source_p,
++	       ":%s NOTICE %s :Un-dlined [%s] from temporary D-lines",
++	       me.name, parv[0], cidr);
++    sendto_realops_flags(FLAGS_ALL, L_ALL,
++                         "%s has removed the temporary D-Line for: [%s]",
++			 get_oper_name(source_p), cidr);
++    ilog(L_NOTICE, "%s removed temporary D-Line for [%s]", parv[0], cidr);
++    return;
++  }
+ 
+   filename = get_conf_name(DLINE_TYPE);
+ 
+diff -urN --exclude=CVS ircd-hybrid-7/modules/m_xline.c ircd-hybrid-7+lmh/modules/m_xline.c
+--- ircd-hybrid-7/modules/m_xline.c	Wed Dec 31 19:00:00 1969
++++ ircd-hybrid-7+lmh/modules/m_xline.c	Fri Jul 12 15:31:19 2002
+@@ -0,0 +1,146 @@
++/* modules/m_xline.c
++ * Copyright (C) 2002 Hybrid Development Team
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are
++ * met:
++ *
++ * 1.Redistributions of source code must retain the above copyright notice,
++ *   this list of conditions and the following disclaimer.
++ * 2.Redistributions in binary form must reproduce the above copyright
++ *   notice, this list of conditions and the following disclaimer in the
++ *   documentation and/or other materials provided with the distribution.
++ * 3.The name of the author may not be used to endorse or promote products
++ *   derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
++ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
++ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
++ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
++ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ *
++ * $Id: lmh.diff,v 1.1 2002/08/13 14:35:14 fishwaldo Exp $
++ */
++
++#include "stdinc.h"
++#include "tools.h"
++#include "handlers.h"
++#include "send.h"
++#include "channel.h"
++#include "client.h"
++#include "common.h"
++#include "config.h"
++#include "class.h"
++#include "ircd.h"
++#include "numeric.h"
++#include "memory.h"
++#include "s_log.h"
++#include "s_serv.h"
++#include "whowas.h"
++#include "irc_string.h"
++#include "hash.h"
++#include "msg.h"
++#include "parse.h"
++#include "modules.h"
++#include "s_conf.h"
++
++static void mo_xline(struct Client *client_p, struct Client *source_p,
++                    int parc, char *parv[]);
++
++struct Message xline_msgtab = {
++  "XLINE", 0, 0, 3, 0, MFLG_SLOW, 0,
++  {m_unregistered, m_not_oper, m_ignore, mo_xline}
++};
++
++void
++_modinit(void)
++{
++  mod_add_cmd(&xline_msgtab);
++}
++
++void
++_moddeinit(void)
++{
++  mod_del_cmd(&xline_msgtab);
++}
++
++char *_version = "$Revision: 1.1 $";
++
++/* m_xline()
++ *
++ * parv[1] - thing to xline
++ * parv[2] - optional type/reason
++ * parv[3] - reason
++ */
++void 
++mo_xline(struct Client *client_p, struct Client *source_p,
++         int parc, char *parv[])
++{
++  char buffer[BUFSIZE*2];
++  FBFILE *out;
++  struct ConfItem *aconf;
++  char *reason;
++  int xtype = 1;
++
++  if(!IsOperXline(source_p))
++  {
++    sendto_one(source_p, ":%s NOTICE %s :You need xline = yes;",
++               me.name, source_p->name);
++    return;
++  }
++
++  if(parc > 3)
++  {
++    xtype = atoi(parv[2]);
++    reason = parv[3];
++  }
++  else
++  {
++    if(IsDigit(*parv[2]))
++    {
++      xtype = atoi(parv[2]);
++      reason = "No Reason";
++    }
++    else
++      reason = parv[2];
++  }
++
++  sendto_realops_flags(FLAGS_ALL, L_ALL,
++		       "%s added X-line for [%s] [%s]",
++		       get_oper_name(source_p), parv[1], reason);
++  sendto_one(source_p, ":%s NOTICE %s :Added X-line for [%s] [%s]",
++             me.name, source_p->name, parv[1], reason);
++  ilog(L_TRACE, "%s added X-line for [%s] [%s]",
++       source_p->name, parv[1], reason);
++  
++  aconf = make_conf();
++  aconf->status = CONF_XLINE;
++  DupString(aconf->host, parv[1]);
++  DupString(aconf->passwd, reason);
++  aconf->port = xtype;
++
++  collapse(aconf->host);
++  conf_add_x_conf(aconf);
++
++  if((out = fbopen(ConfigFileEntry.xlinefile, "a")) == NULL)
++  {
++    sendto_realops_flags(FLAGS_ALL, L_ALL,
++		         "*** Problem opening %s", ConfigFileEntry.xlinefile);
++    return;
++  }
++
++  ircsprintf(buffer, "\"%s\",\"%d\",\"%s\",\"%s\",%lu\n",
++             parv[1], xtype, reason, get_oper_name(source_p), CurrentTime);
++
++  if(fbputs(buffer, out) == -1)
++    sendto_realops_flags(FLAGS_ALL, L_ALL,
++		         "*** Problem writing to %s", ConfigFileEntry.xlinefile);
++
++  fbclose(out);
++}
+diff -urN --exclude=CVS ircd-hybrid-7/src/class.c ircd-hybrid-7+lmh/src/class.c
+--- ircd-hybrid-7/src/class.c	Fri May 24 19:34:45 2002
++++ ircd-hybrid-7+lmh/src/class.c	Fri Jul 12 15:31:19 2002
+@@ -45,19 +45,19 @@
+ 
+ struct Class* ClassList;
+ 
+-static struct Class *make_class()
++struct Class *
++make_class(void)
+ {
+   struct Class        *tmp;
+ 
+   tmp = (struct Class *)MyMalloc(sizeof(struct Class));
+-  tmp->className = NULL;
+-  tmp->servname = NULL;
++  memset(tmp, 0, sizeof(struct Class));
+   return tmp;
+ }
+ 
+ void free_class(struct Class *tmp)
+ {
+-  MyFree(tmp->className);
++  MyFree(tmp->class_name);
+   MyFree((char *)tmp);
+ }
+ 
+@@ -161,57 +161,40 @@
+   return (DEFAULT_CONNECTFREQUENCY);
+ }
+ 
+-/*
+- * add_class
++/* add_class()
+  *
+- * inputs	- classname to use
+- * 		- ping frequency
+- *		- connection frequency
+- * 		- maximum links
+- *		- max sendq
+- * output	- NONE
+- * side effects -
+- * When adding a class, check to see if it is already present first.
+- * if so, then update the information for that class, rather than create
+- * a new entry for it and later delete the old entry.
+- * if no present entry is found, then create a new one and add it in
+- * immediately after the first one (class 0).
++ * input	- class to add
++ * output	-
++ * side effects - class is added to ClassList if new, else old class
++ *                is updated with new values.
+  */
+-void    add_class(char *classname,
+-                  int ping,
+-                  int confreq,
+-                  int maxli,
+-                  long sendq)
++void
++add_class(struct Class *classptr)
+ {
+-  struct Class *t, *p;
++  struct Class *tmpptr;
+ 
+-  if(!classname)
+-    return;
++  tmpptr = find_class(classptr->class_name);
+ 
+-  t = find_class(classname);
+-  if (t == ClassList)
+-    {
+-      p = make_class();
+-      p->next = t->next;
+-      t->next = p;
+-    }
++  if(tmpptr == ClassList)
++  {
++    classptr->next = tmpptr->next;
++    tmpptr->next = classptr;
++    CurrUsers(classptr) = 0;
++  }
+   else
+-    p = t;
+-  Debug((DEBUG_DEBUG,
+-         "Add Class %s: p %x t %x - cf: %d pf: %d ml: %d sq: %l",
+-         classname, p, t, confreq, ping, maxli, sendq));
+-
+-  /* classname already known to be non NULL */
+-  MyFree(ClassName(p));
+-  DupString(ClassName(p),classname);
+-  ConFreq(p) = confreq;
+-  PingFreq(p) = ping;
+-  MaxLinks(p) = maxli;
+-  MaxSendq(p) = (sendq > 0) ? sendq : DEFAULT_SENDQ;
+-  if (p != t)
+-    Links(p) = 0;
++  {
++    MaxUsers(tmpptr) = MaxUsers(classptr);
++    MaxLocal(tmpptr) = MaxLocal(classptr);
++    MaxGlobal(tmpptr) = MaxGlobal(classptr);
++    MaxIdent(tmpptr) = MaxIdent(classptr);
++    PingFreq(tmpptr) = PingFreq(classptr);
++    MaxSendq(tmpptr) = MaxSendq(classptr);
++    
++    free_class(classptr);
++  }
+ }
+ 
++
+ /*
+  * find_class
+  *
+@@ -249,14 +232,10 @@
+ 
+   for (cltmp2 = cltmp = ClassList; cltmp; cltmp = cltmp2->next)
+     {
+-      Debug((DEBUG_DEBUG,
+-             "ClassName %s Class %d : CF: %d PF: %d ML: %d LI: %d SQ: %ld",
+-             ClassName(cltmp),ClassType(cltmp), ConFreq(cltmp), PingFreq(cltmp),
+-             MaxLinks(cltmp), Links(cltmp), MaxSendq(cltmp)));
+-      if (MaxLinks(cltmp) < 0)
++      if (MaxUsers(cltmp) < 0)
+         {
+           cltmp2->next = cltmp->next;
+-          if (Links(cltmp) <= 0)
++          if (CurrUsers(cltmp) <= 0)
+             free_class(cltmp);
+         }
+       else
+@@ -275,14 +254,11 @@
+ {
+   ClassList = make_class();
+ 
+-  ClassType(ClassList) = 0;
+   DupString(ClassName(ClassList),"default");
+   ConFreq(ClassList) = DEFAULT_CONNECTFREQUENCY;
+   PingFreq(ClassList) = DEFAULT_PINGFREQUENCY;
+-  MaxLinks(ClassList) = ConfigFileEntry.maximum_links;
++  MaxUsers(ClassList) = 1;
+   MaxSendq(ClassList) = DEFAULT_SENDQ;
+-  Links(ClassList) = 0;
+-  ClassList->next = NULL;
+ }
+ 
+ /*
+@@ -299,7 +275,8 @@
+   for (cltmp = ClassList; cltmp; cltmp = cltmp->next)
+     sendto_one(source_p, form_str(RPL_STATSYLINE), me.name, source_p->name,
+                'Y', ClassName(cltmp), PingFreq(cltmp), ConFreq(cltmp),
+-               MaxLinks(cltmp), MaxSendq(cltmp));
++               MaxUsers(cltmp), MaxSendq(cltmp),
++	       MaxLocal(cltmp), MaxIdent(cltmp), MaxGlobal(cltmp), MaxIdent(cltmp));
+ }
+ 
+ /*
+@@ -311,7 +288,7 @@
+  */
+ long    get_sendq(struct Client *client_p)
+ {
+-  int   sendq = DEFAULT_SENDQ, retc = BAD_CLIENT_CLASS;
++  int   sendq = DEFAULT_SENDQ;
+   dlink_node      *ptr;
+   struct Class    *cl;
+   struct ConfItem *aconf;
+@@ -326,7 +303,7 @@
+         if ( !(cl = aconf->c_class))
+           continue;
+ 
+-        if (ClassType(cl) > retc)
++	if(ClassName(cl))
+           sendq = MaxSendq(cl);
+       }
+   return sendq;
+diff -urN --exclude=CVS ircd-hybrid-7/src/client.c ircd-hybrid-7+lmh/src/client.c
+--- ircd-hybrid-7/src/client.c	Thu Jul 11 20:43:24 2002
++++ ircd-hybrid-7+lmh/src/client.c	Fri Jul 12 15:31:19 2002
+@@ -998,6 +998,9 @@
+ 
+ 	if (HasID(source_p))
+ 	  del_from_id_hash_table(source_p->user->id, source_p);
++
++	if(ConfigFileEntry.use_global_limits)
++	  del_from_hostname_hash_table(source_p->host, source_p);
+   
+         /* again, this is all that is needed */
+     }
+diff -urN --exclude=CVS ircd-hybrid-7/src/hash.c ircd-hybrid-7+lmh/src/hash.c
+--- ircd-hybrid-7/src/hash.c	Fri Jun  7 17:59:17 2002
++++ ircd-hybrid-7+lmh/src/hash.c	Fri Jul 12 15:31:19 2002
+@@ -39,6 +39,8 @@
+ #include "fdlist.h"
+ #include "fileio.h"
+ #include "memory.h"
++#include "msg.h"
++#include "handlers.h"
+ 
+ /* New hash code */
+ /*
+@@ -47,11 +49,19 @@
+ 
+ static unsigned int hash_channel_name(const char* name);
+ 
++#ifdef FL_DEBUG
++struct Message hash_msgtab = {
++  "HASH", 0, 0, 1, 0, MFLG_SLOW, 0,
++  {m_ignore, m_ignore, m_ignore, mo_hash}
++};
++#endif
++
+ #ifdef DEBUGMODE
+ static struct HashEntry* clientTable = NULL;
+ static struct HashEntry* channelTable = NULL;
+ static struct HashEntry* idTable = NULL;
+ static struct HashEntry* resvTable = NULL;
++static struct HashEntry *hostTable = NULL;
+ static int clhits;
+ static int clmiss;
+ static int chhits;
+@@ -64,6 +74,7 @@
+ static struct HashEntry channelTable[CH_MAX];
+ static struct HashEntry idTable[U_MAX];
+ static struct HashEntry resvTable[R_MAX];
++static struct HashEntry hostTable[HOST_MAX];
+ 
+ #endif
+ 
+@@ -93,7 +104,6 @@
+ }
+ 
+ /*
+- *
+  * look in whowas.c for the missing ...[WW_MAX]; entry
+  */
+ 
+@@ -175,6 +185,17 @@
+   return (h & (CH_MAX - 1));
+ }
+ 
++static unsigned int
++hash_hostname(const char *name)
++{
++  int i = 30;
++  unsigned int h = 0;
++
++  while(*name && --i)
++    h = (h << 4) - (h + (unsigned char)ToLower(*name++));
++
++  return (h & (HOST_MAX - 1));
++}
+ 
+ /*
+  * hash_resv_channel()
+@@ -232,7 +253,7 @@
+ }
+ 
+ static void
+-clear_channel_hash_table()
++clear_channel_hash_table(void)
+ {
+ #ifdef DEBUGMODE
+   chmiss = 0;
+@@ -245,6 +266,16 @@
+ }
+ 
+ static void
++clear_hostname_hash_table(void)
++{
++#ifdef DEBUGMODE
++  if(!hostTable)
++    hostTable = (struct HashEntry *)MyMalloc(HOST_MAX * sizeof(struct HashEntry));
++#endif
++  memset(hostTable, 0, sizeof(struct HashEntry) * HOST_MAX);
++}
++
++static void
+ clear_resv_hash_table()
+ {
+ #ifdef DEBUGMODE
+@@ -263,6 +294,7 @@
+   clear_client_hash_table();
+   clear_channel_hash_table();
+   clear_id_hash_table();
++  clear_hostname_hash_table();
+   clear_resv_hash_table();
+ }
+ 
+@@ -301,6 +333,24 @@
+   ++clientTable[hashv].hits;
+ }
+ 
++void
++add_to_hostname_hash_table(const char *hostname, struct Client *client_p)
++{
++  unsigned int hashv;
++
++  assert(hostname != NULL);
++  assert(client_p != NULL);
++
++  if(hostname == NULL || client_p == NULL)
++    return;
++
++  hashv = hash_hostname(hostname);
++  client_p->hostnext = (struct Client *)hostTable[hashv].list;
++  hostTable[hashv].list = (void *)client_p;
++  hostTable[hashv].links++;
++  hostTable[hashv].hits++;
++}
++
+ /*
+  * add_to_resv_hash_table
+  */
+@@ -445,6 +495,37 @@
+     }
+ }
+ 
++void
++del_from_hostname_hash_table(const char *hostname, struct Client *client_p)
++{
++  struct Client *target_p;
++  struct Client *last_p = NULL;
++  unsigned int hashv;
++
++  if(hostname == NULL || client_p == NULL)
++    return;
++
++  hashv = hash_hostname(hostname);
++  for(target_p = (struct Client *)hostTable[hashv].list; target_p;
++      target_p = target_p->hostnext)
++  {
++    if(target_p == client_p)
++    {
++      if(last_p)
++        last_p->hostnext = client_p->hostnext;
++      else
++        hostTable[hashv].list = (void *)client_p->hostnext;
++
++      if(hostTable[hashv].links > 0)
++        hostTable[hashv].links--;
++
++      return;
++    }
++
++    last_p = target_p;
++  }
++}
++  
+ /*
+  * del_from_resv_hash_table()
+  */
+@@ -552,6 +633,25 @@
+   return (NULL);
+ }
+ 
++struct Client *
++find_hostname(const char *hostname)
++{
++  struct Client *target_p;
++  unsigned int hashv;
++
++  if(hostname == NULL)
++    return NULL;
++
++  hashv = hash_hostname(hostname);
++  for(target_p = (struct Client *)hostTable[hashv].list; target_p;
++      target_p = target_p->hostnext)
++  {
++    if(irccmp(target_p->host, hostname) == 0)
++      return target_p;
++  }
++
++  return NULL;
++}
+ 
+ /*
+  * Whats happening in this next loop ? Well, it takes a name like
+@@ -784,8 +884,72 @@
+   return(NULL);
+ }  
+ 
++#ifdef FL_DEBUG
++void
++mo_hash(struct Client *source_p, struct Client *client_p, 
++        int argc,char *argv[])
++{
++  int i;
++  struct Client *target_p;
++  u_long used_count;
++  int deepest_link;
++  u_long average_link;
++  int this_link;
++  int node[11];
++
++  for(i = 0; i < 11; i++)
++    node[i] = 0;
++
++  deepest_link = used_count = this_link = average_link = 0;
++
++  sendto_one(source_p, ":%s %d %s :Hostname hash statistics",
++               me.name, RPL_STATSDEBUG, source_p->name);
++  
++  for(i = 0; i < HOST_MAX; i++)
++  {
++    this_link = 0;
++
++    for(target_p = hostTable[i].list; target_p; target_p = target_p->hostnext)
++    {
++      used_count++;
++      this_link++;
++    }
+ 
++    if(this_link > deepest_link)
++      deepest_link = this_link;
+ 
++    if(this_link >= 10)
++    {
++      int j = 0;
++      for(target_p = hostTable[i].list; target_p; target_p = target_p->hostnext) 
++      {
++        sendto_one(source_p, ":%s %d %s :Node[%d][%d] %s",
++                   me.name, RPL_STATSDEBUG, source_p->name, i, j,
++		   target_p->host);
++	j++;
++      }
+ 
++      this_link = 10;
++    }
+ 
++    node[this_link]++;
++  }
+ 
++  for(i = 1; i < 11; i++)
++    average_link += node[i] * i;
++    
++  sendto_one(source_p, ":%s %d %s :Hash Size: %d - Used %lu %f%% - Free %lu %f%%",
++             me.name, RPL_STATSDEBUG, source_p->name, HOST_MAX,
++	     used_count, (float)((used_count / HOST_MAX) * 100), 
++	     HOST_MAX - used_count, 
++	     (float)((float)((float)(HOST_MAX - used_count) / HOST_MAX) * 100));
++  
++  sendto_one(source_p, ":%s %d %s :Deepest Link: %d - Average  %f",
++             me.name, RPL_STATSDEBUG, source_p->name, deepest_link,
++	     (float)(average_link / used_count));
++
++  for(i = 0; i < 11; i++)
++    sendto_one(source_p, ":%s %d %s :Nodes with %d entries: %d",
++               me.name, RPL_STATSDEBUG, source_p->name, i, node[i]);
++}
++#endif
+diff -urN --exclude=CVS ircd-hybrid-7/src/ircd.c ircd-hybrid-7+lmh/src/ircd.c
+--- ircd-hybrid-7/src/ircd.c	Thu Jul 11 20:51:08 2002
++++ ircd-hybrid-7+lmh/src/ircd.c	Fri Jul 12 15:31:19 2002
+@@ -261,6 +261,8 @@
+    STRING, "File to use for ircd.conf"},
+   {"klinefile",  &ConfigFileEntry.klinefile, 
+    STRING, "File to use for klines.conf"},
++  {"xlinefile",  &ConfigFileEntry.xlinefile,
++   STRING, "File to use for xlines.conf"},
+   {"logfile",    &logFileName, 
+    STRING, "File to use for ircd.log"},
+   {"pidfile",    &pidFileName,
+@@ -568,10 +570,12 @@
+   memset(&oper_list, 0, sizeof(oper_list));
+   memset(&lazylink_channels, 0, sizeof(lazylink_channels));
+ 
++#if 0
+   lclient_list.head = lclient_list.tail = NULL;
+   oper_list.head = oper_list.tail = NULL;
+   serv_list.head = serv_list.tail = NULL;
+   global_serv_list.head = global_serv_list.tail = NULL;
++#endif
+ 
+   GlobalClientList = &me;       /* Pointer to beginning of Client list */
+ 
+@@ -590,6 +594,7 @@
+   ConfigFileEntry.klinefile = KPATH;    /* Server kline file */
+   ConfigFileEntry.dlinefile = DLPATH;   /* dline file */
+   ConfigFileEntry.glinefile = GPATH;    /* gline log file */
++  ConfigFileEntry.xlinefile = XPATH;
+ 
+   myargv = argv;
+   umask(077);                /* better safe than sorry --SRB */
+@@ -740,7 +745,10 @@
+ 
+   eventAddIsh("cleanup_glines", cleanup_glines, NULL, CLEANUP_GLINES_TIME);
+ 
+-  eventAddIsh("cleanup_tklines", cleanup_tklines, NULL, CLEANUP_TKLINES_TIME);
++  eventAddIsh("cleanup_temps_min", cleanup_temps_min, NULL, 60);
++  eventAddIsh("cleanup_temps_hour", cleanup_temps_hour, NULL, 3600);
++  eventAddIsh("cleanup_temps_day", cleanup_temps_day, NULL, 86400);
++  eventAddIsh("cleanup_temps_week", cleanup_temps_week, NULL, 604800);
+ 
+   /* We want try_connections to be called as soon as possible now! -- adrian */
+   /* No, 'cause after a restart it would cause all sorts of nick collides */
+diff -urN --exclude=CVS ircd-hybrid-7/src/ircd_lexer.l ircd-hybrid-7+lmh/src/ircd_lexer.l
+--- ircd-hybrid-7/src/ircd_lexer.l	Thu Jul 11 19:40:22 2002
++++ ircd-hybrid-7+lmh/src/ircd_lexer.l	Fri Jul 12 15:31:19 2002
+@@ -127,6 +127,7 @@
+ exempt		{ return EXEMPT; }
+ fakename	{ return FAKENAME; }
+ flatten_links	{ return FLATTEN_LINKS; }
++flood_exempt	{ return FLOOD_EXEMPT; }
+ fname_foperlog  { return FNAME_FOPERLOG; }
+ fname_operlog   { return FNAME_OPERLOG; }
+ fname_userlog   { return FNAME_USERLOG; }
+@@ -181,7 +182,9 @@
+ no_join_on_split   { return NO_JOIN_ON_SPLIT; }
+ no_oper_flood   { return NO_OPER_FLOOD; }
+ no_tilde	{ return NO_TILDE; }
+-number_per_ip	{ return NUMBER_PER_IP; }
++number_per_ident	{ return NUMBER_PER_IDENT; }
++number_per_ip		{ return NUMBER_PER_IP; }
++number_per_ip_global	{ return NUMBER_PER_IP_GLOBAL; }
+ oper		{ return OPERATOR; }
+ oper_log        { return OPER_LOG; }
+ operator	{ return OPERATOR; }
+@@ -216,6 +219,7 @@
+ use_anonops	{ return USE_ANONOPS; }
+ use_egd 	{ return USE_EGD; }
+ use_except	{ return USE_EXCEPT; }
++use_global_limits	{ return USE_GLOBAL_LIMITS; }
+ use_halfops     { return USE_HALFOPS; }
+ use_help        { return USE_HELP; }
+ use_invex	{ return USE_INVEX; }
+@@ -227,6 +231,7 @@
+ vhost	{ return VHOST; }
+ vhost6	{ return VHOST6; }
+ warn		{ return WARN; }
++xline		{ return XLINE; }
+ yes		{ return TYES; }
+ 
+ failed_oper_notice      { return FAILED_OPER_NOTICE; }
+diff -urN --exclude=CVS ircd-hybrid-7/src/ircd_parser.y ircd-hybrid-7+lmh/src/ircd_parser.y
+--- ircd-hybrid-7/src/ircd_parser.y	Thu Jul 11 19:40:22 2002
++++ ircd-hybrid-7+lmh/src/ircd_parser.y	Fri Jul 12 15:33:17 2002
+@@ -37,6 +37,7 @@
+ #include "event.h"
+ #include "s_log.h"
+ #include "client.h"	/* for FLAGS_ALL only */
++#include "class.h"
+ #include "irc_string.h"
+ #include "ircdauth.h"
+ #include "memory.h"
+@@ -57,6 +58,8 @@
+ 
+ int yyparse();
+ 
++static struct Class *yy_class = NULL;
++
+ static struct ConfItem *yy_achead = NULL;
+ static struct ConfItem *yy_aconf = NULL;
+ static struct ConfItem *yy_aprev = NULL;
+@@ -70,12 +73,6 @@
+ 
+ static dlink_node *node;
+ 
+-char  *class_name_var;
+-int   class_ping_time_var;
+-int   class_number_per_ip_var;
+-int   class_max_number_var;
+-int   class_sendq_var;
+-
+ static char  *listener_address;
+ 
+ char *resv_reason;
+@@ -130,6 +127,7 @@
+ %token  FAILED_OPER_NOTICE
+ %token  FAKENAME
+ %token  FLATTEN_LINKS
++%token	FLOOD_EXEMPT
+ %token  FNAME_FOPERLOG
+ %token  FNAME_OPERLOG
+ %token  FNAME_USERLOG
+@@ -188,7 +186,9 @@
+ %token  NO_OPER_FLOOD
+ %token  NO_TILDE
+ %token  NUMBER
++%token  NUMBER_PER_IDENT
+ %token  NUMBER_PER_IP
++%token  NUMBER_PER_IP_GLOBAL
+ %token  OPERATOR
+ %token  OPER_LOG
+ %token  OPER_ONLY_UMODES
+@@ -270,6 +270,7 @@
+ %token	USE_ANONOPS
+ %token  USE_EGD
+ %token  USE_EXCEPT
++%token	USE_GLOBAL_LIMITS
+ %token  USE_HALFOPS
+ %token  USE_HELP
+ %token  USE_INVEX
+@@ -280,6 +281,7 @@
+ %token  VHOST6
+ %token  WARN
+ %token  WARN_NO_NLINE
++%token	XLINE
+ 
+ %type   <string>   QSTRING
+ %type   <number>   NUMBER
+@@ -749,8 +751,8 @@
+ oper_items:     oper_items oper_item |
+                 oper_item;
+ 
+-oper_item:      oper_name  | oper_user | oper_password |
+-                oper_class | oper_global_kill | oper_remote |
++oper_item:      oper_name  | oper_user | oper_password | oper_flood_exempt |
++                oper_class | oper_global_kill | oper_remote | oper_xline |
+                 oper_kline | oper_unkline | oper_gline | oper_nick_changes |
+                 oper_die | oper_rehash | oper_admin | oper_rsa_public_key_file | error;
+ 
+@@ -875,6 +877,10 @@
+               |
+               UNKLINE '=' TNO ';' { yy_achead->port &= ~CONF_OPER_UNKLINE; } ;
+ 
++oper_xline: XLINE '=' TYES ';' { yy_achead->port |= CONF_OPER_XLINE; }
++            |
++            XLINE '=' TNO ';' { yy_achead->port &= ~CONF_OPER_XLINE; };
++
+ oper_gline: GLINE '=' TYES ';' { yy_achead->port |= CONF_OPER_GLINE;}
+             |
+             GLINE '=' TNO ';' { yy_achead->port &= ~CONF_OPER_GLINE; };
+@@ -895,28 +901,24 @@
+             |
+             ADMIN '=' TNO ';' { yy_achead->port &= ~CONF_OPER_ADMIN;} ;
+ 
++oper_flood_exempt: FLOOD_EXEMPT '=' TYES ';' { yy_achead->port |= CONF_OPER_FLOOD_EXEMPT; }
++                   |
++		   FLOOD_EXEMPT '=' TNO ';' { yy_achead->port &= ~CONF_OPER_FLOOD_EXEMPT; };
++
+ /***************************************************************************
+  *  section class
+  ***************************************************************************/
+ 
+ class_entry:    CLASS 
+   {
+-    MyFree(class_name_var);
+-    class_name_var = NULL;
+-    class_ping_time_var = 0;
+-    class_number_per_ip_var = 0;
+-    class_max_number_var = 0;
+-    class_sendq_var = 0;
++    yy_class = make_class();
+   }
+   '{' class_items '}' ';'
+   {
+-
+-    add_class(class_name_var,class_ping_time_var,
+-              class_number_per_ip_var, class_max_number_var,
+-              class_sendq_var );
+-
+-    MyFree(class_name_var);
+-    class_name_var = NULL;
++    if(yy_class->class_name)
++      add_class(yy_class);
++    else
++      free_class(yy_class);
+   };
+ 
+ class_items:    class_items class_item |
+@@ -925,6 +927,8 @@
+ class_item:     class_name |
+                 class_ping_time |
+                 class_number_per_ip |
++		class_number_per_ip_global |
++		class_number_per_ident |
+                 class_connectfreq |
+                 class_max_number |
+                 class_sendq |
+@@ -932,33 +936,42 @@
+ 
+ class_name:     NAME '=' QSTRING ';' 
+   {
+-    MyFree(class_name_var);
+-    DupString(class_name_var, yylval.string);
++    DupString(yy_class->class_name, yylval.string);
+   };
+ 
+ class_ping_time:        PING_TIME '=' timespec ';'
+   {
+-    class_ping_time_var = $3;
++    yy_class->ping_freq = $3;
+   };
+ 
+ class_number_per_ip:    NUMBER_PER_IP '=' NUMBER ';'
+   {
+-    class_number_per_ip_var = $3;
++    yy_class->max_local = $3;
++  };
++
++class_number_per_ip_global: NUMBER_PER_IP_GLOBAL '=' NUMBER ';'
++  {
++    yy_class->max_global = $3;
++  };
++
++class_number_per_ident: NUMBER_PER_IDENT '=' NUMBER ';'
++  {
++    yy_class->max_ident = $3;
+   };
+ 
+ class_connectfreq:     CONNECTFREQ '=' timespec ';'
+   {
+-    class_number_per_ip_var = $3;
++    yy_class->con_freq = $3;
+   };
+ 
+ class_max_number:       MAX_NUMBER '=' NUMBER ';'
+   {
+-    class_max_number_var = $3;
++    yy_class->max_total = $3;
+   };
+ 
+ class_sendq:    SENDQ '=' sizespec ';'
+   {
+-    class_sendq_var = $3;
++    yy_class->max_sendq = $3;
+   };
+ 
+ 
+@@ -1303,6 +1316,7 @@
+     yy_aconf->name = NULL;
+     yy_aconf->user = NULL;
+     yy_aconf->host = NULL;
++    yy_aconf->port = CONF_OPER_K;
+   }
+   '{' shared_items '}' ';'
+   {
+@@ -1313,7 +1327,8 @@
+ shared_items:		shared_items shared_item |
+ 			shared_item;
+ 
+-shared_item:		shared_name | shared_user | error;
++shared_item:		shared_name | shared_user | shared_kline |
++                        shared_unkline | error;
+ 
+ shared_name:		NAME '=' QSTRING ';'
+   {
+@@ -1341,6 +1356,14 @@
+     }
+   };
+ 
++shared_kline:  KLINE '=' TYES ';' { yy_aconf->port |= CONF_OPER_K; };
++               |
++	       KLINE '=' TNO ';' { yy_aconf->port &= ~CONF_OPER_K; };
++
++shared_unkline: UNKLINE '=' TYES ';' { yy_aconf->port |= CONF_OPER_UNKLINE; };
++                |
++		UNKLINE '=' TNO ';' { yy_aconf->port &= ~CONF_OPER_UNKLINE; };
++
+ /***************************************************************************
+  *  section connect
+  ***************************************************************************/
+@@ -1970,7 +1993,7 @@
+                     general_oper_umodes |
+                     general_caller_id_wait | general_default_floodcount |
+                     general_min_nonwildcard |
+-                    general_servlink_path | general_use_help |
++                    general_servlink_path | general_use_global_limits | general_use_help |
+                     general_default_cipher_preference |
+                     general_compression_level | general_client_flood |
+                     general_throttle_time | general_havent_read_conf |
+@@ -2332,6 +2355,23 @@
+   {
+     ConfigFileEntry.ping_cookie = 0;
+   } ;
++
++general_use_global_limits: USE_GLOBAL_LIMITS '=' TYES ';'
++  {
++    if(ConfigFileEntry.use_global_limits == 0)
++      ilog(L_ERROR, "Ignoring config file entry 'use_global_limits = yes' "
++                    "-- can only be changed on boot");
++    else
++      ConfigFileEntry.use_global_limits = 1;
++  }
++    | USE_GLOBAL_LIMITS '=' TNO ';'
++  {
++    if(ConfigFileEntry.use_global_limits == 1)
++      ilog(L_ERROR, "Ignoring config file entry 'use_global_limits = no' "
++                    "-- can only be changed on boot");
++    else
++      ConfigFileEntry.use_global_limits = 0;
++  };
+ 
+ general_use_help: USE_HELP '=' TYES ';'
+   {
+diff -urN --exclude=CVS ircd-hybrid-7/src/kdparse.c ircd-hybrid-7+lmh/src/kdparse.c
+--- ircd-hybrid-7/src/kdparse.c	Sat Jul  6 12:58:57 2002
++++ ircd-hybrid-7+lmh/src/kdparse.c	Fri Jul 12 15:31:19 2002
+@@ -110,6 +110,40 @@
+     }
+ }
+ 
++void
++parse_x_file(FBFILE *file)
++{
++  struct ConfItem *aconf;
++  char *reason_field = NULL;
++  char *host_field = NULL;
++  char *port_field = NULL;
++  char line[BUFSIZE];
++  char *p;
++
++  while(fbgets(line, sizeof(line), file))
++  {
++    if((p = strchr(line, '\n')))
++      *p = '\0';
++
++    if((*line == '\0') || (line[0] == '#'))
++      continue;
++
++    if((host_field = getfield(line)) == NULL)
++      continue;
++
++    if((port_field = getfield(NULL)) == NULL)
++      continue;
++
++    if((reason_field = getfield(NULL)) == NULL)
++      continue;
++
++    aconf = make_conf();
++    aconf->status = CONF_XLINE;
++    conf_add_fields(aconf, host_field, reason_field, "", port_field, NULL);
++    conf_add_x_conf(aconf);
++  }
++}
++
+ /*
+  * getfield
+  *
+diff -urN --exclude=CVS ircd-hybrid-7/src/messages.tab ircd-hybrid-7+lmh/src/messages.tab
+--- ircd-hybrid-7/src/messages.tab	Fri Jun 28 14:18:49 2002
++++ ircd-hybrid-7+lmh/src/messages.tab	Fri Jul 12 15:31:19 2002
+@@ -238,7 +238,7 @@
+ /* 215 RPL_STATSILINE, */       ":%s 215 %s %c %s * %s@%s %d %s",
+ /* 216 RPL_STATSKLINE, */       ":%s 216 %s %c %s * %s :%s",
+ /* 217 RPL_STATSQLINE, */       ":%s 217 %s %c %s :%s",
+-/* 218 RPL_STATSYLINE, */       ":%s 218 %s %c %s %d %d %d %lu",
++/* 218 RPL_STATSYLINE, */       ":%s 218 %s %c %s %d %d %d %lu %d.%d %d.%d",
+ /* 219 RPL_ENDOFSTATS, */       ":%s 219 %s %s :End of /STATS report",
+ /* 220 RPL_STATSPLINE, */       ":%s 220 %s %c %d %s %d :%s",
+ /* 221 RPL_UMODEIS, */          ":%s 221 %s %s",
+diff -urN --exclude=CVS ircd-hybrid-7/src/modules.c ircd-hybrid-7+lmh/src/modules.c
+--- ircd-hybrid-7/src/modules.c	Tue Jun  4 01:30:16 2002
++++ ircd-hybrid-7+lmh/src/modules.c	Fri Jul 12 15:31:19 2002
+@@ -110,6 +110,10 @@
+ 
+ extern struct Message error_msgtab;
+ 
++#ifdef FL_DEBUG
++extern struct Message hash_msgtab;
++#endif
++
+ void
+ modules_init(void)
+ {
+@@ -119,6 +123,9 @@
+ 	mod_add_cmd(&modlist_msgtab);
+ 	mod_add_cmd(&modrestart_msgtab);
+ 	mod_add_cmd(&error_msgtab);
++#ifdef FL_DEBUG
++	mod_add_cmd(&hash_msgtab);
++#endif
+ }
+ 
+ /* mod_find_path()
+diff -urN --exclude=CVS ircd-hybrid-7/src/packet.c ircd-hybrid-7+lmh/src/packet.c
+--- ircd-hybrid-7/src/packet.c	Thu May 30 22:21:04 2002
++++ ircd-hybrid-7+lmh/src/packet.c	Fri Jul 12 15:31:19 2002
+@@ -74,7 +74,8 @@
+   else 
+   {
+ 
+-    if (ConfigFileEntry.no_oper_flood && IsOper(client_p))
++    if(IsOper(client_p) && (ConfigFileEntry.no_oper_flood ||
++        IsOperFloodExempt(client_p)))
+       checkflood = 0;
+     /*
+      * Handle flood protection here - if we exceed our flood limit on
+@@ -101,6 +102,10 @@
+         if(lclient_p->sent_parsed >= lclient_p->allow_read)
+           break;
+       }
++
++      /* can flood as much as they want until they sendq off. */
++      else if(IsOperFloodExempt(client_p))
++        ;
+       
+       /* allow opers 4 times the amount of messages as users. why 4?
+        * why not. :) --fl_
+diff -urN --exclude=CVS ircd-hybrid-7/src/s_conf.c ircd-hybrid-7+lmh/src/s_conf.c
+--- ircd-hybrid-7/src/s_conf.c	Thu Jul 11 20:51:08 2002
++++ ircd-hybrid-7+lmh/src/s_conf.c	Fri Jul 12 15:31:19 2002
+@@ -73,7 +73,8 @@
+ static void     read_conf(FBFILE*);
+ static void     clear_out_old_conf(void);
+ static void     flush_deleted_I_P(void);
+-static void     expire_tklines(dlink_list *);
++static void	add_temp_line(struct ConfItem *);
++static void     expire_temps(dlink_list *, int);
+ static int 	is_attached(struct Client *client_p, struct ConfItem *aconf);
+ 
+ FBFILE* conf_fbfile_in;
+@@ -433,18 +434,40 @@
+       (void)exit_client(client_p, source_p, &me, "Socket Error");
+       break;
+ 
+-    case TOO_MANY:
++    case TOO_MANY_LOCAL:
+       sendto_realops_flags(FLAGS_FULL, L_ALL, 
+-                           "Too many on IP for %s (%s).",
+-			   get_client_name(source_p, SHOW_IP),
+-			   source_p->localClient->sockhost);
++                           "Too many local connections for %s",
++			   get_client_name(source_p, SHOW_IP));
+ 			   
+-      ilog(L_INFO,"Too many connections on IP from %s.",
+-	   get_client_name(source_p, SHOW_IP));
++      ilog(L_INFO,"Too many local connections from %s",
++           get_client_name(source_p, SHOW_IP));
+       
+       ServerStats->is_ref++;
+-      (void)exit_client(client_p, source_p, &me, 
+-			"No more connections allowed on that IP" );
++      exit_client(client_p, source_p, &me, "Too many host connections (local)");
++      break;
++
++    case TOO_MANY_GLOBAL:
++      sendto_realops_flags(FLAGS_FULL, L_ALL,
++		           "Too many global connections for %s",
++			   get_client_name(source_p, SHOW_IP));
++      ilog(L_INFO, "Too many global connections from %s",
++           get_client_name(source_p, SHOW_IP));
++
++      ServerStats->is_ref++;
++      exit_client(client_p, source_p, &me,
++		  "Too many host connections (global)");
++      break;
++
++    case TOO_MANY_IDENT:
++      sendto_realops_flags(FLAGS_FULL, L_ALL,
++		           "Too many user connections for %s",
++			   get_client_name(source_p, SHOW_IP));
++      ilog(L_INFO, "Too many user connections from %s",
++           get_client_name(source_p, SHOW_IP));
++
++      ServerStats->is_ref++;
++      exit_client(client_p, source_p, &me,
++                  "Too many user connections (global)");
+       break;
+ 
+     case I_LINE_FULL:
+@@ -607,12 +630,55 @@
+   SetIpHash(client_p);
+   ip_found->count++;
+ 
+-  /* only check it if its non zero */
+-  if ( aconf->c_class /* This should never non NULL *grin* */ &&
+-       ConfConFreq(aconf) && ip_found->count > ConfConFreq(aconf))
++  if(ConfigFileEntry.use_global_limits)
++  {
++    struct Client *target_p;
++    int local_count = 0;
++    int global_count = 0;
++    int ident_count = 0;
++    int unidented = 0;
++
++    if(IsConfExemptLimits(aconf))
++      return(attach_conf(client_p, aconf));
++
++    if(*client_p->username == '~')
++      unidented = 1;
++
++    for(target_p = find_hostname(client_p->host); target_p;
++        target_p = target_p->hostnext)
++    {
++      if(irccmp(client_p->host, target_p->host) != 0)
++        continue;
++
++      if(MyConnect(target_p))
++        local_count++;
++
++      global_count++;
++
++      if(unidented)
++      {
++	if(*target_p->username == '~')
++          ident_count++;
++      }
++      else if(irccmp(target_p->username, client_p->username) == 0)
++        ident_count++;
++
++      if(ConfMaxLocal(aconf) && local_count >= ConfMaxLocal(aconf))
++        return TOO_MANY_LOCAL;
++      else if(ConfMaxGlobal(aconf) && global_count >= ConfMaxGlobal(aconf))
++        return TOO_MANY_GLOBAL;
++      else if(ConfMaxIdent(aconf) && ident_count >= ConfMaxIdent(aconf))
++        return TOO_MANY_IDENT;
++    }
++  }
++  else
++  {
++    /* only check it if its non zero */
++    if(aconf->c_class &&
++       ConfMaxLocal(aconf) && ip_found->count > ConfMaxLocal(aconf))
+     {
+       if(!IsConfExemptLimits(aconf))
+-        return TOO_MANY; /* Already at maximum allowed ip#'s */
++        return TOO_MANY_LOCAL; /* Already at maximum allowed ip#'s */
+       else
+         {
+           sendto_one(client_p,
+@@ -620,6 +686,7 @@
+                      me.name,client_p->name);
+         }
+     }
++  }
+ 
+   return (attach_conf(client_p, aconf) );
+ }
+@@ -689,12 +756,11 @@
+   for(ptr = ip_hash_table[hash_index = hash_ip(ip_in)]; ptr;
+       ptr = ptr->next)
+   {
+-   if(!memcmp(&ptr->ip, ip_in, sizeof(struct irc_inaddr)))
+-   {
+-    return(ptr);
+-   }
++    if(memcmp(&ptr->ip, ip_in, sizeof(struct irc_inaddr)) == 0)
++      return(ptr);
+   }
+-  if ( (ptr = ip_hash_table[hash_index]) != (IP_ENTRY *)NULL )
++
++  if((ptr = ip_hash_table[hash_index]) != NULL)
+     {
+       if( free_ip_entries == (IP_ENTRY *)NULL)
+ 	outofmemory();
+@@ -709,14 +775,14 @@
+       return(newptr);
+     }
+ 
+-  if( free_ip_entries == (IP_ENTRY *)NULL)
++  if( free_ip_entries == NULL)
+     outofmemory();
+ 
+   ptr = ip_hash_table[hash_index] = free_ip_entries;
+   free_ip_entries = ptr->next;
+   memcpy(&ptr->ip, ip_in, sizeof(struct irc_inaddr));
+   ptr->count = 0;
+-  ptr->next = (IP_ENTRY *)NULL;
++  ptr->next = NULL;
+   return (ptr);
+ }
+ 
+@@ -904,10 +970,10 @@
+             {
+               if (aconf->status & CONF_CLIENT_MASK)
+                 {
+-                  if (ConfLinks(aconf) > 0)
+-                    --ConfLinks(aconf);
++                  if (ConfCurrUsers(aconf) > 0)
++                    --ConfCurrUsers(aconf);
+                 }
+-              if (ConfMaxLinks(aconf) == -1 && ConfLinks(aconf) == 0)
++              if (ConfMaxUsers(aconf) == -1 && ConfCurrUsers(aconf) == 0)
+                 {
+                   free_class(ClassPtr(aconf));
+                   ClassPtr(aconf) = NULL;
+@@ -973,7 +1039,7 @@
+   if ( (aconf->status & CONF_OPERATOR) == 0 )
+     {
+       if ((aconf->status & CONF_CLIENT) &&
+-          ConfLinks(aconf) >= ConfMaxLinks(aconf) && ConfMaxLinks(aconf) > 0)
++          ConfCurrUsers(aconf) >= ConfMaxUsers(aconf) && ConfMaxUsers(aconf) > 0)
+         {
+           if (!IsConfExemptLimits(aconf))
+             {
+@@ -999,7 +1065,7 @@
+ 
+   aconf->clients++;
+   if (aconf->status & CONF_CLIENT_MASK)
+-    ConfLinks(aconf)++;
++    ConfCurrUsers(aconf)++;
+   return 0;
+ }
+ 
+@@ -1104,7 +1170,7 @@
+         continue;
+       if (tmp->status & CONF_OPERATOR)
+         {
+-          if (tmp->clients < ConfMaxLinks(tmp))
++          if (tmp->clients < ConfMaxUsers(tmp))
+             return tmp;
+           else
+             continue;
+@@ -1228,7 +1294,7 @@
+  * side effects - looks for a matches on all fields
+  */
+ int 
+-find_u_conf(char *server,char *user,char *host)
++find_u_conf(char *server,char *user,char *host, int flag)
+ {
+   struct ConfItem *aconf;
+ 
+@@ -1240,8 +1306,15 @@
+       if(match(aconf->name,server))
+ 	{
+ 	  if (BadPtr(aconf->user) || BadPtr(aconf->host))
+-	    return YES;
+-	  if(match(aconf->user,user) && match(aconf->host,host))
++	  {
++            if(aconf->port & flag)
++  	      return YES;
++	    else
++              return NO;
++	  }
++
++	  if(match(aconf->user,user) && match(aconf->host,host) &&
++             aconf->port & flag)
+ 	    return YES;
+ 
+ 	}
+@@ -1385,7 +1458,7 @@
+   ConfigFileEntry.max_targets = MAX_TARGETS_DEFAULT;
+   DupString(ConfigFileEntry.servlink_path, SLPATH);
+   ConfigFileEntry.egdpool_path = NULL;
+-  
++
+ #ifdef HAVE_LIBCRYPTO
+   /* jdc -- This is our default value for a cipher.  According to the
+    *        CRYPTLINK document (doc/cryptlink.txt), BF/128 must be supported
+@@ -1499,6 +1572,9 @@
+   if(ConfigChannel.use_anonops == -1)
+     ConfigChannel.use_anonops = 0;
+ 
++  if(ConfigFileEntry.use_global_limits == -1)
++    ConfigFileEntry.use_global_limits = 1;
++
+   GlobalSetOptions.idletime = (ConfigFileEntry.idletime * 60);
+ }
+ 
+@@ -1513,14 +1589,6 @@
+ {
+   (void)collapse(aconf->host);
+   (void)collapse(aconf->user);
+-  Debug((DEBUG_NOTICE,
+-	 "Read Init: (%d) (%s) (%s) (%s) (%d) (%d)",
+-	 aconf->status, 
+-	 aconf->host ? aconf->host : "<NULL>",
+-	 aconf->passwd ? aconf->passwd : "<NULL>",
+-	 aconf->user ? aconf->user : "<NULL>",
+-	 aconf->port,
+-	 aconf->c_class ? ConfClassType(aconf): 0 ));
+ 
+   aconf->next = ConfigItemList;
+   ConfigItemList = aconf;
+@@ -1649,40 +1717,80 @@
+ void
+ add_temp_kline(struct ConfItem *aconf)
+ {
+-  dlink_node *kill_node;
+-  kill_node = make_dlink_node();
+-  dlinkAdd(aconf, kill_node, &temporary_klines);
++  add_temp_line(aconf);
+   aconf->flags |= CONF_FLAGS_TEMPORARY;
+   add_conf_by_address(aconf->host, CONF_KILL, aconf->user, aconf);
+ }
+ 
+-/*
+- * cleanup_tklines
++/* add_temp_dline
+  *
+- * inputs       - NONE
+- * output       - NONE
+- * side effects - call function to expire tklines
+- *                This is an event started off in ircd.c
++ * input	- pointer to struct ConfItem
++ * output	- none
++ * side effects - added to tkline link list and address hash
+  */
++void add_temp_dline(struct ConfItem *aconf)
++{
++  add_temp_line(aconf);
++  aconf->flags |= CONF_FLAGS_TEMPORARY;
++  add_conf_by_address(aconf->host, CONF_DLINE, aconf->user, aconf);
++}
++
++void
++cleanup_temps_min(void *notused)
++{
++  expire_temps(&temporary_min, TEMP_MIN);
++}
++
+ void
+-cleanup_tklines(void *notused)
++cleanup_temps_hour(void *notused)
+ {
+-  expire_tklines(&temporary_klines);
++  expire_temps(&temporary_hour, TEMP_HOUR);
++}
++
++void
++cleanup_temps_day(void *notused)
++{
++  expire_temps(&temporary_day, TEMP_DAY);
++}
++
++void
++cleanup_temps_week(void *notused)
++{
++  expire_temps(&temporary_week, TEMP_WEEK);
++}
++
++static void
++add_temp_line(struct ConfItem *aconf)
++{
++  dlink_node *m;
++
++  m = make_dlink_node();
++  
++  if(aconf->hold > CurrentTime + (10080*60))
++    dlinkAdd(aconf, m, &temporary_week);
++  else if(aconf->hold > CurrentTime + (1440*60))
++    dlinkAdd(aconf, m, &temporary_day);
++  else if(aconf->hold > CurrentTime + (60*60))
++    dlinkAdd(aconf, m, &temporary_hour);
++  else
++    dlinkAdd(aconf, m, &temporary_min);
+ }
+ 
+ /*
+- * expire_tklines
++ * expire_temps
+  *
+- * inputs       - tkline list pointer
++ * inputs       - list pointer
++ * 		- type
+  * output       - NONE
+  * side effects - expire tklines
+  */
+ static void
+-expire_tklines(dlink_list *tklist)
++expire_temps(dlink_list *tklist, int type)
+ {
+   dlink_node *kill_node;
+   dlink_node *next_node;
+   struct ConfItem *kill_ptr;
++
+   for (kill_node = tklist->head; kill_node; kill_node = next_node)
+     {
+       kill_ptr = kill_node->data;
+@@ -1691,15 +1799,48 @@
+       if (kill_ptr->hold <= CurrentTime)
+ 	{
+           /* Alert opers that a TKline expired - Hwy */
+-          sendto_realops_flags(FLAGS_ALL, L_ALL,
++          if(kill_ptr->status & CONF_KILL)
++            sendto_realops_flags(FLAGS_ALL, L_ALL,
+ 			       "Temporary K-line for [%s@%s] expired",
+ 			       (kill_ptr->user) ? kill_ptr->user : "*",
+ 			       (kill_ptr->host) ? kill_ptr->host : "*");
+ 
++	  /* temp dline */
++	  else
++            sendto_realops_flags(FLAGS_ALL, L_ALL,
++			       "Temporary D-line for [%s] expired",
++			       kill_ptr->host);
++
+ 	  delete_one_address_conf(kill_ptr->host, kill_ptr);
+ 	  dlinkDelete(kill_node, tklist);
+ 	  free_dlink_node(kill_node);
+ 	}
++      
++      else if((type == TEMP_WEEK && kill_ptr->hold < CurrentTime + 10080) ||
++              (type == TEMP_DAY && kill_ptr->hold < CurrentTime + 1440) ||
++	      (type == TEMP_HOUR && kill_ptr->hold < CurrentTime + 60))
++      {
++        /* expires within the hour.. */
++        if(kill_ptr->hold < CurrentTime + (60*60))
++	{
++          dlinkDelete(kill_node, tklist);
++	  dlinkAdd(kill_ptr, kill_node, &temporary_min);
++	}
++
++	/* expires within the day */
++	else if(kill_ptr->hold < CurrentTime + (1440*60))
++	{
++          dlinkDelete(kill_node, tklist);
++	  dlinkAdd(kill_ptr, kill_node, &temporary_hour);
++	}
++
++	/* expires within the week */
++	else if(kill_ptr->hold < CurrentTime + (10080*60))
++	{
++          dlinkDelete(kill_node, tklist);
++	  dlinkAdd(kill_ptr, kill_node, &temporary_day);
++	}
++      }
+     }
+ }
+ 
+@@ -1740,6 +1881,15 @@
+   else
+     *privs_ptr++ = 'k';
+ 
++  if(port & CONF_OPER_XLINE)
++  {
++    if(client_p)
++      SetOperXline(client_p);
++    *privs_ptr++ = 'X';
++  }
++  else
++    *privs_ptr++ = 'x';
++
+   if(port & CONF_OPER_N)
+     {
+       if(client_p)
+@@ -1800,7 +1950,13 @@
+     }
+   else
+     *privs_ptr++ = 'a';
+-  
++
++  if(port & CONF_OPER_FLOOD_EXEMPT)
++    {
++      if(client_p)
++        SetOperFloodExempt(client_p);
++    }
++
+   *privs_ptr = '\0';
+ 
+   return(privs_out);
+@@ -1940,6 +2096,7 @@
+ {
+   FBFILE *file;
+   const char *filename, *kfilename, *dfilename; /* kline or conf filename */
++  const char *xfilename;
+ 
+   conf_fbfile_in = NULL;
+ 
+@@ -1966,6 +2123,7 @@
+     /* set to 'undefined' */
+     ConfigChannel.use_halfops = -1;
+     ConfigChannel.use_anonops = -1;
++    ConfigFileEntry.use_global_limits = -1;
+   }
+   else
+   {
+@@ -2012,6 +2170,25 @@
+ 	  fbclose(file);
+ 	}
+     }
++
++  xfilename = ConfigFileEntry.xlinefile;
++  if(irccmp(filename, xfilename) && irccmp(kfilename, xfilename))
++  {
++    if((file = fbopen(xfilename, "r")) == NULL)
++    {
++      if(cold)
++        ilog(L_ERROR, "Failed reading xline file %s", xfilename);
++      else
++        sendto_realops_flags(FLAGS_ALL, L_ALL,
++			     "Can't open %s file xlines could be missing!",
++			     xfilename);
++    }
++    else
++    {
++      parse_x_file(file);
++      fbclose(file);
++    }
++  }
+ }
+ 
+ /*
+@@ -2065,7 +2242,7 @@
+   assert(ClassList != NULL);
+   
+   for (cltmp = ClassList->next; cltmp; cltmp = cltmp->next)
+-    MaxLinks(cltmp) = -1;
++    MaxUsers(cltmp) = -1;
+ 
+   clear_out_address_conf();
+   clear_special_conf(&x_conf);
+@@ -2305,7 +2482,7 @@
+       return;
+     }
+ 
+-  if (ConfMaxLinks(aconf) < 0)
++  if (ConfMaxUsers(aconf) < 0)
+     {
+       ClassPtr(aconf) = find_class(0);
+       MyFree(aconf->className);
+diff -urN --exclude=CVS ircd-hybrid-7/src/s_debug.c ircd-hybrid-7+lmh/src/s_debug.c
+--- ircd-hybrid-7/src/s_debug.c	Fri May 24 19:34:51 2002
++++ ircd-hybrid-7+lmh/src/s_debug.c	Fri Jul 12 15:31:20 2002
+@@ -44,7 +44,6 @@
+ #include "linebuf.h"
+ #include "memory.h"
+ 
+-
+ /*
+  * Option string.  Must be before #ifdef DEBUGMODE.
+  */
+@@ -393,11 +392,20 @@
+              number_servers_cached,
+              (int)mem_servers_cached);
+ 
+-  count_ip_hash(&number_ips_stored,&mem_ips_stored);
+-  sendto_one(source_p, ":%s %d %s :iphash %u(%d)",
+-             me.name, RPL_STATSDEBUG, source_p->name,
+-             number_ips_stored,
+-             (int)mem_ips_stored);
++  if(ConfigFileEntry.use_global_limits)
++  {
++    sendto_one(source_p, ":%s %d %s :hostname hash %d(%u)",
++	       me.name, RPL_STATSDEBUG, source_p->name,
++	       HOST_MAX, HOST_MAX * sizeof(struct HashEntry));
++  }
++  else
++  {
++    count_ip_hash(&number_ips_stored,&mem_ips_stored);
++    sendto_one(source_p, ":%s %d %s :iphash %u(%d)",
++               me.name, RPL_STATSDEBUG, source_p->name,
++               number_ips_stored,
++               (int)mem_ips_stored);
++  }
+ 
+   total_memory = totww + total_channel_memory + conf_memory +
+     class_count * sizeof(struct Class);
+diff -urN --exclude=CVS ircd-hybrid-7/src/s_serv.c ircd-hybrid-7+lmh/src/s_serv.c
+--- ircd-hybrid-7/src/s_serv.c	Thu Jul 11 23:30:04 2002
++++ ircd-hybrid-7+lmh/src/s_serv.c	Fri Jul 12 15:31:20 2002
+@@ -104,6 +104,7 @@
+   { "ZIP",   CAP_ZIP },
+   { "TBURST", CAP_TBURST },
+   { "PARA",  CAP_PARA },
++  { "UNKLN", CAP_UNKLN },
+   { 0,           0 }
+ };
+ 
+@@ -549,7 +550,6 @@
+   time_t             next = 0;
+   struct Class*      cltmp;
+   struct ConfItem*   con_conf = NULL;
+-  int                con_class = 0;
+ 
+   Debug((DEBUG_NOTICE,"Connection check at: %s", myctime(CurrentTime)));
+ 
+@@ -586,10 +586,8 @@
+        */
+       client_p = find_server(aconf->name);
+       
+-      if (!client_p && (Links(cltmp) < MaxLinks(cltmp)) &&
+-          (!connecting || (ClassType(cltmp) > con_class)))
++      if (!client_p && (CurrUsers(cltmp) < MaxUsers(cltmp)) && !connecting)
+         {
+-          con_class = ClassType(cltmp);
+           con_conf = aconf;
+           /* We connect only one at time... */
+           connecting = TRUE;
+diff -urN --exclude=CVS ircd-hybrid-7/src/s_user.c ircd-hybrid-7+lmh/src/s_user.c
+--- ircd-hybrid-7/src/s_user.c	Tue Jun 11 21:40:21 2002
++++ ircd-hybrid-7+lmh/src/s_user.c	Fri Jul 12 15:31:20 2002
+@@ -449,6 +449,9 @@
+   if (IsDead(source_p))
+     return CLIENT_EXITED;
+   
++  if(ConfigFileEntry.use_global_limits)
++    add_to_hostname_hash_table(source_p->host, source_p);
++
+   source_p->umodes |= FLAGS_INVISIBLE;
+ 
+   Count.invisi++;
+@@ -522,6 +525,9 @@
+   /* Increment our total user count here */
+   if (++Count.total > Count.max_tot)
+     Count.max_tot = Count.total;
++
++  if(ConfigFileEntry.use_global_limits)
++    add_to_hostname_hash_table(source_p->host, source_p);
+ 
+   source_p->servptr = find_server(user->server);
+ 
+diff -urN --exclude=CVS ircd-hybrid-7/src/version.c.SH ircd-hybrid-7+lmh/src/version.c.SH
+--- ircd-hybrid-7/src/version.c.SH	Tue Nov 13 03:59:01 2001
++++ ircd-hybrid-7+lmh/src/version.c.SH	Fri Jul 12 15:31:20 2002
+@@ -51,11 +51,12 @@
+ 
+ #include "patchlevel.h"
+ #include "serno.h"
++#include "config.h"
+ 
+ char *generation = "$generation";
+ char *creation = "$creation";
+ char *platform = "$uname";
+-char *ircd_version = PATCHLEVEL;
++char *ircd_version = IRCDNAME;
+ char *serno = SERIALNUM;
+ 
+ char *infotext[] =

@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ssl.c,v 1.3 2003/01/27 04:20:36 fishwaldo Exp $
+ *  $Id: ssl.c,v 1.4 2003/01/29 09:28:50 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -179,12 +179,14 @@ SSL_smart_shutdown (struct Client *client_p)
   int rc;
 
   rc = 0;
+  SSL_set_shutdown(client_p->localClient->ssl, SSL_RECEIVED_SHUTDOWN);
   for (i = 0; i < 4; i++)
     {
       if ((rc = SSL_shutdown (client_p->localClient->ssl)))
 	break;
     }
-
+  SSL_free(client_p->localClient->ssl);
+  client_p->localClient->ssl = NULL;                
   return rc;
 }
 

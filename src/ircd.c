@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c,v 1.9 2003/01/27 04:20:36 fishwaldo Exp $
+ *  $Id: ircd.c,v 1.10 2003/01/29 09:28:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -110,11 +110,12 @@ int callbacks_called;          /* A measure of server load... */
 
 static unsigned long       initialVMTop = 0;   /* top of virtual memory at init */
 const char * logFileName = LPATH;
-static const char * pidFileName = PPATH;
+const char * pidFileName = PPATH;
 
 char**  myargv;
 int     dorehash   = 0;
-int     debuglevel = 10;        /* Server debug level */
+int     doremotd   = 0;
+int     debuglevel = -1;        /* Server debug level */
 char*   debugmode  = "";        /*  -"-    -"-   -"-  */
 time_t  nextconnect = 1;        /* time for next try_connections call */
 
@@ -338,6 +339,13 @@ io_loop(void)
 	  rehash(1);
 	  dorehash = 0;
 	}
+      if (doremotd)
+        {
+          ReadMessageFile( &ConfigFileEntry.motd );
+          sendto_realops_flags(FLAGS_ALL, L_ALL,
+                               "Got signal SIGUSR1, reloading ircd motd file");
+          doremotd = 0;
+        }
     }
 }
 
@@ -480,7 +488,7 @@ static void check_pidfile(const char *filename)
 	}
       fbclose(fb);
     }
-  else
+  else if(errno != ENOENT)
     {
       /* log(L_ERROR, "Error opening pid file %s", filename); */
     }
@@ -506,19 +514,6 @@ static void setup_corefile(void)
       setrlimit(RLIMIT_CORE, &rlim);
     }
 #endif
-}
-
-/*
- * cleanup_zombies
- * inputs	- nothing
- * output	- nothing
- * side effects - Reaps zombies periodically
- * -AndroSyn
- */
-static void cleanup_zombies(void *unused)
-{
-  int status;
-  waitpid(-1, &status, WNOHANG);
 }
 
 int main(int argc, char *argv[])
@@ -747,13 +742,16 @@ int main(int argc, char *argv[])
 
   /* Setup the timeout check. I'll shift it later :)  -- adrian */
   eventAddIsh("comm_checktimeouts", comm_checktimeouts, NULL, 1);
-
+#if 0
   eventAddIsh("cleanup_zombies", cleanup_zombies, NULL, 30); 
-  
+#endif
+
+#if 0
  if (ConfigFileEntry.throttle_time > 0)
    eventAddIsh("flush_expired_ips", flush_expired_ips, NULL, ConfigFileEntry.throttle_time);
  else
    eventAddIsh("flush_expired_ips", flush_expired_ips, NULL, 300);
+#endif
 
   if(ConfigServerHide.links_delay > 0)
     eventAddIsh("write_links_file", write_links_file, NULL, ConfigServerHide.links_delay);

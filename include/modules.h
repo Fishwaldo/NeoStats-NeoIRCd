@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: modules.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: modules.h,v 1.4 2003/01/29 09:28:48 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_modules_h
@@ -70,7 +70,7 @@ extern void _modinit(void);
 extern void _moddeinit(void);
 
 extern int unload_one_module (char *, int);
-extern int load_one_module (char *);
+extern int load_one_module (char *, int);
 extern int load_a_module (char *, int, int);
 extern int findmodule_byname (char *);
 extern char* irc_basename(char *);

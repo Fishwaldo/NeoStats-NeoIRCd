@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_challenge.c,v 1.6 2002/10/31 13:01:54 fishwaldo Exp $
+ *  $Id: m_challenge.c,v 1.7 2003/01/29 09:28:48 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -55,10 +55,11 @@ _moddeinit(void)
   return;
 }
 
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 #else
 
+static void failed_challenge_notice(struct Client *, char *, char *);
 static void m_challenge(struct Client*, struct Client*, int, char**);
 void binary_to_hex( unsigned char * bin, char * hex, int length );
 
@@ -80,7 +81,7 @@ _moddeinit(void)
   mod_del_cmd(&challenge_msgtab);
 }
 
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 /*
  * m_challenge - generate RSA challenge for wouldbe oper
@@ -115,6 +116,7 @@ static void m_challenge( struct Client *client_p, struct Client *source_p,
     {
       sendto_one(source_p, form_str(ERR_PASSWDMISMATCH), me.name,
 		 source_p->name);
+      failed_challenge_notice(source_p, source_p->user->auth_oper, "challenge failed");
       return;
     }
      
@@ -194,6 +196,25 @@ static void m_challenge( struct Client *client_p, struct Client *source_p,
   DupString(source_p->user->auth_oper, aconf->name);
   MyFree(challenge);
   return;
+}
+
+/*
+ * failed_challenge_notice
+ *
+ * inputs       - pointer to client doing /oper ...
+ *              - pointer to nick they tried to oper as
+ *              - pointer to reason they have failed
+ * output       - nothing
+ * side effects - notices all opers of the failed oper attempt if enabled
+ */
+
+static void
+failed_challenge_notice(struct Client *source_p, char *name, char *reason)
+{
+    if (ConfigFileEntry.failed_oper_notice)
+      sendto_realops_flags(FLAGS_ALL | FLAGS_REMOTE, L_ALL, "Failed CHALLENGE attempt as %s "
+                           "by %s (%s@%s) - %s", name, source_p->name,
+                           source_p->username, source_p->host, reason);
 }
 
 #endif /* HAVE_LIBCRYPTO */

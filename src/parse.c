@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: parse.c,v 1.8 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: parse.c,v 1.9 2003/01/29 09:28:50 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -135,7 +135,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 
   assert(!IsDead(client_p));
   assert(client_p->localClient->fd >= 0);
-  if(IsDead(client_p) || client_p->localClient->fd < 0)
+  if(IsDefunct(client_p))
     return;
 
   assert((bufend-pbuffer) < 512);
@@ -542,7 +542,7 @@ hash(char *p)
  *
  * inputs	- pointer to client to report to
  * output	- NONE
- * side effects	- NONE
+ * side effects	- client is shown list of commands
  */
 void
 report_messages(struct Client *source_p)
@@ -556,11 +556,12 @@ report_messages(struct Client *source_p)
 	{
 	  assert(ptr->msg != NULL);
 	  assert(ptr->cmd != NULL);
-	  
-	  sendto_one(source_p, form_str(RPL_STATSCOMMANDS),
-		     me.name, source_p->name, ptr->cmd,
-		     ptr->msg->count, ptr->msg->bytes,
-		     ptr->msg->rcount);
+
+	  if (!((ptr->msg->flags & MFLG_HIDDEN) && !IsAdmin(source_p)))
+	    sendto_one(source_p, form_str(RPL_STATSCOMMANDS),
+		       me.name, source_p->name, ptr->cmd,
+		       ptr->msg->count, ptr->msg->bytes,
+		       ptr->msg->rcount);
 	}
     }
 }
@@ -581,8 +582,9 @@ list_commands(struct Client *source_p)
   {
     for(ptr = msg_hash_table[i]; ptr; ptr = ptr->next)
     {
-      sendto_one(source_p, ":%s NOTICE %s :%s",
-                 me.name, source_p->name, ptr->cmd);
+      if (!((ptr->msg->flags & MFLG_HIDDEN) && !IsAdmin(source_p)))
+        sendto_one(source_p, ":%s NOTICE %s :%s",
+                   me.name, source_p->name, ptr->cmd);
     }
   }
 }

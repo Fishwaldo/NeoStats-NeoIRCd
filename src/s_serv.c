@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.14 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.15 2003/01/29 09:28:50 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -28,6 +28,8 @@
 #include <openssl/rsa.h>
 #include "rsa.h"
 #endif
+
+#include <netinet/tcp.h>
 
 #include "tools.h"
 #include "s_serv.h"
@@ -939,6 +941,7 @@ int server_estab(struct Client *client_p)
   dlink_node        *m;
   dlink_node        *ptr;
   unsigned int 		    srvopt;
+  int 		    opt;
 
   assert(NULL != client_p);
   if(client_p == NULL)
@@ -1004,11 +1007,17 @@ int server_estab(struct Client *client_p)
 
       srvopt = 0;
       if (ConfigServerHide.hidden) srvopt = SERVER_HIDDEN;
-
+      opt = 1;
+      setsockopt(client_p->localClient->fd, IPPROTO_TCP, TCP_NODELAY,
+                             (char *)&opt, sizeof(opt));
+                             
       sendto_one(client_p, "SERVER %s 1 %d :%s",
                  my_name_for_link(me.name, aconf), 
 		 srvopt,
                  (me.info[0]) ? (me.info) : "IRCers United");
+      opt--;
+      setsockopt(client_p->localClient->fd, IPPROTO_TCP, TCP_NODELAY,
+                 (char *)&opt, sizeof(opt));
     }
 
   /*
@@ -1133,7 +1142,7 @@ int server_estab(struct Client *client_p)
     } else
         fd_note(client_p->localClient->fd, "Server: %s", client_p->name);
 
-  /* 
+  /*
   ** Send reserved nickname and channel information to the other server
   ** these can be dynamic (ie, set from other servers) or config based
   ** seeing as both types should be applied to the entire network
@@ -2144,7 +2153,11 @@ serv_connect_callback(int fd, int status, void *data)
 	sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
 			     "Error connecting to %s: %s",
 			     client_p->name, comm_errstr(status));
-        exit_client(client_p, client_p, &me, comm_errstr(status));
+
+	/* If a fd goes bad, call dead_link() the socket is no
+	 * longer valid for reading or writing.
+	 */
+	dead_link_on_write(client_p, 0);
         return;
       }
 
@@ -2152,13 +2165,14 @@ serv_connect_callback(int fd, int status, void *data)
     /* Get the C/N lines */
     aconf = find_conf_name(&client_p->localClient->confs,
 			    client_p->name, CONF_SERVER); 
-    if (!aconf)
+    if (aconf == NULL)
       {
         sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
 	             "Lost connect{} block for %s", get_client_name(client_p, HIDE_IP));
         sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
 		     "Lost connect{} block for %s", get_client_name(client_p, MASK_IP));
-        exit_client(client_p, client_p, &me, "Lost connect{} block");
+
+	exit_client(client_p, client_p, &me, "Lost connect{} block");
         return;
       }
     /* Next, send the initial handshake */
@@ -2213,7 +2227,7 @@ serv_connect_callback(int fd, int status, void *data)
 			     client_p->host);
         sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
 			     "%s went dead during handshake", client_p->name);
-        exit_client(client_p, client_p, &me, "Went dead during handshake");
+
         return;
     }
 
@@ -2238,8 +2252,8 @@ void cryptlink_init(struct Client *client_p,
   int enc_len;
 
   /* get key */
-  if ( (!ServerInfo.rsa_private_key) ||
-       (!RSA_check_key(ServerInfo.rsa_private_key)) )
+  if ((!ServerInfo.rsa_private_key) ||
+      (!RSA_check_key(ServerInfo.rsa_private_key)) )
   {
     cryptlink_error(client_p, "SERV", "Invalid RSA private key",
                                       "Invalid RSA private key");
@@ -2304,10 +2318,6 @@ void cryptlink_init(struct Client *client_p,
   MyFree(encrypted);
   MyFree(key_to_send);
 
-  /*
-   * If we've been marked dead because a send failed, just exit
-   * here now and save everyone the trouble of us ever existing.
-   */
   if (IsDead(client_p))
   {
     cryptlink_error(client_p, "SERV", "Went dead during handshake",
@@ -2323,8 +2333,9 @@ void cryptlink_init(struct Client *client_p,
   }
 }
 
-void cryptlink_error(struct Client *client_p, char *type,
-                     char *reason, char *client_reason)
+void
+cryptlink_error(struct Client *client_p, char *type,
+		char *reason, char *client_reason)
 {
   sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN, "%s: CRYPTLINK %s error - %s",
                        get_client_name(client_p, SHOW_IP), type, reason);
@@ -2336,7 +2347,7 @@ void cryptlink_error(struct Client *client_p, char *type,
    * If client_reason isn't NULL, then exit the client with the message
    * defined in the call.
    */
-  if (client_reason != NULL)
+  if ((client_reason != NULL) && (!IsDead(client_p)))
   {
     exit_client(client_p, client_p, &me, client_reason);
   }

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h,v 1.12 2002/11/20 14:13:56 fishwaldo Exp $
+ *  $Id: client.h,v 1.13 2003/01/29 09:28:48 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_client_h
@@ -40,9 +40,6 @@
 #include "linebuf.h"
 #include "channel.h"
 #include "res.h"
-
-
-
 #ifdef IPV6
 #define HOSTIPLEN	53 /* sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255.ipv6") */
 #else
@@ -189,7 +186,7 @@ struct Client
    * client->vhost is the vitual host that users get by default with umode +x 
    * if you want to change the presentation of the users host, do it here, and leave
    * client->host alone
-   */
+ */
   char		   vhost[HOSTLEN +1];
   /*
    * client->swhois stores a swhois structure
@@ -288,7 +285,6 @@ struct LocalUser
   char              out_key[CIPHERKEYLEN];
 #endif
 
-
   int               fd;         /* >= 0, for local clients */
 #ifndef HAVE_SOCKETPAIR
   int               fd_r;       /* fd for reading */
@@ -363,7 +359,7 @@ struct LocalUser
 
 #define SetServer(x)            {(x)->status = STAT_SERVER; \
 				 (x)->handler = SERVER_HANDLER; }
-		 
+
 #define SetClient(x)            {(x)->status = STAT_CLIENT; \
 				 (x)->handler = IsOper((x)) ? \
 					OPER_HANDLER : CLIENT_HANDLER; }
@@ -492,6 +488,9 @@ struct LocalUser
 #define SetAccess(x)            ((x)->flags |= FLAGS_CHKACCESS)
 #define IsClosing(x)		((x)->flags & FLAGS_CLOSING)
 #define SetClosing(x)		((x)->flags |= FLAGS_CLOSING)
+#define ClearClosing(x)		((x)->flags &= ~FLAGS_CLOSING)
+#define IsKilled(x)		((x)->flags & FLAGS_KILLED)
+#define SetKilled(x)		((x)->flags |= FLAGS_KILLED)
 #define ClearAccess(x)          ((x)->flags &= ~FLAGS_CHKACCESS)
 #define IsCryptIn(x)            ((x)->flags &  FLAGS_CRYPTIN)
 #define SetCryptIn(x)           ((x)->flags |= FLAGS_CRYPTIN)
@@ -519,7 +518,7 @@ struct LocalUser
 #define IsSSL(x)		((x)->flags & FLAGS_SSL)
 #define SetSSLOK(x)		((x)->flags2 |= FLAGS2_SSLOK)
 #define IsSSLOK(x)		((x)->flags2 & FLAGS2_SSLOK)
-
+#define IsDefunct(x)            ((x)->flags & (FLAGS_DEADSOCKET|FLAGS_CLOSING))
 
 /* oper flags */
 #define MyOper(x)               (MyConnect(x) && IsOper(x))
@@ -645,8 +644,8 @@ extern int set_initial_nick(struct Client *client_p, struct Client *source_p,
                             char *nick);
 extern int change_local_nick(struct Client *client_p, struct Client *source_p,
                              char *nick);
-extern void dead_link(struct Client *client_p);
-extern void exit_aborted_clients(void);
+extern void dead_link_on_write(struct Client *client_p, int ierrno);
+extern void dead_link_on_read(struct Client *client_p, int error);
 extern void make_virthost(char *curr, char *host, char *new);
 #endif /* INCLUDED_client_h */
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_invite.c,v 1.7 2002/11/21 13:23:37 fishwaldo Exp $
+ *  $Id: m_invite.c,v 1.8 2003/01/29 09:28:48 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -40,12 +40,14 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
+#include "packet.h"
 
 static void m_invite(struct Client *, struct Client *, int, char **);
+static void ms_invite(struct Client *, struct Client *, int, char **);
 
 struct Message invite_msgtab = {
   "INVITE", 0, 0, 3, 0, MFLG_SLOW, 0,
-  {m_unregistered, m_invite, m_invite, m_invite}
+  {m_unregistered, m_invite, ms_invite, m_invite}
 };
 #ifndef STATIC_MODULES
 
@@ -61,7 +63,7 @@ _moddeinit(void)
   mod_del_cmd(&invite_msgtab);
 }
 
-const char *_version = "$Revision: 1.7 $";
+const char *_version = "$Revision: 1.8 $";
 #endif
 
 /*
@@ -85,9 +87,11 @@ m_invite(struct Client *client_p,
     return;
   }
 
-  /* A little sanity test here */
-  if (source_p->user == NULL)
+  if(!IsClient(source_p))
     return;
+
+  if(MyClient(source_p) && !IsFloodDone(source_p))
+    flood_endgrace(source_p);
 
   if ((target_p = find_person(parv[1])) == NULL)
   {
@@ -188,39 +192,151 @@ m_invite(struct Client *client_p,
       burst_channel(target_p->from, vchan);
   }
 
-  if (MyConnect(target_p))
-  {
-    add_invite(vchan, target_p);
-    sendto_one(target_p, ":%s!%s@%s INVITE %s :%s", source_p->name,
-               source_p->username, source_p->vhost, target_p->name,
-               chptr->chname);
-  }
-  
-  /* we send a notice to all channel ops/halfops/admins */
-  sendto_channel_local(ONLY_CHANOPS_HALFOPS, vchan,
-                       ":%s NOTICE %s :%s is inviting %s to %s.",
-		       me.name, chptr->chname, source_p->name,
-		       target_p->name, chptr->chname);
+  if (MyConnect(target_p) && chop)
+      add_invite(vchan, target_p);
 
-  /* if the channel is +pi, broadcast everywhere thats CAP_PARA, send to
-   * target if target isnt CAP_PARA capable, else just send to target
+  sendto_anywhere(target_p, source_p, "INVITE %s :%s",
+		  target_p->name, chptr->chname);
+
+  /* if the channel is +pi, each server that is capable of CAP_PARA
+   * will send a local message to channel. If there are servers
+   * connected to us that do not understand CAP_PARA, send a NOTICE
+   * to chanops on the channel as per hybrid-6
    */
-  if(ParanoidChannel(vchan))
+  if (ParanoidChannel(vchan))
   {
-    sendto_channel_remote(source_p, client_p,
-  		  	  ONLY_CHANOPS_HALFOPS, CAP_PARA, NOCAPS,
-                          chptr, ":%s INVITE %s :%s", parv[0], 
-                          target_p->name, vchan->chname);
-			  
-    if(!MyConnect(target_p) && (target_p->from != client_p) &&
-       !IsCapable(target_p->from, CAP_PARA))
-      sendto_one(target_p->from, ":%s INVITE %s :%s", parv[0],
-                 target_p->name, vchan->chname);
+    sendto_server(source_p->from, source_p, NULL, NOCAPS, NOCAPS, NOFLAGS,
+                  ":%s INVITE %s %s :%s",
+                  me.name, source_p->name, target_p->name, vchan->chname);
 
-  }
-  else if(!MyConnect(target_p) && (target_p->from != client_p))
-  {
-    sendto_one(target_p->from, ":%s INVITE %s :%s", parv[0],
-               target_p->name, vchan->chname);
+    /* XXX This possibly should be a numeric -db */
+    sendto_channel_local(ONLY_CHANOPS_HALFOPS, vchan,
+                         ":%s NOTICE %s :%s is inviting %s to %s.",
+			 me.name, chptr->chname, source_p->name,
+			 target_p->name, chptr->chname);
+
   }
 }
+
+/*
+** ms_invite
+**      parv[0] - sender prefix
+**      parv[1] - user to invite
+**      parv[2] - channel number
+*/
+/*
+ *
+ */
+static void
+ms_invite(struct Client *client_p,
+	  struct Client *source_p, int parc, char *parv[])
+{
+  struct Client *source_client_p;
+  struct Client *target_p;
+  struct Channel *chptr, *vchan;
+  int notify_type = 0;
+
+  /*
+   * If parc is 3, then its an old fashioned :nick INVITE nick2 :#channel
+   * message, which must be relayed through if its not ours.
+   *
+   * If parc > 3, then its a notify the channel message only, which
+   * would only have been sent if the channel was in ParanoidMode to
+   * begin with, so the check here is redundant.
+   */
+
+  if (parc < 4)
+  {
+    source_client_p = source_p;
+
+    if (*parv[2] == '\0')
+      return;
+
+    if ((target_p = find_person(parv[1])) == NULL)
+      return;
+
+    if(check_channel_name(parv[2]) == 0)
+      return;
+
+    if (!IsChannelName(parv[2]))
+      return;
+
+    if ((chptr = hash_find_channel(parv[2])) == NULL)
+      return;
+  }
+  else
+  {
+    notify_type = 1;
+
+    if (*parv[1] == '\0')
+      return;
+
+    if ((source_client_p = find_person(parv[1])) == NULL)
+      return;
+
+    if (*parv[2] == '\0')
+      return;
+
+    if ((target_p = find_person(parv[2])) == NULL)
+      return;
+
+    if(check_channel_name(parv[3]) == 0)
+      return;
+
+    if (!IsChannelName(parv[3]))
+      return;
+
+    if ((chptr = hash_find_channel(parv[3])) == NULL)
+      return;
+  }
+
+  /* By this point, chptr is non NULL */
+
+  vchan = chptr;
+
+  if (IsMember(target_p, vchan))
+    return;
+
+  if (!notify_type)
+  {
+    if (MyConnect(target_p))
+    {
+      if (vchan->mode.mode & MODE_INVITEONLY)
+	add_invite(vchan, target_p);
+    }
+
+    sendto_anywhere(target_p, source_client_p, "INVITE %s :%s",
+		    target_p->name, chptr->chname);
+  }
+  else
+  {
+
+    /* There are two different kinds of behaviour that both make sense here.
+     * 1) One approach is simply to chop at the first non CAP_PARA hub
+     * 2) if there is a non CAP_PARA hub in between a cluster of CAP_PARA
+     *    servers and another cluster... then one could attempt to "convert"
+     *    them back to CAP_PARA form.
+     */
+
+    /* if the channel is +pi, each server that is capable of CAP_PARA
+     * will send a local message to channel. If the invite came from
+     * a non CAP_PARA server, attempt to "convert" it back to CAP_PARA form
+     * even if this means a duplicate channel message to ops.
+     */
+    if (ParanoidChannel(vchan))
+    {
+      sendto_server(source_p->from, source_p, NULL, NOCAPS, NOCAPS, NOFLAGS,
+		    ":%s INVITE %s %s :%s",
+		    source_p->name, source_client_p->name,
+		    target_p->name, vchan->chname);
+
+      /* XXX This possibly should be a numeric -db */
+      sendto_channel_local(ONLY_CHANOPS_HALFOPS, vchan,
+			   ":%s NOTICE %s :%s is inviting %s to %s.",
+			   me.name, chptr->chname, source_client_p->name,
+			   target_p->name, chptr->chname);
+
+    }
+  }
+}
+

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: modules.c,v 1.6 2002/09/13 16:30:04 fishwaldo Exp $
+ *  $Id: modules.c,v 1.7 2003/01/29 09:28:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -320,7 +320,7 @@ load_core_modules(int warn)
  * side effects -
  */
 int
-load_one_module (char *path)
+load_one_module (char *path, int coremodule)
 {
   char modpath[MAXPATHLEN];
   dlink_node *pathst;
@@ -340,7 +340,10 @@ load_one_module (char *path)
 		 if(S_ISREG(statbuf.st_mode))
 		    {
 		       /* Regular files only please */
-		       return load_a_module(modpath, 1, 0);
+		       if (coremodule)
+		         return load_a_module(modpath, 1, 1);
+		       else
+		         return load_a_module(modpath, 1, 0);
 		    }
 	      }
 	    
@@ -372,10 +375,11 @@ mo_modload (struct Client *client_p, struct Client *source_p, int parc, char **p
   {
     sendto_one (source_p, ":%s NOTICE %s :Module %s is already loaded",
                 me.name, source_p->name, m_bn);
+    MyFree(m_bn);
     return;
   }
 
-  load_one_module (parv[1]);
+  load_one_module (parv[1], 0);
 
   MyFree(m_bn);
 }
@@ -414,7 +418,7 @@ mo_modunload (struct Client *client_p, struct Client *source_p, int parc, char *
     return;
   }
 
-  if( unload_one_module (m_bn, 1) == -1 )
+  if(unload_one_module (m_bn, 1) == -1)
   {
     sendto_one (source_p, ":%s NOTICE %s :Module %s is not loaded",
                 me.name, source_p->name, m_bn);
@@ -449,7 +453,7 @@ mo_modreload (struct Client *client_p, struct Client *source_p, int parc, char *
 
   check_core = modlist[modindex]->core;
 
-  if( unload_one_module (m_bn, 1) == -1 )
+  if(unload_one_module (m_bn, 1) == -1)
     {
       sendto_one (source_p, ":%s NOTICE %s :Module %s is not loaded",
                   me.name, source_p->name, m_bn);
@@ -457,7 +461,7 @@ mo_modreload (struct Client *client_p, struct Client *source_p, int parc, char *
       return;
     }
 
-  if((load_one_module(parv[1]) == -1) && check_core)
+  if((load_one_module(parv[1], check_core) == -1) && check_core)
   {
     sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                          "Error reloading core module: %s: terminating ircd",

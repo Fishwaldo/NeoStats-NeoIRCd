@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_bsd_sigio.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: s_bsd_sigio.c,v 1.4 2003/01/29 09:28:50 fishwaldo Exp $
  */
 
 #ifndef _GNU_SOURCE
@@ -353,5 +353,9 @@ int comm_select(unsigned long delay)
     mask_our_signal(sigio_signal);
     return 0;
 }
-
+#else
+/**
+ * Don't let an empty compilation unit slip through.
+ */
+static int dummy;
 #endif

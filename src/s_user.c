@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.41 2002/11/20 14:13:57 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.42 2003/01/29 09:28:50 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -551,7 +551,7 @@ register_remote_user(struct Client *client_p, struct Client *source_p,
       kill_client(client_p, source_p, "%s (Server doesn't exist)",
 		  me.name);
 
-      source_p->flags |= FLAGS_KILLED;
+      SetKilled(source_p);
       return exit_client(NULL, source_p, &me, "Ghosted Client");
     }
 
@@ -570,7 +570,7 @@ register_remote_user(struct Client *client_p, struct Client *source_p,
 		  user->server,
 		  target_p->from->name);
 
-      source_p->flags |= FLAGS_KILLED;
+      SetKilled(source_p);
       return exit_client(source_p, source_p, &me,
 			 "USER server wrong direction");
       
@@ -587,7 +587,7 @@ register_remote_user(struct Client *client_p, struct Client *source_p,
       sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "No server %s for user %s[%s@%s] from %s",
 			   user->server, source_p->name, source_p->username,
 			   source_p->host, source_p->from->name);
-      source_p->flags |= FLAGS_KILLED;
+      SetKilled(source_p);
       return exit_client(source_p, source_p, &me, "Ghosted Client");
     }
 
@@ -964,7 +964,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 
   /* if the prefix is from a server, and the server isn't ulined 
   ** and the prefix isn't from the clients server, then its a error
-  */
+   */
 
 
   if (IsServer(source_p) && (target_p->servptr != source_p) && !IsUlined(source_p))
@@ -980,7 +980,9 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
     {
        sendto_one(source_p, form_str(ERR_USERSDONTMATCH), me.name, parv[0]);
        return 0;
-    }              
+    }
+
+
   if (parc < 3)
     {
       m = buf;
@@ -1077,7 +1079,6 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
           /* we may not get these,
            * but they shouldnt be in default
            */
-
         case ' ' :
         case '\n' :
         case '\r' :
@@ -1414,7 +1415,7 @@ oper_up( struct Client *source_p, struct ConfItem *aconf )
   sendto_one(source_p, ":%s NOTICE %s :*** Oper privs are %s", me.name,
              source_p->name, operprivs);
   SendMessageFile(source_p, &ConfigFileEntry.opermotd);
-
+  
   /* autojoin them to a channel if its defined */
   flags = 0;
   if (strlen(ConfigFileEntry.operautojoin) > 0) {

@@ -1,5 +1,6 @@
-$Id: TODO,v 1.14 2002/11/21 13:23:37 fishwaldo Exp $
+$Id: TODO,v 1.15 2003/01/29 09:28:48 fishwaldo Exp $
 
+put back "expire_channels" stuff
 
 /stats g should report when a G line will expire
 SSL client support modes and channel related stuff

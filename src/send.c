@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.c,v 1.11 2002/11/04 08:50:46 fishwaldo Exp $
+ *  $Id: send.c,v 1.12 2003/01/29 09:28:50 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -61,7 +61,6 @@ unsigned long current_serial=0L;
 
 static void
 sendto_list_local(dlink_list *list, buf_head_t *linebuf);
-
 static void
 sendto_list_local_butone(struct Client *one, dlink_list *list,
                          buf_head_t *linebuf);
@@ -175,7 +174,7 @@ _send_linebuf(struct Client *to, buf_head_t *linebuf)
                            get_sendq(to));
     if (IsClient(to))
       to->flags |= FLAGS_SENDQEX;
-    dead_link(to);
+    dead_link_on_write(to, 0);
     return -1;
   }
   else
@@ -222,23 +221,23 @@ send_linebuf_remote(struct Client *to, struct Client *from,
     if (IsServer(from))
     {
       sendto_realops_flags(FLAGS_ALL, L_ALL,
-                           "Send message to %s[%s] dropped from %s(Fake Dir)",
+                           "Send message to %s [%s] dropped from %s(Fake Dir)",
                            to->name, to->from->name, from->name);
       return;
     }
 
     sendto_realops_flags(FLAGS_ALL, L_ALL,
-                         "Ghosted: %s[%s@%s] from %s[%s@%s] (%s)",
+                         "Ghosted: %s [%s@%s] from %s [%s@%s] (%s)",
                          to->name, to->username, to->host,
                          from->name, from->username, from->host,
                          to->from->name);
 
     sendto_server(NULL, to, NULL, NOCAPS, NOCAPS, NOFLAGS,
-                  ":%s KILL %s :%s (%s[%s@%s] Ghosted %s)",
+                  ":%s KILL %s :%s (%s [%s@%s] Ghosted %s)",
                   me.name, to->name, me.name, to->name,
                   to->username, to->vhost, to->from->name);
 
-    to->flags |= FLAGS_KILLED;
+    SetKilled(to);
 
     if (IsPerson(from))
       sendto_one(from, form_str(ERR_GHOSTEDCLIENT),
@@ -331,7 +330,7 @@ send_queued_write(int fd, void *data)
     }
     else if (retlen <= 0)
     {
-      dead_link(to);
+      dead_link_on_write(to, errno);
       return;
     }
   }
@@ -380,14 +379,14 @@ send_queued_slink_write(int fd, void *data)
       /* If we have a fatal error */
       if (!ignoreErrno(errno))
       {
-	dead_link(to);
+	dead_link_on_write(to, errno);
 	return;
       }
     }
     else if (retlen == 0)
     {
       /* 0 bytes is an EOF .. */
-      dead_link(to);
+      dead_link_on_write(to, 0);
       return;
     }
     else
@@ -1176,7 +1175,6 @@ sendto_anywhere(struct Client *to, struct Client *from,
       linebuf_putmsg(&linebuf, pattern, &args, ":%s ", ID(from));
     else
       linebuf_putmsg(&linebuf, pattern, &args, ":%s ", from->name);
-
   }
   va_end(args);
 
@@ -1346,7 +1344,8 @@ kill_client(struct Client *client_p,
   
   va_start(args, pattern);
 
-  if(HasID(diedie) && IsCapable(client_p, CAP_UID))
+  /* XXX perhaps IsCapable should test for localClient itself ? -db */
+  if(HasID(diedie) && client_p->localClient && IsCapable(client_p, CAP_UID))
     linebuf_putmsg(&linebuf, pattern, &args, ":%s KILL %s :",
                    me.name, ID(diedie));
   else
@@ -1407,7 +1406,8 @@ kill_client_ll_serv_butone(struct Client *one, struct Client *source_p,
     if (one && (client_p == one->from))
       continue;
 
-    if (IsCapable(client_p,CAP_LL) && ServerInfo.hub)
+    /* XXX perhaps IsCapable should test for localClient itself ? -db */
+    if (client_p->localClient && IsCapable(client_p,CAP_LL) && ServerInfo.hub)
     {
       if((source_p->lazyLinkClientExists &
           client_p->localClient->serverMask) != 0)
@@ -1420,7 +1420,8 @@ kill_client_ll_serv_butone(struct Client *one, struct Client *source_p,
     }
     else
     {
-      if (have_uid && IsCapable(client_p, CAP_UID))
+      /* XXX perhaps IsCapable should test for localClient itself ? -db */
+      if (have_uid && client_p->localClient && IsCapable(client_p, CAP_UID))
         send_linebuf(client_p, &linebuf_uid);
       else
         send_linebuf(client_p, &linebuf_nick);

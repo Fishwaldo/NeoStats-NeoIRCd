@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_bsd.c,v 1.9 2002/11/04 08:14:00 fishwaldo Exp $
+ *  $Id: s_bsd.c,v 1.10 2003/01/29 09:28:50 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -52,6 +52,7 @@
 #endif
 #include "memory.h"
 
+
 #ifndef IN_LOOPBACKNET
 #define IN_LOOPBACKNET        0x7f
 #endif
@@ -75,7 +76,8 @@ static PF comm_connect_tryconnect;
 
 /* close_all_connections() can be used *before* the system come up! */
 
-void close_all_connections(void)
+void
+close_all_connections(void)
 {
   int i;
 #ifndef NDEBUG
@@ -120,14 +122,16 @@ void close_all_connections(void)
  * This may only work when SO_DEBUG is enabled but its worth the
  * gamble anyway.
  */
-int get_sockerr(int fd)
+int
+get_sockerr(int fd)
 {
   int errtmp = errno;
 #ifdef SO_ERROR
   int err = 0;
   socklen_t len = sizeof(err);
 
-  if (-1 < fd && !getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*) &err, (socklen_t *)&len)) {
+  if (-1 < fd && !getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*) &err, (socklen_t *)&len))
+  {
     if (err)
       errtmp = err;
   }
@@ -155,7 +159,8 @@ int get_sockerr(int fd)
  * Actually stderr is still there IFF ircd was run with -s --Rodder
  */
 
-void report_error(int level, const char* text, const char* who, int error) 
+void
+report_error(int level, const char* text, const char* who, int error) 
 {
   who = (who) ? who : "";
 
@@ -207,7 +212,8 @@ disable_sock_options(int fd)
  * side effects - use POSIX compliant non blocking and
  *                be done with it.
  */
-int set_non_blocking(int fd)
+int
+set_non_blocking(int fd)
 {
 #ifndef VMS
   int nonb = 0;
@@ -242,7 +248,8 @@ int set_non_blocking(int fd)
  *        Close the physical connection. This function must make
  *        MyConnect(client_p) == FALSE, and set client_p->from == NULL.
  */
-void close_connection(struct Client *client_p)
+void
+close_connection(struct Client *client_p)
 {
   struct ConfItem *aconf;
   assert(NULL != client_p);
@@ -309,18 +316,18 @@ void close_connection(struct Client *client_p)
   else
     ServerStats->is_ni++;
   
-  if (-1 < client_p->localClient->fd)
+  if (!IsDead(client_p))
     {
       /* attempt to flush any pending dbufs. Evil, but .. -- adrian */
-      if (!IsDead(client_p))
-        send_queued_write(client_p->localClient->fd, client_p);
+      send_queued_write(client_p->localClient->fd, client_p);
       fd_close(client_p->localClient->fd);
       client_p->localClient->fd = -1;
+      SetDead(client_p);
     }
 
   if(HasServlink(client_p))
     {
-      if(client_p->localClient->fd > -1)
+      if(client_p->localClient->ctrlfd > -1)
       {
         fd_close(client_p->localClient->ctrlfd);
 #ifndef HAVE_SOCKETPAIR
@@ -346,7 +353,8 @@ void close_connection(struct Client *client_p)
  * The client is sent to the auth module for verification, and not put in
  * any client list yet.
  */
-void add_connection(struct Listener* listener, int fd)
+void
+add_connection(struct Listener* listener, int fd)
 {
   struct Client*     new_client;
 
@@ -478,73 +486,6 @@ void add_connection(struct Listener* listener, int fd)
 }
 
 
-void error_exit_client(struct Client* client_p, int error)
-{
-  /*
-   * ...hmm, with non-blocking sockets we might get
-   * here from quite valid reasons, although.. why
-   * would select report "data available" when there
-   * wasn't... so, this must be an error anyway...  --msa
-   * actually, EOF occurs when read() returns 0 and
-   * in due course, select() returns that fd as ready
-   * for reading even though it ends up being an EOF. -avalon
-   */
-  char errmsg[255];
-  int  current_error = get_sockerr(client_p->localClient->fd);
-
-  Debug((DEBUG_ERROR, "READ ERROR: fd = %d %d %d",
-         client_p->localClient->fd, current_error, error));
-  if (IsServer(client_p) || IsHandshake(client_p))
-    {
-      int connected = CurrentTime - client_p->firsttime;
-      
-      if (error == 0)
-        {
-	  /* Admins get the real IP */
-	  sendto_realops_flags(FLAGS_ALL, L_ADMIN,
-				"Server %s closed the connection",
-				get_client_name(client_p, SHOW_IP));
-
-	  /* Opers get a masked IP */
-	  sendto_realops_flags(FLAGS_ALL, L_OPER,
-				"Server %s closed the connection",
-				get_client_name(client_p, MASK_IP));
-
-	  ilog(L_NOTICE, "Server %s closed the connection",
-		get_client_name(client_p, SHOW_IP));
-        }
-      else
-	{
-	  report_error(L_ADMIN, "Lost connection to %s: %d",
-	               get_client_name(client_p, SHOW_IP),
-		       current_error);
-	  report_error(L_OPER, "Lost connection to %s: %d",
-	               get_client_name(client_p, MASK_IP),
-		       current_error);
-
-	}
-
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
-			   "%s had been connected for %d day%s, %2d:%02d:%02d",
-			   client_p->name, connected/86400,
-			   (connected/86400 == 1) ? "" : "s",
-			   (connected % 86400) / 3600, (connected % 3600) / 60,
-			   connected % 60);
-    }
-  if (error == 0)
-  {
-    strcpy(errmsg, "Remote host closed the connection");
-  }
-  else
-  {
-    ircsprintf(errmsg, "Read error: %s", 
-               strerror(current_error));
-  }
-  fd_close(client_p->localClient->fd);
-  client_p->localClient->fd = -1;
-  
-  exit_client(client_p, client_p, &me, errmsg);
-}
 
 /*
  * stolen from squid - its a neat (but overused! :) routine which we

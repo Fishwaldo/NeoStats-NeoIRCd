@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.20 2002/11/20 14:13:57 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.21 2003/01/29 09:28:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -127,9 +127,13 @@ static void update_channel_info(struct Channel *);
  * some buffers for rebuilding channel/nick lists with ,'s
  */
 
-static char modebuf[MODEBUFLEN], parabuf[MODEBUFLEN];
+static char modebuf[BUFSIZE];
+static char parabuf[MODEBUFLEN];
 static char mask_buf[BUFSIZE];
 static int mask_pos;
+
+/* 10 is a magic number in hybrid 6 NFI where it comes from -db */
+#define BAN_FUDGE	10
 
 static struct ChModeChange mode_changes[BUFSIZE];
 static int mode_count;
@@ -218,7 +222,7 @@ add_id(struct Client *client_p, struct Channel *chptr, char *banid, int type)
   {
     actualBan = ban->data;
     if (match(actualBan->banstr, banid))
-      return 0;
+      return(0);
   }
 
   ban = make_dlink_node();
@@ -245,7 +249,7 @@ add_id(struct Client *client_p, struct Channel *chptr, char *banid, int type)
   dlinkAdd(actualBan, ban, list);
 
   chptr->num_mask++;
-  return 1;
+  return(1);
 }
 
 /*
@@ -431,7 +435,7 @@ change_channel_membership(struct Channel *chptr,
     free_dlink_node(ptr);
   }
 
-  return ok;
+  return (ok);
 }
 
 /*
@@ -752,6 +756,10 @@ chm_hideops(struct Client *client_p, struct Client *source_p,
     return;
   }
 
+  if (MyClient(source_p) && (++mode_limit > MAXMODEPARAMS))
+    return;
+
+
   if (dir == MODE_ADD && !(chptr->mode.mode & MODE_HIDEOPS))
   {
     chptr->mode.mode |= MODE_HIDEOPS;
@@ -831,10 +839,6 @@ chm_ban(struct Client *client_p, struct Client *source_p,
   else
     mask = pretty_mask(raw_mask);
     
-  /* We'd have problems parsing this, hyb6 does it too */
-    if (strlen(mask) > (MODEBUFLEN - 2))
-      return;
-
   /* if we're adding a NEW id */
   if (dir == MODE_ADD) 
   {
@@ -849,6 +853,9 @@ chm_ban(struct Client *client_p, struct Client *source_p,
   }
   else if (dir == MODE_DEL)
   {
+/* XXX grrrrrrr */
+#ifdef NO_BAN_COOKIE
+
     if (del_id(chptr, mask, CHFL_BAN) == 0)
     {
       /* mask isn't a valid ban, check raw_mask */
@@ -859,6 +866,14 @@ chm_ban(struct Client *client_p, struct Client *source_p,
       }
       mask = raw_mask;
     }
+
+#else
+/* XXX this hack allows /mode * +o-b nick ban.cookie
+ * I'd like to see this hack go away in the future.
+ */
+      if(del_id(chptr, raw_mask, CHFL_BAN))
+       mask = raw_mask;
+#endif
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_DEL;
@@ -914,10 +929,6 @@ chm_except(struct Client *client_p, struct Client *source_p,
   else
     mask = pretty_mask(raw_mask);
 
-  /* We'd have problems parsing this, hyb6 does it too */
-    if (strlen(mask) > (MODEBUFLEN - 2)) 
-      return; 
-
   /* If we're adding a NEW id */
   if (dir == MODE_ADD)
   {
@@ -926,7 +937,7 @@ chm_except(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
+      mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = mask;
   }
@@ -997,10 +1008,6 @@ chm_invex(struct Client *client_p, struct Client *source_p,
   else
     mask = pretty_mask(raw_mask);
 
-  /* We'd have problems parsing this, hyb6 does it too */
-    if (strlen(mask) > (MODEBUFLEN - 2)) 
-      return; 
-
   if(dir == MODE_ADD)
   {
     if((add_id(source_p, chptr, mask, CHFL_INVEX) == 0) && MyClient(source_p))
@@ -1008,7 +1015,7 @@ chm_invex(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
+      mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = mask;
   }
@@ -1027,7 +1034,7 @@ chm_invex(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
+      mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = mask;
   }
@@ -1486,7 +1493,7 @@ chm_voice(struct Client *client_p, struct Client *source_p,
   }
 
   mode_get_status(chptr, targ_p, &t_op, &t_hop, &t_voice, &t_admin, 1);
-  
+
   if (MyClient(source_p) && (++mode_limit > MAXMODEPARAMS))
     return;
 
@@ -1618,7 +1625,7 @@ chm_key(struct Client *client_p, struct Client *source_p,
       fix_key_old(key);
 
     assert(key[0] != ' ');
-    strlcpy(chptr->mode.key, key, KEYLEN);
+    strlcpy(chptr->mode.key, key, sizeof(chptr->mode.key));
 
     /* if somebody does MODE #channel +kk a b, accept latter --fl */
     for (i = 0; i < mode_count; i++)
@@ -1728,7 +1735,7 @@ static struct ChannelMode ModeTable[255] =
  *         MODE_PEON for peon level access.
  * Side-effects: None.
  */
-  static int
+static int
 get_channel_access(struct Client *source_p, struct Channel *chptr)
 {
   /* Let hacked servers in for now... */
@@ -1738,7 +1745,7 @@ get_channel_access(struct Client *source_p, struct Channel *chptr)
 
   if (is_chan_admin(chptr, source_p))
     return CHACCESS_ADMIN;
-    
+
   if (is_chan_op(chptr, source_p))
     return CHACCESS_CHANOP;
 
@@ -1771,32 +1778,35 @@ static void
 send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
                       struct Channel *chptr)
 {
-  int i, mbl, pbl, nc, mc;
+  int i, mbl, pbl, arglen, nc, mc;
+  int len;
   char *arg;
+  char *parptr;
   int dir;
   int cap, nocap;
-  
+
 
   cap = 0;
   nocap = 0;
   mc = 0;
   nc = 0;
   pbl = 0;
-  parabuf[0] = 0;
   dir = MODE_QUERY;
 
-
+  parabuf[0] = '\0';
+  parptr = parabuf;
 
   if ((cap & CAP_UID) && source_p->user &&
-     (source_p->user->id[0] == '.'))
-   mbl = ircsprintf(modebuf, ":%s MODE %s ", source_p->user->id,
-                    chptr->chname);
- else
-   mbl = ircsprintf(modebuf, ":%s MODE %s ", source_p->name,
-                    chptr->chname);
+      (source_p->user->id[0] == '.'))
+    mbl = ircsprintf(modebuf, ":%s MODE %s ", source_p->user->id,
+                     chptr->chname);
+  else
+    mbl = ircsprintf(modebuf, ":%s MODE %s ", source_p->name,
+                     chptr->chname);
+
+  /* loop the list of - modes we have */
   for (i = 0; i < mode_count; i++)
   {
-
     /* if they dont support the cap we need, or they do support a cap they
      * cant have, then dont add it to the modebuf.. that way they wont see
      * the mode
@@ -1808,7 +1818,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
     arg = "";
     if ((cap & CAP_UID) && mode_changes[i].id)
       arg = mode_changes[i].id;
-    if (!*arg)
+    if (*arg == '\0')
       arg = mode_changes[i].arg;
 
     /* if we're creeping past the buf size, we need to send it and make
@@ -1818,13 +1828,19 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
      * them as if they were the longest of the nick or uid at all times,
      * which even then won't work as we don't always know the uid -A1kmm.
      */
+    if (arg != NULL)
+      arglen = strlen(arg);
+    else
+      arglen = 0;
 
-    if ((arg != NULL) && ((mc == MAXMODEPARAMS) ||
-                        ((strlen(arg) + mbl + pbl + 2) > BUFSIZE)))
+    if((mc == MAXMODEPARAMS) ||
+       ((arglen + mbl + pbl + 2) > BUFSIZE) ||
+       (pbl + arglen + BAN_FUDGE) >= MODEBUFLEN)
     {
       if (nc != 0)
         sendto_server(client_p, source_p, chptr, cap, nocap,
-                      LL_ICHAN | LL_ICLIENT, "%s %s", modebuf, parabuf);
+                      LL_ICHAN | LL_ICLIENT, "%s %s",
+		      modebuf, parabuf);
       nc = 0;
       mc = 0;
 
@@ -1837,7 +1853,9 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
                          chptr->chname);
 
       pbl = 0;
-      parabuf[0] = 0;
+      parabuf[0] = '\0';
+      parptr = parabuf;
+      dir = MODE_QUERY;
     }
 
     if(dir != mode_changes[i].dir)
@@ -1847,14 +1865,14 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
     }
 
     modebuf[mbl++] = mode_changes[i].letter;
-    modebuf[mbl] = 0;
+    modebuf[mbl] = '\0';
     nc++;
 
     if (arg != NULL)
     {
-      pbl = strlcat(parabuf, arg, MODEBUFLEN);
-      parabuf[pbl++] = ' ';
-      parabuf[pbl] = '\0';
+      len = ircsprintf(parptr, "%s ", arg);
+      pbl += len;
+      parptr += len;
       mc++;
     }
   }
@@ -1865,8 +1883,6 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
   if (nc != 0)
     sendto_server(client_p, source_p, chptr, cap, nocap,
                   LL_ICLIENT, "%s %s", modebuf, parabuf);
-                  
-
 }
 
 /* void send_mode_changes(struct Client *client_p,
@@ -1879,19 +1895,22 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
  * Side-effects: Sends the appropriate mode changes to other clients
  *               and propagates to servers.
  */
+/* ensure parabuf < MODEBUFLEN -db */
 static void
 send_mode_changes(struct Client *client_p, struct Client *source_p,
                   struct Channel *chptr, char *chname)
 {
-  int pbl, mbl, nc, mc;
-  int i, st;
+  int i, mbl, pbl, arglen, nc, mc;
+  int len;
+  char *arg;
+  char *parptr;
+  int st;
   int dir = MODE_QUERY;
-  
-
 
   /* bail out if we have nothing to do... */
   if (mode_count <= 0)
     return;
+
   /* Send all mode changes to the chanops/halfops, and even peons if
    * we are not +A...
    */
@@ -1903,10 +1922,12 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
     mbl = ircsprintf(modebuf, ":%s!%s@%s MODE %s ", source_p->name,
                      source_p->username, source_p->vhost, chname);
 
-  pbl = 0;
-  parabuf[0] = '\0';
-  nc = 0;
   mc = 0;
+  nc = 0;
+  pbl = 0;
+
+  parabuf[0] = '\0';
+  parptr = parabuf;
 
   for (i = 0; i < mode_count; i++)
   {
@@ -1915,10 +1936,15 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
         mode_changes[i].mems == ONLY_SERVERS)
       continue;
 
+    arg = mode_changes[i].arg;
+    if (arg != NULL)
+      arglen = strlen(arg);
+    else
+      arglen = 0;
 
-    if (mode_changes[i].arg != NULL &&
-        ((mc == MAXMODEPARAMS)  || 
-        ((strlen(mode_changes[i].arg) + mbl + pbl + 2) > BUFSIZE)))
+    if ((mc == MAXMODEPARAMS)  || 
+        ((arglen + mbl + pbl + 2) > BUFSIZE) ||
+	((arglen + pbl + BAN_FUDGE) >= MODEBUFLEN))
     {
       if (mbl && modebuf[mbl - 1] == '-')
         modebuf[mbl - 1] = '\0';
@@ -1937,6 +1963,8 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
 
       pbl = 0;
       parabuf[0] = '\0';
+      parptr = parabuf;
+      dir = MODE_QUERY;
     }
 
     if(dir != mode_changes[i].dir)
@@ -1949,12 +1977,12 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
     modebuf[mbl] = '\0';
     nc++;
 
-    if (mode_changes[i].arg != NULL)
+    if (arg != NULL)
     {
+      len = ircsprintf(parptr, "%s ", arg);
+      pbl += len;
+      parptr += len;
       mc++;
-      pbl = strlen(strcat(parabuf, mode_changes[i].arg));
-      parabuf[pbl++] = ' ';
-      parabuf[pbl] = '\0';
     }
   }
 
@@ -1992,8 +2020,15 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
 	continue;
       }
 
-      if (mode_changes[i].arg != NULL && ((mc == MAXMODEPARAMS) ||
-           ((strlen(mode_changes[i].arg) + mbl + pbl + 2) > BUFSIZE)))
+      arg = mode_changes[i].arg;
+      if(arg != NULL)
+	arglen = strlen(arg);
+      else
+	arglen = 0;
+
+      if ((mc == MAXMODEPARAMS) ||
+	  ((arglen + mbl + pbl + 2) > BUFSIZE) ||
+	  ((arglen + pbl + BAN_FUDGE) >= MODEBUFLEN))
       {
         if (mbl && modebuf[mbl - 1] == '-')
           modebuf[mbl - 1] = '\0';
@@ -2007,6 +2042,7 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
         mbl = ircsprintf(modebuf, ":%s MODE %s ", me.name, chname);
         pbl = 0;
         parabuf[0] = '\0';
+	parptr = parabuf;
       }
 
       if(dir != mode_changes[i].dir)
@@ -2019,12 +2055,12 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
       modebuf[mbl] = '\0';
       nc++;
 
-      if (mode_changes[i].arg != NULL)
+      if (arg != NULL)
       {
-        mc++;
-        pbl = strlen(strcat(parabuf, mode_changes[i].arg));
-        parabuf[pbl++] = ' ';
-        parabuf[pbl] = '\0';
+	len = ircsprintf(parptr, "%s ", arg);
+	pbl += len;
+	parptr += len;
+	mc++;
       }
     }
 
@@ -2036,6 +2072,10 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
     if (nc != 0)
       sendto_channel_local(st, chptr, "%s %s", modebuf, parabuf);
   }
+
+  
+  if (nc != 0)
+    sendto_one(client_p, "%s %s", modebuf, parabuf);
 
   /* Now send to servers... */
   send_cap_mode_changes(client_p, source_p, chptr);
@@ -2061,8 +2101,6 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
   int alevel, errors = 0;
   char *ml = parv[0], c;
   int table_position;
-
-
 
   mask_pos = 0;
   mode_count = 0;
@@ -2096,7 +2134,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
     }
 
   update_channel_info(chptr);
-
+  
   send_mode_changes(client_p, source_p, chptr, chname);
 }
 
@@ -2169,8 +2207,6 @@ send_oplist(const char *chname, struct Client *client_p, dlink_list * list,
   char opbuf[MODEBUFLEN];
   char *t;
 
-
-
   *mcbuf = *opbuf = '\0';
   t = opbuf;
 
@@ -2217,7 +2253,6 @@ sync_channel_oplists(struct Channel *chptr, int dir)
 {
   dlink_node *ptr;
 
-
   for (ptr=chptr->locpeons.head; ptr!=NULL && ptr->data!=NULL; ptr=ptr->next)
     sync_oplists(chptr, ptr->data, MODE_ADD, chptr->chname);
   for (ptr=chptr->locvoiced.head; ptr!=NULL && ptr->data!=NULL; ptr = ptr->next)
@@ -2232,7 +2267,6 @@ static void mode_get_status(struct Channel *chptr, struct Client *target_p,
   int *t_op, int *t_hop, int *t_voice, int *t_admin,  int need_check)
 {
   int i;
-
 
   if (need_check)
   {
@@ -2259,7 +2293,7 @@ static void mode_get_status(struct Channel *chptr, struct Client *target_p,
         *t_hop = (mode_changes[i].dir == MODE_ADD) ? 1 : 0;
 	return;
       }
-      else if (mode_changes[i].letter == 'v') 
+      else if (mode_changes[i].letter == 'v')
       {
         *t_voice = (mode_changes[i].dir == MODE_ADD) ? 1 : 0;
         return;
@@ -2280,7 +2314,6 @@ update_channel_info(struct Channel *chptr)
   int t_voice, t_hop, t_op, t_admin;
   dlink_node *ptr;
   dlink_node *ptr_next;
-
 
   /* hideops_changed is set to chptr->mode.mode & MODE_HIDEOPS at
    * the beginning..
@@ -2423,18 +2456,18 @@ update_channel_info(struct Channel *chptr)
       }
     }
     else if (mode_changes[i].letter == 'a')
-    {
-      if(mode_changes[i].dir == MODE_DEL)
       {
+        if(mode_changes[i].dir == MODE_DEL)
+        {
         change_channel_membership(chptr, &chptr->peons, &chptr->locpeons, 
-                                  mode_changes[i].client);
-      }
-      else 
-      {
+	                            mode_changes[i].client);
+        }
+        else
+        {
         change_channel_membership(chptr, &chptr->chanadmins, &chptr->locchanadmins,
-                                  mode_changes[i].client);
+                                    mode_changes[i].client);
+        }
       }
-    }
     else if (mode_changes[i].letter == 'v')
     {
       {

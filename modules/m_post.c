@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_post.c,v 1.3 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_post.c,v 1.4 2003/01/29 09:28:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -57,15 +57,18 @@ void
 _modinit(void)
 {
   mod_add_cmd(&post_msgtab);
-}
+  mod_add_cmd(&get_msgtab);
+  mod_add_cmd(&put_msgtab);}
 
 void
 _moddeinit(void)
 {
   mod_del_cmd(&post_msgtab);
+  mod_del_cmd(&get_msgtab);
+  mod_del_cmd(&put_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
 ** mr_dumb_proxy

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.15 2002/11/20 14:13:57 fishwaldo Exp $
+ *  $Id: channel.c,v 1.16 2003/01/29 09:28:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -84,6 +84,7 @@ void init_channels(void)
   channel_heap = BlockHeapCreate(sizeof(struct Channel), CHANNEL_HEAP_SIZE);
   ban_heap = BlockHeapCreate(sizeof(struct Ban), BAN_HEAP_SIZE);
   topic_heap = BlockHeapCreate(TOPICLEN+1 + USERHOST_REPLYLEN, TOPIC_HEAP_SIZE);
+
   eventAddIsh("channelheap_garbage_collect", channelheap_garbage_collect,
               NULL, 45);
 }
@@ -224,20 +225,22 @@ remove_user_from_channel(struct Channel *chptr, struct Client *who)
 
     free_dlink_node(ptr);
   }
-
   chptr->users_last = CurrentTime;
 
-  DLINK_FOREACH_SAFE(ptr, next_ptr, who->user->channel.head)
+  if (who->user != NULL)
   {
-    if (ptr->data == chptr)
+    DLINK_FOREACH_SAFE(ptr, next_ptr, who->user->channel.head)
     {
-      dlinkDelete(ptr, &who->user->channel);
-      free_dlink_node(ptr);
-      break;
+      if (ptr->data == chptr)
+      {
+	dlinkDelete(ptr, &who->user->channel);
+	free_dlink_node(ptr);
+	who->user->joined--;
+	break;
+      }
     }
   }
 
-  who->user->joined--;
 
   if (MyClient(who))
   {
@@ -316,16 +319,16 @@ send_channel_modes(struct Client *client_p, struct Channel *chptr)
   send_members(client_p, modebuf, parabuf, chptr, &chptr->chanops, "@");
 
 
-  send_members(client_p, modebuf, parabuf, chptr, &chptr->halfops, "%");
+    send_members(client_p, modebuf, parabuf, chptr, &chptr->halfops, "%");
   send_members(client_p, modebuf, parabuf, chptr, &chptr->chanadmins, "!");
   send_members(client_p, modebuf, parabuf, chptr, &chptr->voiced, "+");
   send_members(client_p, modebuf, parabuf, chptr, &chptr->peons, "");
 
   send_mode_list(client_p, chptr->chname, &chptr->banlist, 'b', 0);
 
-  send_mode_list(client_p, chptr->chname, &chptr->exceptlist, 'e', 0);
+    send_mode_list(client_p, chptr->chname, &chptr->exceptlist, 'e', 0);
 
-  send_mode_list(client_p, chptr->chname, &chptr->invexlist, 'I', 0);
+    send_mode_list(client_p, chptr->chname, &chptr->invexlist, 'I', 0);
 }
 
 /*
@@ -416,15 +419,22 @@ check_channel_name(const char *name)
 }
 
 /*
-**  Subtract one user from channel (and free channel
-**  block, if channel became empty).
-*/
+ * sub1_from_channel
+ *
+ * inputs	- pointer to channel to remove client from
+ * output	- did the channel get destroyed
+ * side effects	- remove one user from chptr.  if the
+ *		  channel is now empty, and it is not already
+ *		  scheduled for destruction, schedule it
+ */
 static int
 sub1_from_channel(struct Channel *chptr)
 {
   if (--chptr->users <= 0)
   {
-    assert(chptr->users >= 0);
+#ifdef INVARIANTS
+    assert(chptr->users == 0);
+#endif
     chptr->users = 0;           /* if chptr->users < 0, make sure it sticks at 0
                                  * It should never happen but...
                                  */
@@ -538,9 +548,8 @@ destroy_channel(struct Channel *chptr)
    * any reference it has to this channel.
    * Finally, free now unused dlink's
    *
-   * This test allows us to use this code both for LazyLinks and
-   * persistent channels. In the case of a LL the channel need not
-   * be empty, it only has to be empty of local users.
+   * For LazyLinks, note that the channel need not be empty, it only
+   * has to be empty of local users.
    */
   delete_members(chptr, &chptr->chanadmins);
   delete_members(chptr, &chptr->chanops);
@@ -615,20 +624,21 @@ delete_members(struct Channel *chptr, dlink_list * list)
     next_ptr = ptr->next;
     who = (struct Client *)ptr->data;
 
-    /* remove reference to chptr from who */
-    for (ptr_ch = who->user->channel.head; ptr_ch; ptr_ch = next_ptr_ch)
+    if (who->user != NULL)
     {
-      next_ptr_ch = ptr_ch->next;
-
-      if (ptr_ch->data == chptr)
+      /* remove reference to chptr from who */
+      DLINK_FOREACH_SAFE (ptr_ch, next_ptr_ch, who->user->channel.head)
       {
-        dlinkDelete(ptr_ch, &who->user->channel);
-        free_dlink_node(ptr_ch);
-        break;
+	if (ptr_ch->data == chptr)
+	{
+	  dlinkDelete(ptr_ch, &who->user->channel);
+	  free_dlink_node(ptr_ch);
+	  who->user->joined--;
+	  break;
+	}
       }
     }
 
-    who->user->joined--;
 
 
     /* remove reference to who from chptr */
@@ -917,13 +927,16 @@ check_banned(struct Channel *chptr, struct Client *who, char *s, char *s2, char 
       actualBan = NULL;
   }
 
-  if (actualBan != NULL)
+  if ((actualBan != NULL))
   {
     DLINK_FOREACH(except, chptr->exceptlist.head)
     {
       actualExcept = except->data;
 
-      if (match(actualExcept->banstr, s) || match(actualExcept->banstr, s2) || match(actualExcept->banstr, s3))
+      if (match(actualExcept->banstr, s) || 
+          match(actualExcept->banstr, s2) ||
+          match_cidr(actualExcept->banstr, s2) ||
+	  match(actualExcept->banstr, s3))
       {
         return CHFL_EXCEPTION;
       }
@@ -951,7 +964,7 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
   char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
   char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
   char src_vhost[NICKLEN + USERLEN + HOSTLEN +6];
-  
+
   assert(source_p->localClient != NULL);
 
   ircsprintf(src_host,
@@ -980,7 +993,7 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
       }
       if (ptr == NULL)
         return (ERR_INVITEONLYCHAN);
-    } 
+    }
   }
   if ((chptr->mode.mode & MODE_SSLONLY) && !IsSSL(source_p)) {
     for (lp = source_p->user->invited.head; lp; lp = lp->next) {
@@ -1078,7 +1091,7 @@ is_chan_admin(struct Channel *chptr, struct Client *who)
 /*
  * is_any_op
  *
- * inputs       - pointer to channel to check for chanop or halfops or chanadmin on
+ * inputs       - pointer to channel to check for chanop or halfops on
  *              - pointer to client struct being checked
  * output       - yes if anyop no if not
  * side effects -

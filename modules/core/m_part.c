@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_part.c,v 1.4 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_part.c,v 1.5 2003/01/29 09:28:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -61,7 +61,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&part_msgtab);
 }
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 
 static void part_one_client(struct Client *client_p,
@@ -157,7 +157,7 @@ static void part_one_client(struct Client *client_p,
                     ":%s PART %s :%s", ID(source_p), chptr->chname,
                     reason);
       sendto_server(client_p, NULL, chptr, NOCAPS, CAP_UID, NOFLAGS,
-                    ":%s PART %s  :%s", source_p->name, chptr->chname,
+                    ":%s PART %s :%s", source_p->name, chptr->chname,
                     reason);
       sendto_channel_local(ALL_MEMBERS,
                            chptr, ":%s!%s@%s PART %s :%s",

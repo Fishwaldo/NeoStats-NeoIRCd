@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: ircd.h,v 1.4 2003/01/29 09:28:48 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_ircd_h
@@ -78,9 +78,11 @@ extern char*          infotext[];
 extern char*          serno;
 extern char*          ircd_version;
 extern const char*    logFileName;
+extern const char*    pidFileName;
 extern const char     serveropts[];
 extern int            cold_start;
 extern int            dorehash;
+extern int            doremotd;
 extern struct Client  me;
 extern struct Client* GlobalClientList;
 extern struct Client* local[];

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whowas.c,v 1.4 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_whowas.c,v 1.5 2003/01/29 09:28:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -61,7 +61,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&whowas_msgtab);
 }
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 static int whowas_do(struct Client *client_p, struct Client *source_p,
                      int parc, char *parv[]);
@@ -79,7 +79,7 @@ static void m_whowas(struct Client *client_p,
 {
   static time_t last_used=0L;
 
-  if (parc < 2)
+  if (parc < 2 || parv[1][0] == '\0')
     {
       sendto_one(source_p, form_str(ERR_NONICKNAMEGIVEN),
                  me.name, parv[0]);
@@ -104,7 +104,7 @@ static void mo_whowas(struct Client *client_p,
                      int parc,
                      char *parv[])
 {
-  if (parc < 2)
+  if (parc < 2 || parv[1][0] == '\0')
     {
       sendto_one(source_p, form_str(ERR_NONICKNAMEGIVEN),
                  me.name, parv[0]);
@@ -132,7 +132,7 @@ static int whowas_do(struct Client *client_p, struct Client *source_p,
     max = atoi(parv[2]);
   if (parc > 3)
     if (hunt_server(client_p,source_p,":%s WHOWAS %s %s :%s", 3,parc,parv))
-      return 0;
+      return(0);
 
   nick = parv[1];
   while (*nick == ',')
@@ -140,7 +140,7 @@ static int whowas_do(struct Client *client_p, struct Client *source_p,
   if((p = strchr(nick,',')) != NULL)
     *p = '\0';
   if (!*nick)
-    return 0;
+    return(0);
 
   temp = WHOWASHASH[hash_whowas_name(nick)];
   found = 0;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c,v 1.11 2002/10/31 13:01:57 fishwaldo Exp $
+ *  $Id: m_server.c,v 1.12 2003/01/29 09:28:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&server_msgtab);
 }
-const char *_version = "$Revision: 1.11 $";
+const char *_version = "$Revision: 1.12 $";
 #endif
 
 int bogus_host(char *host);
@@ -439,7 +439,7 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
           "Non-Hub link %s introduced %s.",
 	  get_client_name(client_p, MASK_IP), name);
 
-      exit_client(NULL, source_p, &me, "No matching hub_mask.");
+      exit_client(NULL, client_p, &me, "No matching hub_mask.");
       return;
     }
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.h,v 1.10 2002/09/19 05:41:10 fishwaldo Exp $
+ *  $Id: channel.h,v 1.11 2003/01/29 09:28:48 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_channel_h
@@ -65,7 +65,7 @@ struct Channel
   dlink_list      voiced;
   dlink_list      peons;                /* non ops, just members */
   dlink_list	  deopped;              /* users deopped on sjoin */
-  
+
   dlink_list	  locchanadmins;	/* local versions of the above */
   dlink_list      locchanops;           /* local versions of the above */
   dlink_list      lochalfops;

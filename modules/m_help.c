@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_help.c,v 1.4 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: m_help.c,v 1.5 2003/01/29 09:28:48 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ _moddeinit(void)
   mod_del_cmd(&uhelp_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 /*
  * m_help - HELP message handler
@@ -211,6 +211,7 @@ sendhelpfile(struct Client *source_p, char *path,
     sendto_one(source_p, form_str(RPL_HELPTXT), me.name, nick, topic, line);
   }
 
+  fbclose(file);
   sendto_one(source_p, form_str(RPL_ENDOFHELP), me.name, nick, topic);
   return;
 }

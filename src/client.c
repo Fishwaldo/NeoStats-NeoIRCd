@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c,v 1.11 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: client.c,v 1.12 2003/01/29 09:28:49 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -58,6 +58,7 @@
 static void check_pings_list(dlink_list *list);
 static void check_unknowns_list(dlink_list *list);
 static void free_exited_clients(void *unused);
+static void free_local_client(struct Client *client_p);
 
 static EVH check_pings;
 
@@ -68,7 +69,6 @@ static BlockHeap *client_heap = NULL;
 static BlockHeap *lclient_heap = NULL;
 
 dlink_list dead_list;
-dlink_list abort_list;
 
 /*
  * client_heap_gc
@@ -175,40 +175,50 @@ struct Client* make_client(struct Client* from)
   return client_p;
 }
 
-void free_client(struct Client* client_p)
+static void
+free_local_client(struct Client *client_p)
 {
-  assert(NULL != client_p);
-  assert(&me != client_p);
-  assert(NULL == client_p->prev);
-  assert(NULL == client_p->next);
-
   if (MyConnect(client_p))
-    {
-      assert(IsClosing(client_p) && IsDead(client_p));
-      
+  {
     /*
      * clean up extra sockets from P-lines which have been discarded.
      */
-    if (client_p->localClient->listener)
-    {
-      assert(0 < client_p->localClient->listener->ref_count);
-      if (0 == --client_p->localClient->listener->ref_count &&
-          !client_p->localClient->listener->active) 
-        free_listener(client_p->localClient->listener);
-      client_p->localClient->listener = 0;
-    }
-
+      if (client_p->localClient->listener)
+      {
+        assert(0 < client_p->localClient->listener->ref_count);
+        if (0 == --client_p->localClient->listener->ref_count &&
+            !client_p->localClient->listener->active) 
+          free_listener(client_p->localClient->listener);
+        client_p->localClient->listener = 0;
+      }
+#ifdef USE_SSL
+      if (client_p->localClient->ssl)
+      {
+      	SSL_smart_shutdown(client_p);
+      }
+#endif
       if (client_p->localClient->fd >= 0)
 	fd_close(client_p->localClient->fd);
 
       BlockHeapFree(lclient_heap, client_p->localClient);
       --local_client_count;
       assert(local_client_count >= 0);
-    }
+      client_p->localClient = NULL;
+  }
+}
+
+void
+free_client(struct Client* client_p)
+{
+  assert(NULL != client_p);
+  assert(&me != client_p);
+  assert(NULL == client_p->prev);
+  assert(NULL == client_p->next);
+
+  if(MyConnect(client_p))
+      free_local_client(client_p);
   else
-    {
       --remote_client_count;
-    }
 
   BlockHeapFree(client_heap, client_p);
 }
@@ -270,7 +280,7 @@ check_pings_list(dlink_list *list)
     ** Note: No need to notify opers here. It's
     ** already done when "FLAGS_DEADSOCKET" is set.
     */
-    if (client_p->flags & FLAGS_DEADSOCKET)
+    if (IsDead(client_p))
     {
       /* Ignore it, its been exited already */
       continue; 
@@ -309,30 +319,30 @@ check_pings_list(dlink_list *list)
     else
       ping = get_client_ping(client_p);
 
-      if (ping < (CurrentTime - client_p->lasttime))
-        {
-          /*
-           * If the client/server hasnt talked to us in 2*ping seconds
-           * and it has a ping time, then close its connection.
-           */
-          if (((CurrentTime - client_p->lasttime) >= (2 * ping) &&
-               (client_p->flags & FLAGS_PINGSENT)))
-            {
-              if (IsServer(client_p) || IsConnecting(client_p) ||
-                  IsHandshake(client_p))
-                {
+    if (ping < (CurrentTime - client_p->lasttime))
+    {
+      /*
+       * If the client/server hasnt talked to us in 2*ping seconds
+       * and it has a ping time, then close its connection.
+       */
+      if (((CurrentTime - client_p->lasttime) >= (2 * ping) &&
+	   (client_p->flags & FLAGS_PINGSENT)))
+      {
+	if (IsServer(client_p) || IsConnecting(client_p) ||
+	    IsHandshake(client_p))
+	  {
                   sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
-				       "No response from %s, closing link",
-				       get_client_name(client_p, HIDE_IP));
+				 "No response from %s, closing link",
+				 get_client_name(client_p, HIDE_IP));
                   sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
-                                       "No response from %s, closing link",
-                                       get_client_name(client_p, MASK_IP));
-                  ilog(L_NOTICE, "No response from %s, closing link",
-                      get_client_name(client_p, HIDE_IP));
-                }
-	      (void)ircsprintf(scratch,
-			       "Ping timeout: %d seconds",
-			       (int)(CurrentTime - client_p->lasttime));
+				 "No response from %s, closing link",
+				 get_client_name(client_p, MASK_IP));
+	    ilog(L_NOTICE, "No response from %s, closing link",
+		 get_client_name(client_p, HIDE_IP));
+	  }
+	(void)ircsprintf(scratch,
+			 "Ping timeout: %d seconds",
+			 (int)(CurrentTime - client_p->lasttime));
 	      
 	(void)exit_client(client_p, client_p, &me, scratch);
 	continue;
@@ -826,15 +836,15 @@ get_client_name(struct Client* client, int showip)
       switch (showip)
         {
           case SHOW_IP:
-            ircsprintf(nbuf, "%s[%s@%s]", client->name, client->username,
+            ircsprintf(nbuf, "%s [%s@%s]", client->name, client->username,
               client->localClient->sockhost);
             break;
           case MASK_IP:
-            ircsprintf(nbuf, "%s[%s@255.255.255.255]", client->name,
+            ircsprintf(nbuf, "%s [%s@255.255.255.255]", client->name,
               client->username);
             break;
           default:
-            ircsprintf(nbuf, "%s[%s@%s]", client->name, client->username,
+            ircsprintf(nbuf, "%s [%s@%s]", client->name, client->username,
               client->host);
         }
       return nbuf;
@@ -864,6 +874,8 @@ free_exited_clients(void *unused)
           free_dlink_node(ptr);
           continue;
         }
+
+
       release_client_state(target_p);
       free_client(target_p);
       dlinkDelete(ptr, &dead_list);
@@ -875,9 +887,9 @@ free_exited_clients(void *unused)
 ** Exit one client, local or remote. Assuming all dependents have
 ** been already removed, and socket closed for local client.
 */
-static void exit_one_client(struct Client *client_p,
-                            struct Client *source_p,
-                            struct Client *from, const char *comment)
+static void
+exit_one_client(struct Client *client_p, struct Client *source_p,
+		struct Client *from, const char *comment)
 {
   struct Client* target_p;
   dlink_node *lp;
@@ -940,7 +952,7 @@ static void exit_one_client(struct Client *client_p,
 
       target_p = source_p->from;
       if (target_p && IsServer(target_p) && target_p != client_p && !IsMe(target_p) &&
-          (source_p->flags & FLAGS_KILLED) == 0)
+          (!IsKilled(source_p)))
         sendto_one(target_p, ":%s SQUIT %s :%s", from->name, source_p->name, comment);
     }
   else if (IsPerson(source_p)) /* ...just clean all others with QUIT... */
@@ -950,7 +962,7 @@ static void exit_one_client(struct Client *client_p,
       ** is no sense in sending the QUIT--KILL's have been
       ** sent instead.
       */
-      if ((source_p->flags & FLAGS_KILLED) == 0)
+      if (!IsKilled(source_p))
         {
           sendto_server(client_p, source_p, NULL, NOCAPS, NOCAPS,
                         NOFLAGS, ":%s QUIT :%s", source_p->name, comment);
@@ -968,9 +980,9 @@ static void exit_one_client(struct Client *client_p,
 				   comment);
 
       DLINK_FOREACH_SAFE(lp, next_lp, source_p->user->channel.head)
-	{
-	  remove_user_from_channel(lp->data, source_p);
-	}
+      {
+	remove_user_from_channel(lp->data, source_p);
+      }
         
       /* Should not be in any channels now */
       assert(source_p->user->channel.head == NULL);
@@ -1003,9 +1015,8 @@ static void exit_one_client(struct Client *client_p,
 
   /* Check to see if the client isn't already on the dead list */
   assert(dlinkFind(&dead_list, source_p) == NULL);
-  /* add to dead client dlist */
+  /* add to dead_list */
   lp = make_dlink_node();
-  SetDead(source_p);
   dlinkAdd(source_p, lp, &dead_list);
 }
 
@@ -1059,7 +1070,8 @@ static void recurse_send_quits(struct Client *client_p, struct Client *source_p,
 /*
  * added sanity test code.... source_p->serv might be NULL...
  */
-static void recurse_remove_clients(struct Client* source_p, const char* comment)
+static void
+recurse_remove_clients(struct Client* source_p, const char* comment)
 {
   struct Client *target_p;
 
@@ -1071,7 +1083,7 @@ static void recurse_remove_clients(struct Client* source_p, const char* comment)
 
   while ((target_p = source_p->serv->users))
     {
-      target_p->flags |= FLAGS_KILLED;
+      SetKilled(target_p);
       exit_one_client(NULL, target_p, &me, comment);
     }
 
@@ -1082,7 +1094,7 @@ static void recurse_remove_clients(struct Client* source_p, const char* comment)
       ** a server marked as "KILLED" won't send a SQUIT 
       ** in exit_one_client()   -orabidoo
       */
-      target_p->flags |= FLAGS_KILLED;
+      SetKilled(target_p);
       exit_one_client(NULL, target_p, &me, me.name);
     }
 }
@@ -1128,29 +1140,26 @@ remove_dependents(struct Client* client_p,
   recurse_remove_clients(source_p, comment1);
 }
 
-
-
-
 /*
- * dead_link - Adds client to a list of clients that need an exit_client()
+ * dead_link_on_write - report a write error if not already dead,
+ *			mark it as dead then exit it
  *
  */
-void dead_link(struct Client *client_p)
+void
+dead_link_on_write(struct Client *client_p, int ierrno)
 {
-  dlink_node *m;
   const char *notice;
-  if(IsClosing(client_p) || IsDead(client_p))
-    return;
 
-  linebuf_donebuf(&client_p->localClient->buf_recvq);
-  linebuf_donebuf(&client_p->localClient->buf_sendq);
+  if(IsDefunct(client_p))
+    return;
+  SetDead(client_p);
+
   if(client_p->flags & FLAGS_SENDQEX)
     notice = "Max SendQ exceeded";
   else
     notice = "Write error: connection closed";
-
     	
-  if (!IsPerson(client_p) && !IsUnknown(client_p) && !IsClosing(client_p))
+  if (!IsPerson(client_p) && !IsUnknown(client_p))
   {
     sendto_realops_flags(FLAGS_ALL, L_ADMIN,
 		         "Closing link to %s: %s",
@@ -1159,42 +1168,74 @@ void dead_link(struct Client *client_p)
 		         "Closing link to %s: %s",
                          get_client_name(client_p, MASK_IP), notice);
   }
-  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(client_p, HIDE_IP), notice));
-  assert(dlinkFind(&abort_list, client_p) == NULL);
-  m = make_dlink_node();
-  dlinkAdd(client_p, m, &abort_list);
-  SetDead(client_p); /* You are dead my friend */
+  Debug((DEBUG_ERROR, "Closing link to %s: %s",
+	 get_client_name(client_p, HIDE_IP), notice));
+  exit_client(client_p, client_p, &me, "Closing link");
 }
 
+/*
+ * dead_link_on_read -  report a read error if not already dead,
+ *			mark it as dead then exit it
+ *
+ */
 void
-exit_aborted_clients(void)
+dead_link_on_read(struct Client* client_p, int error)
 {
-  dlink_node *ptr, *next;
-  struct Client *target_p;
-  char *notice;
+  char errmsg[255];
+  int  current_error = get_sockerr(client_p->localClient->fd);
 
-  DLINK_FOREACH_SAFE(ptr, next, abort_list.head)
-    {
-      target_p = ptr->data;
-      if (ptr->data == NULL)
-        {
-          sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
-                        "Warning: null client on abort_list!");
-          dlinkDelete(ptr, &abort_list);
-          free_dlink_node(ptr);
-          continue;
-        }
-      dlinkDelete(ptr, &abort_list);
-      if(target_p->flags & FLAGS_SENDQEX)
-        notice = "Max SendQ exceeded";
-      else
-        notice = "Write error: connection closed";
+  if(IsDead(client_p))
+    return;
+  SetDead(client_p);
+
+  Debug((DEBUG_ERROR, "READ ERROR: fd = %d %d %d",
+         client_p->localClient->fd, current_error, error));
+
+  if (IsServer(client_p) || IsHandshake(client_p))
+  {
+    int connected = CurrentTime - client_p->firsttime;
       
-      exit_client(target_p, target_p, &me, notice);  
-      free_dlink_node(ptr);
-    }
-}
+    if (error == 0)
+    {
+      /* Admins get the real IP */
+      sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+			   "Server %s closed the connection",
+			   get_client_name(client_p, SHOW_IP));
 
+      /* Opers get a masked IP */
+      sendto_realops_flags(FLAGS_ALL, L_OPER,
+			   "Server %s closed the connection",
+			   get_client_name(client_p, MASK_IP));
+
+      ilog(L_NOTICE, "Server %s closed the connection",
+	   get_client_name(client_p, SHOW_IP));
+    }
+    else
+    {
+      report_error(L_ADMIN, "Lost connection to %s: %d",
+		   get_client_name(client_p, SHOW_IP), current_error);
+      report_error(L_OPER, "Lost connection to %s: %d",
+		   get_client_name(client_p, MASK_IP), current_error);
+    }
+
+    sendto_realops_flags(FLAGS_ALL, L_ALL,
+			 "%s had been connected for %d day%s, %2d:%02d:%02d",
+			 client_p->name, connected/86400,
+			 (connected/86400 == 1) ? "" : "s",
+			 (connected % 86400) / 3600, (connected % 3600) / 60,
+			 connected % 60);
+  }
+
+  if (error == 0)
+  {
+    strcpy(errmsg, "Remote host closed the connection");
+  }
+  else
+  {
+    ircsprintf(errmsg, "Read error: %s", strerror(current_error));
+  }
+  exit_client(client_p, client_p, &me, errmsg);
+}
 
 /*
 ** exit_client - This is old "m_bye". Name  changed, because this is not a
@@ -1216,6 +1257,7 @@ exit_aborted_clients(void)
 **        CLIENT_EXITED        if (client_p == source_p)
 **        0                if (client_p != source_p)
 */
+
 int
 exit_client(
 	    struct Client* client_p, /* The local client originating the
@@ -1232,16 +1274,15 @@ exit_client(
 {
   char comment1[HOSTLEN + HOSTLEN + 2];
   dlink_node *m;
+
+  if (IsClosing(source_p))
+    return(0);
+
+  SetClosing(source_p);
+
   if (MyConnect(source_p))
     {
-      /* DO NOT REMOVE. exit_client can be called twice after a failed
-       * read/write.
-       */
-      if(IsClosing(source_p))
-        return 0;
-
-      SetClosing(source_p);
-      if (source_p->flags & FLAGS_IPHASH)
+      if (IsIpHash(source_p))
         remove_one_ip(&source_p->localClient->ip);
 
       delete_adns_queries(source_p->localClient->dns_query);
@@ -1317,9 +1358,10 @@ exit_client(
                              source_p->name, source_p->username, source_p->host,
                              comment, 
                              source_p->localClient->sockhost);
+
       log_user_exit(source_p);
 
-      if (source_p->localClient->fd >= 0)
+      if (!IsDead(source_p))
 	{
 	  if (client_p != NULL && source_p != client_p)
 	    sendto_one(source_p, "ERROR :Closing Link: %s %s (%s)",
@@ -1328,20 +1370,6 @@ exit_client(
 	    sendto_one(source_p, "ERROR :Closing Link: %s (%s)",
 		       source_p->vhost, comment);
 	}
-      /*
-      ** Currently only server connections can have
-      ** depending remote clients here, but it does no
-      ** harm to check for all local clients. In
-      ** future some other clients than servers might
-      ** have remotes too...
-      **
-      ** Close the Client connection first and mark it
-      ** so that no messages are attempted to send to it.
-      ** (The following *must* make MyConnect(source_p) == FALSE!).
-      ** It also makes source_p->from == NULL, thus it's unnecessary
-      ** to test whether "source_p != target_p" in the following loops.
-      */
-     close_connection(source_p);
     }
 
   if(IsServer(source_p))
@@ -1379,12 +1407,18 @@ exit_client(
               source_p->localClient->sendK, source_p->localClient->receiveK);
         }
     }
+
+  if(MyConnect(source_p))
+  {
+     close_connection(source_p);
+     SetDead(source_p); /* You are dead my friend */
+  }
+
   /* The client *better* be off all of the lists */
   assert(dlinkFind(&unknown_list, source_p) == NULL);
   assert(dlinkFind(&lclient_list, source_p) == NULL);
   assert(dlinkFind(&serv_list, source_p) == NULL);
   assert(dlinkFind(&oper_list, source_p) == NULL);
-  
     
   exit_one_client(client_p, source_p, from, comment);
   return client_p == source_p ? CLIENT_EXITED : 0;

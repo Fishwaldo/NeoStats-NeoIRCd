@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h,v 1.8 2003/01/27 04:20:36 fishwaldo Exp $
+ *  $Id: s_conf.h,v 1.9 2003/01/29 09:28:48 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -88,7 +88,6 @@ struct ConfItem
 #define CONF_SERVER             0x0004
 #define CONF_OPERATOR           0x0010
 #define CONF_KILL               0x0040
-#define CONF_USERVER		0x0080
 
 #define CONF_CLASS              0x0400
 #define CONF_LEAF               0x0800
@@ -250,7 +249,7 @@ struct config_channel_entry
   int   no_create_on_split;
   int   no_join_on_split;
   int	persist_time;
-  int   oper_pass_resv;
+  int	oper_pass_resv;
   int   quiet_on_ban;
   int   default_split_server_count;
   int   default_split_user_count;
@@ -393,7 +392,6 @@ extern void conf_add_d_conf(struct ConfItem *);
 extern void conf_add_x_conf(struct ConfItem *);
 extern void conf_add_fields(struct ConfItem*, char*, char *, char*, char *,char *);
 extern void conf_add_conf(struct ConfItem *);
-extern void flush_expired_ips(void *);
 
 /* XXX consider moving these into kdparse.h */
 extern void parse_k_file(FBFILE *fb);

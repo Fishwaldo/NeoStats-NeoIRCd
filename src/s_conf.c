@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c,v 1.11 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: s_conf.c,v 1.12 2003/01/29 09:28:50 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -211,6 +211,7 @@ free_conf(struct ConfItem* aconf)
   MyFree(aconf->name);
   MyFree(aconf->className);
   MyFree(aconf->user);
+  MyFree(aconf->fakename);
 #ifdef HAVE_LIBCRYPTO
   if (aconf->rsa_public_key)        { RSA_free(aconf->rsa_public_key); }
   if (aconf->rsa_public_key_file)   { MyFree(aconf->rsa_public_key_file); }
@@ -272,7 +273,8 @@ report_configured_links(struct Client* source_p, int mask)
   char*		     classname;
   int                port;
 
-  for (tmp = ConfigItemList; tmp; tmp = tmp->next) {
+  for (tmp = ConfigItemList; tmp; tmp = tmp->next)
+  {
     if (tmp->status & mask)
       {
         for (p = &report_array[0]; p->conf_type; p++)
@@ -404,15 +406,16 @@ report_specials(struct Client* source_p, int flags, int numeric)
 int 
 check_client(struct Client *client_p, struct Client *source_p, char *username)
 {
-  static char     sockname[HOSTLEN + 1];
-  int             i;
+  int i;
  
   ClearAccess(source_p);
 
+  /* I'm already in big trouble if source_p->localClient is NULL -db */
   if ((i = verify_access(source_p, username)))
-    {
-      ilog(L_INFO, "Access denied: %s[%s]", source_p->name, sockname);
-    }
+  {
+    ilog(L_INFO, "Access denied: %s[%s]", 
+	 source_p->name, source_p->localClient->sockhost);
+  }
 
   switch( i )
     {
@@ -469,7 +472,7 @@ check_client(struct Client *client_p, struct Client *source_p, char *username)
 	  source_p->localClient->listener->port);
 	  
       (void)exit_client(client_p, source_p, &me,
-			"You are not authorised to use this server");
+			"You are not authorized to use this server");
       break;
     }
     case BANNED_CLIENT:
@@ -582,8 +585,8 @@ int attach_iline(struct Client *client_p, struct ConfItem *aconf)
   ip_found->count++;
 
   /* only check it if its non zero */
-  if ( aconf->c_class /* This should never non NULL *grin* */ &&
-       ConfConFreq(aconf) && ip_found->count > ConfConFreq(aconf))
+  if (aconf->c_class /* This should never non NULL *grin* */ &&
+      ConfConFreq(aconf) && ip_found->count > ConfConFreq(aconf))
     {
       if(!IsConfExemptLimits(aconf))
         return(TOO_MANY); /* Already at maximum allowed ip#'s */
@@ -668,9 +671,9 @@ find_or_add_ip(struct irc_inaddr *ip_in)
     return(ptr);
    }
   }
-  if ((ptr = ip_hash_table[hash_index]) != (IP_ENTRY *)NULL)
+  if ((ptr = ip_hash_table[hash_index]) != NULL)
     {
-      if( free_ip_entries == (IP_ENTRY *)NULL)
+      if (free_ip_entries == NULL)
 	outofmemory();
 
       newptr = ip_hash_table[hash_index] = free_ip_entries;
@@ -683,14 +686,14 @@ find_or_add_ip(struct irc_inaddr *ip_in)
       return(newptr);
     }
 
-  if (free_ip_entries == (IP_ENTRY *)NULL)
+  if (free_ip_entries == NULL)
     outofmemory();
 
   ptr = ip_hash_table[hash_index] = free_ip_entries;
   free_ip_entries = ptr->next;
   memcpy(&ptr->ip, ip_in, sizeof(struct irc_inaddr));
   ptr->count = 0;
-  ptr->next = (IP_ENTRY *)NULL;
+  ptr->next = NULL;
   return(ptr);
 }
 
@@ -710,28 +713,28 @@ remove_one_ip(struct irc_inaddr *ip_in)
 {
   IP_ENTRY *ptr, **lptr;
   int hash_index = hash_ip(ip_in);
-  for (lptr = ip_hash_table+hash_index, ptr = *lptr;
-       ptr;
+  for (lptr = ip_hash_table+hash_index, ptr = *lptr; ptr;
        lptr=&ptr->next, ptr=*lptr)
   {
 #ifndef IPV6
-   if (ptr->ip != PIN_ADDR(ip_in))
-    continue;
+    if (ptr->ip != PIN_ADDR(ip_in))
+      continue;
 #else
-   if (memcmp(&IN_ADDR(ptr->ip), &PIN_ADDR(ip_in),
-              sizeof(struct irc_inaddr)))
-    continue;
+    if (memcmp(&IN_ADDR(ptr->ip), &PIN_ADDR(ip_in),
+	       sizeof(struct irc_inaddr)))
+      continue;
 #endif
-  if (ptr->count != 0)
-   ptr->count--;
-  if (ptr->count != 0 ||
-      (CurrentTime-ptr->last_attempt)<=ConfigFileEntry.throttle_time)
-   continue;
-  *lptr = ptr->next;
-  ptr->next = free_ip_entries;
-  free_ip_entries = ptr;
-  return;
- }
+    if (ptr->count > 0)
+      ptr->count--;
+    if (ptr->count == 0 &&
+	(CurrentTime-ptr->last_attempt)>ConfigFileEntry.throttle_time)
+    {
+      *lptr = ptr->next;
+      ptr->next = free_ip_entries;
+      free_ip_entries = ptr;
+      return;
+    }
+  }
 }
 
 /*
@@ -1554,7 +1557,6 @@ conf_connect_allowed(struct irc_inaddr *addr, int aftype)
       ConfigFileEntry.throttle_time)
     {
       ip_found->last_attempt = CurrentTime;
-      ip_found->count--;
       return(TOO_FAST);
     }
   ip_found->last_attempt = CurrentTime;
@@ -2146,7 +2148,7 @@ WriteKlineOrDline( KlineType type,
 
   filename = get_conf_name(type);
 
-  if(type == DLINE_TYPE)
+  if (type == DLINE_TYPE)
     {
       sendto_realops_flags(FLAGS_ALL, L_ALL,
 			   "%s added D-Line for [%s] [%s]",
@@ -2164,7 +2166,7 @@ WriteKlineOrDline( KlineType type,
 		 me.name, source_p->name, user, host);
     }
 
-  if ( (out = fbopen(filename, "a")) == NULL )
+  if ((out = fbopen(filename, "a")) == NULL)
     {
       sendto_realops_flags(FLAGS_ALL, L_ALL,
 			   "*** Problem opening %s ", filename);
@@ -2423,35 +2425,4 @@ int
 conf_yy_fatal_error(char *msg)
 {
   return(0);
-}
-
-
-/* void flush_expired_ips(void *unused)
- *
- * inputs	- none.
- * output	- none.
- * side effects	- Deletes all IP address entries which should have expired.
- */
-void
-flush_expired_ips(void *unused)
-{
-  int i;
-  time_t expire_before = CurrentTime - ConfigFileEntry.throttle_time;
-  IP_ENTRY *ie, **iee;
-
-  for (i=0; i<IP_HASH_SIZE; i++)
-    {
-      for (iee=ip_hash_table+i, ie=*iee; ie; ie=*iee)
-	{
-	  if (ie->count == 0 && ie->last_attempt <= expire_before)
-	    {
-	      *iee=ie->next;
-	      ie->next = free_ip_entries;
-	      free_ip_entries = ie;
-	    }
-	  else
-	    iee = &ie->next;
-	}
-      *iee = NULL;
-    }
 }

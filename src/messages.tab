@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab,v 1.9 2002/11/20 14:13:57 fishwaldo Exp $
+ *   $Id: messages.tab,v 1.10 2003/01/29 09:28:49 fishwaldo Exp $
  */
 
 static  char *  replies[] = {
@@ -540,7 +540,7 @@ static  char *  replies[] = {
 /* 510 */	NULL,
 /* 511 */	NULL,
 /* 512 */	NULL,
-/* 513 ERR_WRONGPONG */		"%s 513 %s :To connect type /QUOTE PONG %lu",
+/* 513 ERR_WRONGPONG */		":%s 513 %s :To connect type /QUOTE PONG %lu",
 /* 514 */	NULL,
 /* 515 */	NULL,
 /* 516 */	NULL,

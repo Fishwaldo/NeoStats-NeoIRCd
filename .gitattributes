@@ -369,6 +369,7 @@ modules/m_smo.c -text
 modules/m_stats.c -text
 modules/m_svinfo.c -text
 modules/m_svscmds.c -text
+modules/m_swhois.c -text
 modules/m_testline.c -text
 modules/m_time.c -text
 modules/m_topic.c -text

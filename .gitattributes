@@ -362,6 +362,7 @@ modules/m_rehash.c -text
 modules/m_restart.c -text
 modules/m_resv.c -text
 modules/m_set.c -text
+modules/m_sethost.c -text
 modules/m_stats.c -text
 modules/m_svinfo.c -text
 modules/m_testline.c -text
@@ -398,6 +399,7 @@ src/channel.c -text
 src/channel_mode.c -text
 src/class.c -text
 src/client.c -text
+src/cloak.c -text
 src/crypt.c -text
 src/descrip.mms -text
 src/dynlink.c -text

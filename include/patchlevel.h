@@ -19,9 +19,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: patchlevel.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: patchlevel.h,v 1.4 2002/09/17 06:50:46 fishwaldo Exp $
  */
 
 #ifndef PATCHLEVEL
-#define PATCHLEVEL   "NeoIRCd 0.9.1"
+#define PATCHLEVEL   "NeoIRCd 0.9.2"
 #endif

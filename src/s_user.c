@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.13 2002/09/17 06:09:35 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.14 2002/09/17 06:50:46 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1417,14 +1417,18 @@ oper_up( struct Client *source_p, struct ConfItem *aconf )
   SendMessageFile(source_p, &ConfigFileEntry.opermotd);
 
   /* autojoin them to a channel if its defined */
+  flags = 0;
   if (ConfigFileEntry.operautojoin) {
 	sendto_one(source_p, "%s NOTICE %s :Autojoining you to %s", me.name, source_p->name, ConfigFileEntry.operautojoin);
 	if ((chptr = hash_find_channel(ConfigFileEntry.operautojoin)) != NULL) {
 		if (IsMember(source_p, chptr))
 			return(1);
-		if (chptr->users = 0)
+printf("already there %d\n", chptr->users);
+		if (chptr->users == 0)
 			flags = CHFL_ADMIN;
+
 	} else {
+printf("newchan\n");
 		flags = CHFL_ADMIN;
 		if (!ServerInfo.hub) {
 			/* lazy links */

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.6 2002/09/02 09:17:08 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.7 2002/09/03 04:57:46 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1133,6 +1133,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
       else
       	target_p->umodes |= FLAGS_REGNICK;
     }
+
   if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(target_p))
     ++Count.invisi;
   if ((setflags & FLAGS_INVISIBLE) && !IsInvisible(target_p))

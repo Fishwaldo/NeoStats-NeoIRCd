@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.36 2002/10/16 05:01:53 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.37 2002/10/16 05:21:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1046,8 +1046,8 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 			/* if they are already hidden, don't hide them again 
 			 * of they are not a local client 
 			 */
+			SetHidden(target_p);
 			if (MyClient(target_p)) {
-				SetHidden(target_p);
 				make_virthost(target_p->host, target_p->localClient->sockhost, target_p->vhost);
 				sendto_server(NULL, target_p, NULL, 0, 0, LL_ICLIENT, ":%s SETHOST %s :%s", me.name, target_p->name, target_p->vhost);
 			}

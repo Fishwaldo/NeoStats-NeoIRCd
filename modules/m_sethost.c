@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_sethost.c,v 1.3 2002/09/13 06:54:34 fishwaldo Exp $
+ *   $Id: m_sethost.c,v 1.4 2002/10/16 05:21:07 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -79,7 +79,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 
 /*
@@ -117,7 +117,7 @@ static void ms_sethost(struct Client *client_p, struct Client *source_p,
 			strncpy(target_p->vhost, parv[2], HOSTLEN);
 		
 			/* send it to the rest of the net */
-			sendto_server(source_p, source_p, NULL, 0, 0, LL_ICLIENT, ":%s SETHOST %s :%s", me.name, source_p->name, source_p->vhost);
+			sendto_server(source_p, source_p, NULL, 0, 0, LL_ICLIENT, ":%s SETHOST %s :%s", source_p->name, target_p->name, target_p->vhost);
 	
 			return;
 		

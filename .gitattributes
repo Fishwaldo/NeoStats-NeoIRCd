@@ -50,7 +50,6 @@ contrib/m_flags.c -text
 contrib/m_force.c -text
 contrib/m_jupe.c -text
 contrib/m_ltrace.c -text
-contrib/m_map.c -text
 contrib/m_mkpasswd.c -text
 contrib/m_ojoin.c -text
 contrib/m_opme.c -text
@@ -362,6 +361,7 @@ modules/m_lljoin.c -text
 modules/m_llnick.c -text
 modules/m_locops.c -text
 modules/m_lusers.c -text
+modules/m_map.c -text
 modules/m_motd.c -text
 modules/m_names.c -text
 modules/m_nburst.c -text

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whois.c,v 1.9 2002/09/19 05:41:10 fishwaldo Exp $
+ *  $Id: m_whois.c,v 1.10 2002/10/15 07:30:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -76,7 +76,7 @@ _moddeinit(void)
   mod_del_cmd(&whois_msgtab);
 }
 
-const char *_version = "$Revision: 1.9 $";
+const char *_version = "$Revision: 1.10 $";
 #endif
 /*
 ** m_whois
@@ -433,8 +433,8 @@ whois_person(struct Client *source_p,struct Client *target_p, int glob)
           
   if ((IsOper(source_p) || !ConfigServerHide.hide_servers) || target_p == source_p)
     sendto_one(source_p, form_str(RPL_WHOISSERVER),
-	       me.name, source_p->name, target_p->name, server_name,
-	       a2client_p?a2client_p->info:"*Not On This Net*");
+	       me.name, source_p->name, target_p->name, !target_p->servptr->hidden_server ? server_name : ServerInfo.network_name, 
+	       target_p->servptr->hidden_server ? ServerInfo.network_desc : a2client_p ? a2client_p->info:"*Not On This Net*");
   else
     sendto_one(source_p, form_str(RPL_WHOISSERVER),
 	       me.name, source_p->name, target_p->name,

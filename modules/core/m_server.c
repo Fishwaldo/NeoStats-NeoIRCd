@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c,v 1.9 2002/10/15 02:44:33 fishwaldo Exp $
+ *  $Id: m_server.c,v 1.10 2002/10/15 07:30:09 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&server_msgtab);
 }
-const char *_version = "$Revision: 1.9 $";
+const char *_version = "$Revision: 1.10 $";
 #endif
 
 int bogus_host(char *host);
@@ -252,7 +252,9 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
   /* clear the Ulined flag */
 
   client_p->flags &= ~FLAGS_ULINED;
-  if (srvopt & SERVER_HIDDEN) client_p->hidden_server = 1;
+  if (srvopt & SERVER_HIDDEN) { 
+  	client_p->hidden_server = 1;
+  }
   set_server_gecos(client_p, info);
   /* if this server is trying to set itself Ulined, its Not allowed, so exit it */
   if (srvopt & SERVER_ULINED) {
@@ -499,8 +501,10 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
   /* clear the Ulined flag before we look at info for (U) */
 
   target_p->flags &= ~FLAGS_ULINED;
-  if (srvopt && SERVER_ULINED) target_p->flags |= FLAGS_ULINED;
-  if (srvopt && SERVER_HIDDEN) target_p->hidden_server = 1;
+  if (srvopt & SERVER_ULINED) target_p->flags |= FLAGS_ULINED;
+  if (srvopt & SERVER_HIDDEN) {
+  	target_p->hidden_server = 1;
+  }
   
   set_server_gecos(target_p, info);
   

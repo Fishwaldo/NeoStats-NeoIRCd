@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_links.c,v 1.4 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: m_links.c,v 1.5 2002/10/15 07:30:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ _moddeinit(void)
   mod_del_cmd(&links_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 /*
  * m_links - LINKS message handler
@@ -141,6 +141,9 @@ static void mo_links(struct Client *client_p, struct Client *source_p,
 
       if (*mask && !match(mask, target_p->name))
         continue;
+
+      if (target_p->hidden_server && !IsOper(source_p))
+      	continue;
     
       if(target_p->info[0])
         {

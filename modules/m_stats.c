@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_stats.c,v 1.6 2002/09/19 05:41:10 fishwaldo Exp $
+ *  $Id: m_stats.c,v 1.7 2002/10/15 07:30:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -80,7 +80,7 @@ _moddeinit(void)
   mod_del_cmd(&stats_msgtab);
 }
 
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 
 const char* Lformat = ":%s %d %s %s %u %u %u %u %u :%u %u %s";
@@ -752,7 +752,7 @@ stats_ziplinks(struct Client *source_p)
 static void
 stats_servlinks(struct Client *source_p)
 {
-  static char Sformat[] = ":%s %d %s %s %u %u %u %u %u :%u %u %s";
+  static char Sformat[] = ":%s %d %s %s %u %u %u %u %u :%u %u %s %s";
   long uptime, sendK, receiveK;
   struct Client        *target_p;
   dlink_node *ptr;
@@ -769,11 +769,12 @@ stats_servlinks(struct Client *source_p)
   DLINK_FOREACH(ptr, serv_list.head)
   {
     target_p = ptr->data;
-
+    if (!IsOper(source_p) && target_p->hidden_server) 
+    	continue;
     j++;
     sendK += target_p->localClient->sendK;
     receiveK += target_p->localClient->receiveK;
-
+   
     sendto_one(source_p, Sformat, me.name, RPL_STATSLINKINFO,
                source_p->name, 
                IsOperAdmin(source_p) ? get_client_name(target_p, SHOW_IP)
@@ -785,7 +786,8 @@ stats_servlinks(struct Client *source_p)
                (int)target_p->localClient->receiveK,
                CurrentTime - target_p->firsttime,
                (CurrentTime > target_p->since) ? (CurrentTime - target_p->since): 0,
-               IsOper(source_p) ? show_capabilities(target_p) : "TS");
+               IsOper(source_p) ? show_capabilities(target_p) : "TS",
+               target_p->hidden_server ? "H" : "");
   }
   
   sendto_one(source_p, ":%s %d %s :%u total server(s)",

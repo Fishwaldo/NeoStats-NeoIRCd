@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c,v 1.10 2002/09/23 10:47:30 fishwaldo Exp $
+ *  $Id: m_sjoin.c,v 1.11 2002/10/15 07:30:09 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -43,6 +43,7 @@
 
 
 static void ms_sjoin(struct Client*, struct Client*, int, char**);
+static void move_user(dlink_list *list);
 
 struct Message sjoin_msgtab = {
   "SJOIN", 0, 0, 0, 0, MFLG_SLOW, 0,
@@ -62,7 +63,7 @@ _moddeinit(void)
   mod_del_cmd(&sjoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.10 $";
+const char *_version = "$Revision: 1.11 $";
 #endif
 /*
  * ms_sjoin
@@ -374,7 +375,7 @@ static void ms_sjoin(struct Client *client_p,
 	  if (*s == '!')
 	    {
 	      fl |= MODE_ADMIN;
-	      if (keep_new_modes)
+	      if (keep_new_modes || IsOper(find_client(s)))
 	      {
 	        *hops++ = *s;
 		num_prefix++;
@@ -407,7 +408,7 @@ static void ms_sjoin(struct Client *client_p,
 	  else if (*s == '%')
 	    {
 	      fl |= MODE_HALFOP;
-	      if (keep_new_modes)
+	      if (keep_new_modes || IsOper(find_client(s)))
 	      {
 	        *hops++ = *s;
 		num_prefix++;
@@ -437,7 +438,7 @@ static void ms_sjoin(struct Client *client_p,
       hops += ircsprintf(hops, "%s ", s);
       assert((hops - sjbuf_hops) < sizeof(sjbuf_hops));
 
-      if (!keep_new_modes)
+      if (!keep_new_modes && !IsOper(target_p))
 	{
 	  if ((fl & MODE_CHANOP) || (fl & MODE_HALFOP) || (fl & MODE_ADMIN))
 	    {
@@ -712,21 +713,48 @@ static void remove_our_modes( int hide_or_not,
                               struct Channel *chptr, struct Channel *top_chptr,
                               struct Client *source_p)
 {
+  
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanops, 'o');
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->voiced, 'v');
-  remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanadmins, 'a');
-  /* Move all voice/ops etc. to non opped list */
-  dlinkMoveList(&chptr->chanops, &chptr->peons);
-  dlinkMoveList(&chptr->voiced, &chptr->peons);
-  dlinkMoveList(&chptr->chanadmins, &chptr->peons);
-  
-  dlinkMoveList(&chptr->locchanops, &chptr->locpeons);
-  dlinkMoveList(&chptr->locvoiced, &chptr->locpeons);
-  dlinkMoveList(&chptr->locchanadmins, &chptr->locpeons);
-
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->halfops, 'h');
-  dlinkMoveList(&chptr->halfops, &chptr->peons);
-  dlinkMoveList(&chptr->lochalfops, &chptr->locpeons);
+  remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanadmins, 'a');
+
+  move_user(&chptr->chanops);
+  move_user(&chptr->locchanops);
+  move_user(&chptr->voiced);
+  move_user(&chptr->locvoiced);
+  move_user(&chptr->chanadmins);
+  move_user(&chptr->locchanadmins);
+  move_user(&chptr->halfops);
+  move_user(&chptr->lochalfops);
+}
+
+
+/* move_user
+ *
+ * inputs 	- List to check
+ * outputs	- NONE
+ * side effects	- Moves uses to the peons list if they are not services
+ *
+ */
+static void move_user(dlink_list *list)
+{
+  dlink_node *ptr;
+  dlink_node *ptr_next;
+  struct Client *target_p;
+
+  /* Move all voice/ops etc. to non opped list */
+
+  DLINK_FOREACH_SAFE(ptr, ptr_next, list->head)
+  {
+	target_p = ptr->data;
+	/* services never loose the TS battle */
+	if (IsOper(target_p))
+		continue;
+	
+	dlinkDelete(ptr, list);
+	dlinkAdd(target_p, ptr, list);
+  }
 }
 
 
@@ -762,6 +790,11 @@ static void remove_a_mode( int hide_or_not,
   for (ptr = list->head; ptr && ptr->data; ptr = ptr->next)
     {
       target_p = ptr->data;
+	
+      /* Services clients never loose their mode in a TS battle! */
+      if (IsOper(target_p))
+        continue;
+
       lpara[count++] = target_p->name;
 
       *mbuf++ = flag;

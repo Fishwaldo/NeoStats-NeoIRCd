@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_map.c,v 1.1 2002/09/13 07:05:32 fishwaldo Exp $
+ *  $Id: m_map.c,v 1.2 2002/10/15 07:30:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -54,7 +54,7 @@ void _moddeinit(void)
   mod_del_cmd(&map_msgtab);
 }
 
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 static char buf[BUFSIZE];
@@ -98,7 +98,10 @@ static void dump_map(struct Client *client_p,struct Client *root_p, char *pbuf)
   struct Client *server_p,*user_p;
         
   *pbuf= '\0';
-       
+
+  if (root_p->hidden_server && !IsOper(client_p)) {
+  	goto nextserver;
+  }
   strncat(pbuf,root_p->name,BUFSIZE - ((size_t) pbuf - (size_t) buf));
   len = strlen(buf);
   buf[len] = ' ';
@@ -120,7 +123,7 @@ static void dump_map(struct Client *client_p,struct Client *root_p, char *pbuf)
            100 * (float) users / (float) Count.total);
         
   sendto_one(client_p, form_str(RPL_MAP),me.name,client_p->name,buf);
-        
+nextserver:      
   if ((server_p = root_p->serv->servers))
   {
     for (; server_p; server_p = server_p->lnext)
@@ -141,7 +144,7 @@ static void dump_map(struct Client *client_p,struct Client *root_p, char *pbuf)
   for (i = 1,server_p = root_p->serv->servers; server_p; server_p=server_p->lnext)
   {
     *pbuf = ' ';
-    if (i < cnt)
+    if ((i < cnt) && (!server_p->lnext->hidden_server && !IsOper(client_p)))
       *(pbuf + 1) = '|';
     else
       *(pbuf + 1) = '`';

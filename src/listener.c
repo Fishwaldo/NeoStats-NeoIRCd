@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: listener.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: listener.c,v 1.4 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -417,7 +417,7 @@ accept_connection(int pfd, void *data)
        */
       if((last_oper_notice + 20) <= CurrentTime)
 	{
-	  sendto_realops_flags(FLAGS_ALL, L_ALL,"All connections in use. (%s)",
+	  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,"All connections in use. (%s)",
 			       get_listener_name(listener));
 	  last_oper_notice = CurrentTime;
 	}

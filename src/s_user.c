@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.11 2002/09/13 09:17:14 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.12 2002/09/13 16:30:05 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -402,7 +402,7 @@ register_local_user(struct Client *client_p, struct Client *source_p,
        &&
        !(IsExemptLimits(source_p)) )
     {
-      sendto_realops_flags(FLAGS_FULL, L_ALL,
+      sendto_realops_flags(FLAGS_FULL|FLAGS_REMOTE, L_ALL,
 			   "Too many clients, rejecting %s[%s].",
 			   nick, source_p->host);
 			   
@@ -416,7 +416,7 @@ register_local_user(struct Client *client_p, struct Client *source_p,
 
   if (!valid_username(source_p->username))
     {
-      sendto_realops_flags(FLAGS_REJ, L_ALL,
+      sendto_realops_flags(FLAGS_REJ|FLAGS_REMOTE, L_ALL,
                            "Invalid username: %s (%s@%s)",
 			   nick, source_p->username, source_p->host);
       ServerStats->is_ref++;
@@ -496,7 +496,7 @@ register_local_user(struct Client *client_p, struct Client *source_p,
     dlinkDelete(m, &unknown_list);
     dlinkAdd(source_p, m, &lclient_list);
   } else {
-     sendto_realops_flags(FLAGS_ALL, L_ADMIN, "Tried to register %s (%s@%s) but I couldn't find it?!?", 
+     sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN, "Tried to register %s (%s@%s) but I couldn't find it?!?", 
      			  nick, source_p->username, source_p->host);
      exit_client(client_p, source_p, &me, "Client exited");
      return CLIENT_EXITED;
@@ -543,7 +543,7 @@ register_remote_user(struct Client *client_p, struct Client *source_p,
 
   if (source_p->servptr == NULL)
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,"Ghost killed: %s on invalid server %s",
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,"Ghost killed: %s on invalid server %s",
 			   source_p->name, source_p->user->server);
 
       kill_client(client_p, source_p, "%s (Server doesn't exist)",
@@ -582,7 +582,7 @@ register_remote_user(struct Client *client_p, struct Client *source_p,
     {
       kill_client(client_p, source_p, "%s GHOST (no server found)",
                   me.name);
-      sendto_realops_flags(FLAGS_ALL, L_ALL, "No server %s for user %s[%s@%s] from %s",
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "No server %s for user %s[%s@%s] from %s",
 			   user->server, source_p->name, source_p->username,
 			   source_p->host, source_p->from->name);
       source_p->flags |= FLAGS_KILLED;
@@ -956,7 +956,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 
   if (IsServer(source_p))
     {
-       sendto_realops_flags(FLAGS_ALL, L_ADMIN, "*** Mode for User %s from %s",
+       sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN, "*** Mode for User %s from %s",
                             parv[1], source_p->name);
        return 0;
     }
@@ -1327,7 +1327,7 @@ check_X_line(struct Client *client_p, struct Client *source_p)
 	{
 	  if (aconf->port == 1)
 	    {
-	      sendto_realops_flags(FLAGS_REJ, L_ALL,
+	      sendto_realops_flags(FLAGS_REJ|FLAGS_REMOTE, L_ALL,
 				   "X-line Rejecting [%s] [%s], user %s",
 				   source_p->info,
 				   reason,
@@ -1338,7 +1338,7 @@ check_X_line(struct Client *client_p, struct Client *source_p)
 	  return (CLIENT_EXITED);
 	}
       else
-	sendto_realops_flags(FLAGS_REJ, L_ALL,
+	sendto_realops_flags(FLAGS_REJ|FLAGS_REMOTE, L_ALL,
 			     "X-line Warning [%s] [%s], user %s",
 			     source_p->info,
 			     reason,
@@ -1414,9 +1414,9 @@ oper_up( struct Client *source_p, struct ConfItem *aconf )
   if (IsOperAdmin(source_p))
     source_p->umodes |= FLAGS_ADMIN;
 
-  sendto_realops_flags(FLAGS_ALL, L_ALL,
-		       "%s (%s@%s) is now an operator", source_p->name,
-		       source_p->username, source_p->host);
+  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
+		       "%s (%s@%s) is now an %s", source_p->name,
+		       source_p->username, source_p->host, (IsOperAdmin(source_p) ? "Administrator" : "Operator"));
   send_umode_out(source_p, source_p, old);
   sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
   sendto_one(source_p, ":%s NOTICE %s :*** Oper privs are %s", me.name,

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: restart.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: restart.c,v 1.4 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -57,7 +57,7 @@ void server_reboot(void)
 {
   int i;
 
-  sendto_realops_flags(FLAGS_ALL, L_ALL,
+  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                        "Restarting server...");
 
   ilog(L_NOTICE, "Restarting server...");

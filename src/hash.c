@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: hash.c,v 1.4 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: hash.c,v 1.5 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -697,7 +697,7 @@ get_or_create_channel(struct Client *client_p, char *chname, int *isnew)
     {
       if (IsServer(client_p))
 	{
-	  sendto_realops_flags(FLAGS_DEBUG, L_ALL,
+	  sendto_realops_flags(FLAGS_DEBUG|FLAGS_REMOTE, L_ALL,
 			       "*** Long channel name from %s (%d > %d): %s",
 			       client_p->name,
 			       len,

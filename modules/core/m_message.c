@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_message.c,v 1.6 2002/09/13 09:17:14 fishwaldo Exp $
+ *  $Id: m_message.c,v 1.7 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -122,7 +122,7 @@ _moddeinit(void)
   mod_del_cmd(&notice_msgtab);
 }
 
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 
 /*
@@ -691,7 +691,7 @@ flood_attack_client(int p_or_n, struct Client *source_p,
     {
       if (target_p->localClient->flood_noticed == 0)
       {
-        sendto_realops_flags(FLAGS_BOTS, L_ALL,
+        sendto_realops_flags(FLAGS_BOTS|FLAGS_REMOTE, L_ALL,
                              "Possible Flooder %s [%s@%s] on %s target: %s",
                              source_p->name, source_p->username,
                              source_p->vhost,
@@ -747,7 +747,7 @@ flood_attack_channel(int p_or_n, struct Client *source_p,
     {
       if (chptr->flood_noticed == 0)
       {
-        sendto_realops_flags(FLAGS_BOTS, L_ALL,
+        sendto_realops_flags(FLAGS_BOTS|FLAGS_REMOTE, L_ALL,
                              "Possible Flooder %s [%s@%s] on %s target: %s",
                              source_p->name, source_p->username,
                              source_p->vhost,
@@ -864,7 +864,7 @@ handle_opers(int p_or_n, char *command, struct Client *client_p,
     /* Check if someones msg'ing opers@our.server */
     if (strcmp(nick, "opers") == 0)
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL, "To opers: From: %s: %s",
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "To opers: From: %s: %s",
                            source_p->name, text);
       return;
     }

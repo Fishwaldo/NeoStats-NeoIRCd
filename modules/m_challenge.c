@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_challenge.c,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: m_challenge.c,v 1.4 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -55,7 +55,7 @@ _moddeinit(void)
   return;
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 #else
 
@@ -80,7 +80,7 @@ _moddeinit(void)
   mod_del_cmd(&challenge_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
  * m_challenge - generate RSA challenge for wouldbe oper
@@ -132,7 +132,7 @@ static void m_challenge( struct Client *client_p, struct Client *source_p,
       {
 	sendto_one(source_p,":%s NOTICE %s :Can't attach conf!",
                    me.name,source_p->name);   
-	sendto_realops_flags(FLAGS_ALL, L_ALL,
+	sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 	                     "Failed OPER attempt by %s (%s@%s) can't attach conf!",
 	                     source_p->name, source_p->username, source_p->host);
 	attach_conf(source_p, oconf);

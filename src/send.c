@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.c,v 1.6 2002/09/13 06:50:09 fishwaldo Exp $
+ *  $Id: send.c,v 1.7 2002/09/13 16:30:05 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -153,7 +153,7 @@ _send_linebuf(struct Client *to, buf_head_t *linebuf)
 #ifdef INVARIANTS
   if (IsMe(to))
   {
-    sendto_realops_flags(FLAGS_ALL, L_ALL,
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                          "Trying to send message to myself!");
     return 0;
   }
@@ -164,7 +164,7 @@ _send_linebuf(struct Client *to, buf_head_t *linebuf)
   if (linebuf_len(&to->localClient->buf_sendq) > get_sendq(to))
   {
     if (IsServer(to))
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "Max SendQ limit exceeded for %s: %u > %lu",
                            get_client_name(to, HIDE_IP),
                            linebuf_len(&to->localClient->buf_sendq),
@@ -1143,6 +1143,9 @@ sendto_realops_flags(int flags, int level, const char *pattern, ...)
       linebuf_donebuf(&linebuf);
     }
   }
+  /* should we send this as a global message? */
+  if (flags & FLAGS_REMOTE)
+  	sendto_server(NULL, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s SMO %d %d :%s", me.name, flags, level, nbuf);
 } /* sendto_realops_flags() */
 
 /*

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: modules.c,v 1.5 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: modules.c,v 1.6 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -459,7 +459,7 @@ mo_modreload (struct Client *client_p, struct Client *source_p, int parc, char *
 
   if((load_one_module(parv[1]) == -1) && check_core)
   {
-    sendto_realops_flags(FLAGS_ALL, L_ALL,
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                          "Error reloading core module: %s: terminating ircd",
 			 parv[1]);
     ilog(L_CRIT, "Error loading core module %s: terminating ircd", parv[1]);

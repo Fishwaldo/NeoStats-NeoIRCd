@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c,v 1.5 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: s_conf.c,v 1.6 2002/09/13 16:30:05 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -422,7 +422,7 @@ check_client(struct Client *client_p, struct Client *source_p, char *username)
       break;
 
     case TOO_MANY:
-      sendto_realops_flags(FLAGS_FULL, L_ALL, 
+      sendto_realops_flags(FLAGS_FULL|FLAGS_REMOTE, L_ALL, 
                            "Too many on IP for %s (%s).",
 			   get_client_name(source_p, SHOW_IP),
 			   source_p->localClient->sockhost);
@@ -436,7 +436,7 @@ check_client(struct Client *client_p, struct Client *source_p, char *username)
       break;
 
     case I_LINE_FULL:
-      sendto_realops_flags(FLAGS_FULL, L_ALL,
+      sendto_realops_flags(FLAGS_FULL|FLAGS_REMOTE, L_ALL,
                            "I-line is full for %s (%s).",
 			   get_client_name(source_p, SHOW_IP),
 			   source_p->localClient->sockhost);
@@ -456,7 +456,7 @@ check_client(struct Client *client_p, struct Client *source_p, char *username)
       /* jdc - lists server name & port connections are on */
       /*       a purely cosmetical change */
       inetntop(source_p->localClient->aftype, &IN_ADDR(source_p->localClient->ip), ipaddr, HOSTIPLEN);
-      sendto_realops_flags(FLAGS_UNAUTH, L_ALL,
+      sendto_realops_flags(FLAGS_UNAUTH|FLAGS_REMOTE, L_ALL,
 			   "Unauthorised client connection from %s [%s] on [%s/%u].",
 			   get_client_name(source_p, SHOW_IP),
 			   ipaddr,

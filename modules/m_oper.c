@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_oper.c,v 1.4 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_oper.c,v 1.5 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -74,7 +74,7 @@ _moddeinit(void)
   mod_del_cmd(&oper_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 
 /*
@@ -112,7 +112,7 @@ m_oper(struct Client *client_p, struct Client *source_p,
       sendto_one(source_p, form_str(ERR_NOOPERHOST), me.name, source_p->name);
       if (ConfigFileEntry.failed_oper_notice)
         {
-          sendto_realops_flags(FLAGS_ALL, L_ALL,
+          sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                                "Failed OPER attempt - host mismatch by %s (%s@%s)",
                                source_p->name, source_p->username, 
 			       source_p->host);
@@ -137,7 +137,7 @@ m_oper(struct Client *client_p, struct Client *source_p,
         {
           sendto_one(source_p,":%s NOTICE %s :Can't attach conf!",
                      me.name,source_p->name);
-          sendto_realops_flags(FLAGS_ALL, L_ALL,
+          sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                                "Failed OPER attempt by %s (%s@%s) can't attach conf!",
                                source_p->name, source_p->username,
 			       source_p->host);
@@ -162,7 +162,7 @@ m_oper(struct Client *client_p, struct Client *source_p,
       sendto_one(source_p,form_str(ERR_PASSWDMISMATCH),me.name, parv[0]);
       if (ConfigFileEntry.failed_oper_notice)
         {
-          sendto_realops_flags(FLAGS_ALL, L_ALL,
+          sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                                "Failed OPER attempt by %s (%s@%s)",
                                source_p->name, source_p->username,
 			       source_p->host);

@@ -8,3 +8,5 @@ Usermodes:
                   Use the /oper command to attain this.
          +i     - Designates this client 'invisible'.
          +g     - "caller id" mode only allow accept clients to message you
+	 +x	- "Hidden Host/Vhost" means this client is using a vhost, 
+                  or hidden host, and not the real host.

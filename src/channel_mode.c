@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.10 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.11 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -209,7 +209,7 @@ add_id(struct Client *client_p, struct Channel *chptr, char *banid, int type)
       list = &chptr->invexlist;
       break;
     default:
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "add_id() called with unknown ban type %d!", type);
       return 0;
   }
@@ -279,7 +279,7 @@ del_id(struct Channel *chptr, char *banid, int type)
       list = &chptr->invexlist;
       break;
     default:
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "del_id() called with unknown ban type %d!", type);
       return 0;
   }

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_eob.c,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: m_eob.c,v 1.4 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -54,7 +54,7 @@ _moddeinit(void)
   mod_del_cmd(&eob_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
  * ms_eob - EOB command handler
@@ -64,7 +64,7 @@ const char *_version = "$Revision: 1.3 $";
 static void ms_eob(struct Client *client_p, struct Client *source_p,
                   int parc, char *parv[])
 {
-   sendto_realops_flags(FLAGS_ALL, L_ALL,
+   sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                         "End of burst from %s (%d seconds)",
                         source_p->name, 
 			(signed int)(CurrentTime - source_p->firsttime));

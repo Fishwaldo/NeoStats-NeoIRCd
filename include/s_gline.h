@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_gline.h,v 1.4 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: s_gline.h,v 1.5 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_gline_h
@@ -36,7 +36,7 @@ extern struct ConfItem* find_is_glined(const char* host, const char* name);
 extern int    remove_gline_match(const char *user, const char *host);
 extern void   cleanup_glines();
 extern void   add_gline(struct ConfItem *);
-
+extern void  send_glines(struct Client *client_p);
 
 #define CLEANUP_GLINES_TIME  300
 

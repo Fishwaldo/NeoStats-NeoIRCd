@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_bsd.c,v 1.4 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: s_bsd.c,v 1.5 2002/09/13 16:30:05 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -157,7 +157,7 @@ void report_error(int level, const char* text, const char* who, int error)
 {
   who = (who) ? who : "";
 
-  sendto_realops_flags(FLAGS_DEBUG, level, text, who, strerror(error));
+  sendto_realops_flags(FLAGS_DEBUG|FLAGS_REMOTE, level, text, who, strerror(error));
 
   ilog(L_ERROR, text, who, strerror(error));
 }
@@ -436,12 +436,12 @@ void error_exit_client(struct Client* client_p, int error)
       if (error == 0)
         {
 	  /* Admins get the real IP */
-	  sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+	  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
 				"Server %s closed the connection",
 				get_client_name(client_p, SHOW_IP));
 
 	  /* Opers get a masked IP */
-	  sendto_realops_flags(FLAGS_ALL, L_OPER,
+	  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
 				"Server %s closed the connection",
 				get_client_name(client_p, MASK_IP));
 
@@ -459,7 +459,7 @@ void error_exit_client(struct Client* client_p, int error)
 
 	}
 
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 			   "%s had been connected for %d day%s, %2d:%02d:%02d",
 			   client_p->name, connected/86400,
 			   (connected/86400 == 1) ? "" : "s",

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: resv.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: resv.h,v 1.4 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_resv_h
@@ -65,6 +65,9 @@ extern int find_channel_resv(char *);
 extern int find_nick_resv(char *);
 
 extern void report_resv(struct Client *);
+
+extern void send_resv(struct Client *);
+
 extern struct ResvNick *return_nick_resv(char *);
 
 extern int clean_resv_nick(char *);

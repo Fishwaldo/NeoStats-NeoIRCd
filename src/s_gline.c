@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_gline.c,v 1.4 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: s_gline.c,v 1.5 2002/09/13 16:30:05 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -182,3 +182,28 @@ expire_glines()
     }
 }
 
+/* 
+ * 
+ * send_glines
+ * 
+ * inputs       - Client to send to.
+ * outputs      - none
+ * side effects - Sends the current gline list to a newly connected irc server
+ */
+ 
+void 
+send_glines(struct Client *client_p) 
+{
+  dlink_node *gline_node;
+  dlink_node *next_node;
+  struct ConfItem *kill_ptr;
+
+  for(gline_node = glines.head; gline_node; gline_node = next_node)
+    {
+      kill_ptr = gline_node->data;
+      next_node = gline_node->next;
+
+      sendto_one(client_p, ":%s GLINE %s %s :%s", me.name, kill_ptr->name, kill_ptr->host, kill_ptr->passwd);
+    }
+
+}

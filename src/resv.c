@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: resv.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: resv.c,v 1.4 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -233,6 +233,19 @@ report_resv(struct Client *source_p)
 	       resv_np->conf ? 'Q' : 'q',
 	       resv_np->name, resv_np->reason);
 }	       
+
+void 
+send_resv(struct Client *source_p)
+{
+  struct ResvChannel *resv_cp;
+  struct ResvNick *resv_np;
+  
+  for (resv_cp = ResvChannelList; resv_cp; resv_cp = resv_cp->next)
+    sendto_one(source_p, ":%s RESV %s :%s", me.name, resv_cp->name, resv_cp->reason);
+  for (resv_np = ResvNickList; resv_np; resv_np = resv_np->next)
+    sendto_one(source_p, ":%s RESV %s :%s", me.name, resv_np->name, resv_np->reason);
+
+}
 
 int
 clean_resv_nick(char *nick)

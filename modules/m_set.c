@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_set.c,v 1.3 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_set.c,v 1.4 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 /* rewritten by jdc */
@@ -64,7 +64,7 @@ _moddeinit(void)
   mod_del_cmd(&set_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /* Structure used for the SET table itself */
 struct SetStruct
@@ -173,7 +173,7 @@ static void quote_autoconnall( struct Client *source_p, int newval)
 {
   if(newval >= 0)
   {
-    sendto_realops_flags(FLAGS_ALL, L_ALL,"%s has changed AUTOCONNALL to %i",
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,"%s has changed AUTOCONNALL to %i",
                          source_p->name, newval);
 
     GlobalSetOptions.autoconn = newval;
@@ -232,14 +232,14 @@ static void quote_idletime( struct Client *source_p, int newval )
   {
     if (newval == 0)
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "%s has disabled idletime checking",
                            source_p->name);
       GlobalSetOptions.idletime = 0;
     }
     else
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "%s has changed IDLETIME to %i",
                            source_p->name, newval);
       GlobalSetOptions.idletime = (newval*60);
@@ -307,7 +307,7 @@ static void quote_max( struct Client *source_p, int newval )
 
     GlobalSetOptions.maxclients = newval;
 
-    sendto_realops_flags(FLAGS_ALL, L_ALL,
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 	"%s!%s@%s set new MAXCLIENTS to %d (%d current)",
 	source_p->name, source_p->username, source_p->host,
 	GlobalSetOptions.maxclients, Count.local);
@@ -355,7 +355,7 @@ static void quote_spamnum( struct Client *source_p, int newval )
   {
     if (newval == 0)
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "%s has disabled ANTI_SPAMBOT", source_p->name);
       GlobalSetOptions.spam_num = newval;
       return;
@@ -368,7 +368,7 @@ static void quote_spamnum( struct Client *source_p, int newval )
     {
       GlobalSetOptions.spam_num = newval;
     }
-    sendto_realops_flags(FLAGS_ALL, L_ALL,"%s has changed SPAMNUM to %i",
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,"%s has changed SPAMNUM to %i",
 		source_p->name, GlobalSetOptions.spam_num);
   }
   else
@@ -392,7 +392,7 @@ static void quote_spamtime( struct Client *source_p, int newval )
     {
       GlobalSetOptions.spam_time = newval;
     }
-    sendto_realops_flags(FLAGS_ALL, L_ALL,"%s has changed SPAMTIME to %i",
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,"%s has changed SPAMTIME to %i",
 		source_p->name, GlobalSetOptions.spam_time);
   }
   else
@@ -438,7 +438,7 @@ static void quote_splitmode(struct Client *source_p, char *charval)
     /* OFF */
     if(newval == 0)
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL, 
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, 
                            "%s is disabling splitmode",
                            get_oper_name(source_p));
 
@@ -450,7 +450,7 @@ static void quote_splitmode(struct Client *source_p, char *charval)
     /* ON */
     else if(newval == 1)
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "%s is enabling and activating splitmode",
 	                   get_oper_name(source_p));
 		 
@@ -463,7 +463,7 @@ static void quote_splitmode(struct Client *source_p, char *charval)
     /* AUTO */
     else if(newval == 2)
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "%s is enabling automatic splitmode",
 			   get_oper_name(source_p));
 
@@ -486,7 +486,7 @@ static void quote_splitnum(struct Client *source_p, int newval)
 {
   if(newval >= 0)
   {
-    sendto_realops_flags(FLAGS_ALL, L_ALL,
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                          "%s has changed SPLITNUM to %i", 
 			 source_p->name, newval);
     split_servers = newval;
@@ -504,7 +504,7 @@ static void quote_splitusers(struct Client *source_p, int newval)
 {
   if(newval >= 0)
   {
-    sendto_realops_flags(FLAGS_ALL, L_ALL,
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                          "%s has changed SPLITUSERS to %i", 
 			 source_p->name, newval);
     split_users = newval;

@@ -24,7 +24,7 @@ NO PARAMETERS:
      +m     - 'Moderated'.  This will prevent any user who isn't opped,
               half-opped or voiced (+o/+h/+v) from talking in the channel.
 
-     +a     - 'Anonymous ops'.  This will stop people who join from
+     +A     - 'Anonymous ops'.  This will stop people who join from
               seeing who has ops.  Any modes set in the channel will
               be shown as if a server set them.
 
@@ -32,10 +32,16 @@ NO PARAMETERS:
               receive an op sync, where the server will op every user
               that is opped.  They will then see modes normally, and
               have the true list of who has ops/half-ops/voices
+              Can only be set by Channel Admins (+a)
 
      +i     - 'Invite only'.  This will stop anyone from joining your
               channel who hasn't received an /invite or whose host isn't in
               the +I list.
+ 
+     +O     - 'Operator Only'. This will stop normal users from joining a 
+              channel set aside for Operators only. /invite or
+              Invite exceptions can be used to help non-opers join the 
+              channel.
 
 
 WITH PARAMETERS:
@@ -65,11 +71,15 @@ WITH PARAMETERS:
 
               PARAMS: /mode #channel +hhhh nick1 nick2 nick3 nick4
 
-     +o     - 'Op'.  This gives the user full control over the channel.
+     +o     - 'Op'.  This gives the user almost control over the channel.
               An opped user may op other users, set any mode, and
               remove ops from whoever they want.
 
               PARAMS: /mode #channel +oooo nick1 nick2 nick3 nick4
+ 
+     +a     - 'Admin'. This gives the user full control over the channel.
+              Admin mode is given to the first user to join the
+              channel, and they may set options like Anonops and so on.
 
      +b     - 'Ban'.  This will prevent a user from entering the channel,
               based on a nick!ident@host match.

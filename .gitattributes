@@ -376,6 +376,7 @@ modules/m_restart.c -text
 modules/m_resv.c -text
 modules/m_set.c -text
 modules/m_sethost.c -text
+modules/m_smo.c -text
 modules/m_stats.c -text
 modules/m_svinfo.c -text
 modules/m_svscmds.c -text

@@ -1,7 +1,7 @@
 Help topics available to opers:
 
 ACCEPT          ADMIN           AWAY            CAPAB
-CBURST          CHALLENGE       CJOIN           CLIENT
+CBURST          CHALLENGE       CLIENT
 CLOSE           CMODE           CONNECT         CREDITS
 CRYPTLINK       DIE             DLINE           DMEM
 DROP            EOB             ERROR           GLINE

@@ -6,9 +6,10 @@ user or channel specified.
 PRIVMSG supports the following prefixes for sending
 messages to specific clients in a channel:
 
-@ - channel operators only
-% - channel operators and half-ops
-+ - operators, half-ops, and voiced users
+* - channel Admins only
+@ - channel operators and admins only
+% - channel operators and half-ops and admins
++ - operators, half-ops, and voiced users and admins
 
 Two other targets are permitted:
 

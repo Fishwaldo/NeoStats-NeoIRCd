@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h,v 1.7 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: client.h,v 1.8 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_client_h
@@ -184,7 +184,12 @@ struct Client
    * client->host alone
    */
   char		   vhost[HOSTLEN +1];
-
+  /*
+   * client->swhois stores a swhois structure
+   * swhois is a string that is sent to users if set when they whois this client
+   * allows you to set things like :is a WebMonkey to the whois output
+   */
+  char 		   swhois[REALLEN +1];
 
   /* caller ID allow list */
   /* This has to be here, since a client on an on_allow_list could
@@ -416,6 +421,7 @@ struct LocalUser
 #define FLAGS_ADMIN        0x100000 /* Admin on server */
 #define FLAGS_SERVICES	   0x200000 /* Is Services */
 #define FLAGS_ULINED	   0x400000 /* is a ulined server? */
+#define FLAGS_REMOTE	   0x800000 /* sendto_realops_flags flag to send message to remote servers */
 #define FLAGS_ALL	   FLAGS_SERVNOTICE
 
 

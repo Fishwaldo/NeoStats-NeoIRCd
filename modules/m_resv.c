@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_resv.c,v 1.3 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_resv.c,v 1.4 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -38,16 +38,18 @@
 #include "hash.h"
 
 static void mo_resv(struct Client *, struct Client *, int, char **);
+static void ms_resv(struct Client *, struct Client *, int, char **);
 static void mo_unresv(struct Client *, struct Client *, int, char **);
+static void ms_unresv(struct Client *, struct Client *, int, char **);
 
 struct Message resv_msgtab = {
   "RESV", 0, 0, 3, 0, MFLG_SLOW | MFLG_UNREG, 0,
-  {m_ignore, m_not_oper, m_ignore, mo_resv}
+  {m_ignore, m_not_oper, ms_resv, mo_resv}
 };
 
 struct Message unresv_msgtab = {
   "UNRESV", 0, 0, 2, 0, MFLG_SLOW | MFLG_UNREG, 0,
-  {m_ignore, m_not_oper, m_ignore, mo_unresv}
+  {m_ignore, m_not_oper, ms_unresv, mo_unresv}
 };
 
 #ifndef STATIC_MODULES
@@ -65,13 +67,14 @@ _moddeinit(void)
   mod_del_cmd(&unresv_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 
 /*
  * mo_resv()
  *      parv[0] = sender prefix
  *      parv[1] = channel/nick to forbid
+ *	parv[2] = reason
  */
 
 static void mo_resv(struct Client *client_p, struct Client *source_p,
@@ -95,10 +98,11 @@ static void mo_resv(struct Client *client_p, struct Client *source_p,
     }
     
     sendto_one(source_p,
-               ":%s NOTICE %s :A local RESV has been placed on channel: %s [%s]",
+               ":%s NOTICE %s :A RESV has been placed on channel: %s [%s]",
                me.name, source_p->name, resv_p->name, resv_p->reason);
 	       
-    sendto_realops_flags(FLAGS_ALL, L_ALL,
+    sendto_server(NULL, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s RESV %s :%s", me.name, parv[1], parv[2]);
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                          "%s has placed a local RESV on channel: %s [%s]",
              	         get_oper_name(source_p),
 		         resv_p->name, resv_p->reason);
@@ -130,7 +134,8 @@ static void mo_resv(struct Client *client_p, struct Client *source_p,
 	       me.name, source_p->name,
 	       resv_p->name, resv_p->reason);
 
-    sendto_realops_flags(FLAGS_ALL, L_ALL,
+    sendto_server(NULL, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s RESV %s :%s", me.name, parv[1], parv[2]);
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                          "%s has placed a local RESV on nick: %s [%s]",
 			 get_oper_name(source_p),
 			 resv_p->name, resv_p->reason);
@@ -140,6 +145,48 @@ static void mo_resv(struct Client *client_p, struct Client *source_p,
               ":%s NOTICE %s :You have specified an invalid resv: [%s]",
 	      me.name, source_p->name, parv[1]);
 }
+
+/*
+ * ms_resv()
+ * 	Process a resv from a server 
+ *      parv[0] = sender prefix
+ *      parv[1] = channel/nick to forbid
+ * 	parv[2] = reason
+ */
+
+static void ms_resv(struct Client *client_p, struct Client *source_p, int parc, char *parv[]) {
+
+  if(BadPtr(parv[1]))
+    return;
+
+  /* if it doesn't come from a Server drop it */
+  if (!IsServer(source_p))
+  	return;
+  
+  /* relay it to other servers */  
+  sendto_server(client_p, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s RESV %s :%s", source_p->name, parv[1], parv[2]);
+
+  if(IsChannelName(parv[1]))
+  {
+    struct ResvChannel *resv_p;
+    
+    resv_p = create_channel_resv(parv[1], parv[2], 0);
+  
+  }
+  else if(clean_resv_nick(parv[1]))
+  {
+    struct ResvNick *resv_p;
+
+    resv_p = create_nick_resv(parv[1], parv[2], 0);
+
+  }
+
+  			 
+}
+
+
+
+
 
 /*
  * mo_unresv()
@@ -179,7 +226,7 @@ static void mo_unresv(struct Client *client_p, struct Client *source_p,
                  ":%s NOTICE %s :The local RESV has been removed on channel: %s",
   	         me.name, source_p->name, parv[1]);
 		 
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "%s has removed the local RESV for channel: %s",
 	  		   get_oper_name(source_p), parv[1]);
 	      
@@ -213,9 +260,76 @@ static void mo_unresv(struct Client *client_p, struct Client *source_p,
                  ":%s NOTICE %s :The local RESV has been removed on nick: %s",
 		 me.name, source_p->name, parv[1]);
 
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "%s has removed the local RESV for nick: %s",
 			   get_oper_name(source_p), parv[1]);
     }
   }
+}
+
+/*
+ * ms_unresv()
+ *     parv[0] = sender prefix
+ *     parv[1] = channel/nick to unforbid
+ */
+
+
+static void ms_unresv(struct Client *client_p, struct Client *source_p, int parc, char *parv[]) {
+
+  if (!IsServer(source_p)) 
+	return;
+
+  /* relay it to other servers */  
+  sendto_server(client_p, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s UNRESV %s", source_p->name, parv[1]);
+
+  if(IsChannelName(parv[1]))
+  {
+    struct ResvChannel *resv_p;
+    
+    if(!ResvChannelList || 
+       !(resv_p = (struct ResvChannel *)hash_find_resv(parv[1])))
+    {
+      /* we can't find the resv here, so just ignore it */
+      return;
+    }
+  
+    else if(resv_p->conf)
+    {
+      sendto_one(source_p,
+         ":%s NOTICE %s :The RESV for channel: %s is in the config file and must be removed by hand.",
+                 me.name, source_p->name, parv[1]);
+      return;	       
+    }
+    /* otherwise, delete it */
+    else
+    {
+      delete_channel_resv(resv_p);
+    }
+  }
+  else if(clean_resv_nick(parv[1]))
+  {
+    struct ResvNick *resv_p;
+
+    if(!ResvNickList || !(resv_p = return_nick_resv(parv[1])))
+    {
+	/* we cna't find the resv here on this server, so just ignore it */
+      return;
+    }
+
+    else if(resv_p->conf)
+    {
+      sendto_one(source_p,
+         ":%s NOTICE %s :The RESV for nick: %s is in the config file and must be removed by hand.",
+	         me.name, source_p->name, parv[1]);
+      return;
+    }
+
+    else
+    {
+      delete_nick_resv(resv_p);
+
+    }
+  }
+	
+
 }

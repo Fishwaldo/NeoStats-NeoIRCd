@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: list.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: list.c,v 1.4 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -139,7 +139,7 @@ void free_user(struct User* user, struct Client* client_p)
       if (user->joined || user->refcnt < 0 ||
           user->invited.head || user->channel.head)
       {
-        sendto_realops_flags(FLAGS_ALL, L_ALL,
+        sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 			     "* %#lx user (%s!%s@%s) %#lx %#lx %#lx %d %d *",
 			     (unsigned long)client_p, client_p ? client_p->name : "<noname>",
 			     client_p->username, client_p->host, (unsigned long)user,

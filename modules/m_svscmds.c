@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_svscmds.c,v 1.3 2002/09/13 06:54:34 fishwaldo Exp $
+ *   $Id: m_svscmds.c,v 1.4 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -104,7 +104,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 
 /*
@@ -138,7 +138,7 @@ static void ms_svshost(struct Client *client_p, struct Client *source_p,
 			return;
 		
 		} else {
-			sendto_realops_flags(FLAGS_ALL, L_ALL, "Non U-Lined Server %s is attempting to use svshost on %s", source_p->name, target_p->name);
+			sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Non U-Lined Server %s is attempting to use svshost on %s", source_p->name, target_p->name);
 			return;
 		}
 	} else {
@@ -171,7 +171,7 @@ static void ms_svsnick(struct Client *client_p, struct Client *source_p,
 	if (!IsClient(target_p)) 
 		return;
 	if (!IsUlined(source_p)) {
-		sendto_realops_flags(FLAGS_ALL, L_ALL, "Non U-Lined Server %s is attempting to use svsnick on %s", source_p->name, target_p->name);
+		sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Non U-Lined Server %s is attempting to use svsnick on %s", source_p->name, target_p->name);
 		return;
 	}
 	/* first find the target that we want to change */
@@ -253,7 +253,7 @@ static void ms_svsid(struct Client *client_p, struct Client *source_p,
 	if (!IsClient(target_p)) 
 		return;
 	if (!IsUlined(source_p)) {
-		sendto_realops_flags(FLAGS_ALL, L_ALL, "Non U-Lined Server %s is attempting to use svsid on %s", source_p->name, target_p->name);
+		sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Non U-Lined Server %s is attempting to use svsid on %s", source_p->name, target_p->name);
 		return;
 	}
 	/* set the new ID */

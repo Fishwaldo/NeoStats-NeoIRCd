@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_cryptlink.c,v 1.4 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: m_cryptlink.c,v 1.5 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 /*
@@ -68,7 +68,7 @@
 void _modinit(void) {}
 void _moddeinit(void) {}
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 #else
 
@@ -114,7 +114,7 @@ _moddeinit(void)
   mod_del_cmd(&cryptlink_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 
 
@@ -374,7 +374,7 @@ static void cryptlink_serv(struct Client *client_p, struct Client *source_p,
       if(IsCapable(client_p, CAP_HUB))
       {
           ClearCap(client_p,CAP_LL);
-          sendto_realops_flags(FLAGS_ALL, L_ALL,
+          sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                "*** LazyLinks to a hub from a hub, thats a no-no.");
       }
       else
@@ -383,7 +383,7 @@ static void cryptlink_serv(struct Client *client_p, struct Client *source_p,
 
           if(!client_p->localClient->serverMask)
           {
-              sendto_realops_flags(FLAGS_ALL, L_ALL,
+              sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                                    "serverMask is full!");
               /* try and negotiate a non LL connect */
               ClearCap(client_p,CAP_LL);
@@ -395,7 +395,7 @@ static void cryptlink_serv(struct Client *client_p, struct Client *source_p,
       if (!IsCapable(client_p, CAP_HUB))
       {
         ClearCap(client_p,CAP_LL);
-        sendto_realops_flags(FLAGS_ALL, L_ALL,
+        sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
           "*** LazyLinks to a leaf from a leaf, thats a no-no.");
       }
   }

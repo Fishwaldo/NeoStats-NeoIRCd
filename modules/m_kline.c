@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c,v 1.7 2002/09/13 09:17:13 fishwaldo Exp $
+ *  $Id: m_kline.c,v 1.8 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -86,7 +86,7 @@ _moddeinit(void)
   mod_del_cmd(&dline_msgtab[0]);
   mod_del_cmd(&dline_msgtab[1]);
 }
-const char *_version = "$Revision: 1.7 $";
+const char *_version = "$Revision: 1.8 $";
 #endif
 
 /* Local function prototypes */
@@ -304,7 +304,7 @@ ms_kline(struct Client *client_p, struct Client *source_p,
 
   if (valid_user_host(source_p, kuser, khost))
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
              "*** %s!%s@%s on %s is requesting an Invalid K-Line for [%s@%s] [%s]",
              source_p->name, source_p->username, source_p->host, source_p->user->server,
              kuser, khost, kreason);
@@ -313,7 +313,7 @@ ms_kline(struct Client *client_p, struct Client *source_p,
 
   if (valid_wild_card(kuser, khost))
     {
-       sendto_realops_flags(FLAGS_ALL, L_ALL, 
+       sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, 
              "*** %s!%s@%s on %s is requesting a K-Line without %d wildcard chars for [%s@%s] [%s]",
              source_p->name, source_p->username, source_p->host, source_p->user->server,
              ConfigFileEntry.min_nonwildcard, kuser, khost, kreason);
@@ -1000,7 +1000,7 @@ already_placed_kline(struct Client *source_p, char *luser, char *lhost)
     */
    /* they can?  here was me thinking it was only remote clients :P */
    if(!MyClient(source_p))
-    sendto_realops_flags(FLAGS_ALL, L_ALL, 
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, 
              "*** Remote K-Line [%s@%s] already K-Lined by [%s@%s] - %s",
              luser, lhost, aconf->user, aconf->host, reason);
    else

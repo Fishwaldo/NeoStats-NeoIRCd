@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c,v 1.5 2002/09/13 09:17:14 fishwaldo Exp $
+ *  $Id: m_server.c,v 1.6 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&server_msgtab);
 }
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 
 int bogus_host(char *host);
@@ -107,9 +107,9 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
    */
   if (!DoesTS(client_p))
     {
-      sendto_realops_flags(FLAGS_ALL, L_ADMIN,"Link %s dropped, non-TS server",
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,"Link %s dropped, non-TS server",
 			   get_client_name(client_p, HIDE_IP));
-      sendto_realops_flags(FLAGS_ALL, L_OPER,"Link %s dropped, non-TS server",
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,"Link %s dropped, non-TS server",
 			   get_client_name(client_p, MASK_IP));
       exit_client(client_p, client_p, client_p, "Non-TS server");
       return;
@@ -128,11 +128,11 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
     case -1:
       if (ConfigFileEntry.warn_no_nline)
       {
-        sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+        sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
            "Unauthorized server connection attempt from %s: No entry for "
            "servername %s", get_client_name(client_p, HIDE_IP), name);
 
-        sendto_realops_flags(FLAGS_ALL, L_OPER,
+        sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
            "Unauthorized server connection attempt from %s: No entry for "
            "servername %s", get_client_name(client_p, MASK_IP), name);
       }
@@ -143,11 +143,11 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
       break;
       
     case -2:
-      sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
            "Unauthorized server connection attempt from %s: Bad password "
            "for server %s", get_client_name(client_p, HIDE_IP), name);
 
-      sendto_realops_flags(FLAGS_ALL, L_OPER,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
            "Unauthorized server connection attempt from %s: Bad password "
            "for server %s", get_client_name(client_p, MASK_IP), name);
 
@@ -157,11 +157,11 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
       break;
       
     case -3:
-      sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
            "Unauthorized server connection attempt from %s: Invalid host "
            "for server %s", get_client_name(client_p, HIDE_IP), name);
 
-      sendto_realops_flags(FLAGS_ALL, L_OPER,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
            "Unauthorized server connection attempt from %s: Invalid host "
            "for server %s", get_client_name(client_p, MASK_IP), name);
 
@@ -172,10 +172,10 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
     
     /* servername is > HOSTLEN */
     case -4:
-      sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
                            "Invalid servername %s from %s",
 			   name, get_client_name(client_p, HIDE_IP));
-      sendto_realops_flags(FLAGS_ALL, L_OPER,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
 		           "Invalid servername %s from %s",
 			   name, get_client_name(client_p, MASK_IP));
 
@@ -198,11 +198,11 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
        * Definitely don't do that here. This is from an unregistered
        * connect - A1kmm.
        */
-      sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
          "Attempt to re-introduce server %s from %s", name,
          get_client_name(client_p, HIDE_IP));
 
-      sendto_realops_flags(FLAGS_ALL, L_OPER,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
          "Attempt to re-introduce server %s from %s", name,
          get_client_name(client_p, MASK_IP));
 
@@ -216,7 +216,7 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
       if(IsCapable(client_p, CAP_HUB))
         {
           ClearCap(client_p,CAP_LL);
-          sendto_realops_flags(FLAGS_ALL, L_ALL,
+          sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                "*** LazyLinks to a hub from a hub, thats a no-no.");
         }
       else
@@ -225,7 +225,7 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
 
           if(!client_p->localClient->serverMask)
             {
-              sendto_realops_flags(FLAGS_ALL, L_ALL,
+              sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                                    "serverMask is full!");
               /* try and negotiate a non LL connect */
               ClearCap(client_p,CAP_LL);
@@ -237,7 +237,7 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
       if(!IsCapable(client_p, CAP_HUB))
         {
           ClearCap(client_p,CAP_LL);
-          sendto_realops_flags(FLAGS_ALL, L_ALL,
+          sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                "*** LazyLinks to a leaf from a leaf, thats a no-no.");
         }
     }
@@ -257,7 +257,7 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
   
   /* if this server is trying to set itself Ulined, its Not allowed, so exit it */
   if (srvopt && SERVER_ULINED) {
-  	sendto_realops_flags(FLAGS_ALL, L_ALL, "Server %s trying to U line itself. No Way, Nadda, I dun think so", client_p->name);
+  	sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Server %s trying to U line itself. No Way, Nadda, I dun think so", client_p->name);
   	exit_client(client_p, client_p, client_p, "Got a Gline Instead");
   	return;
   }
@@ -333,10 +333,10 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
 
       sendto_one(client_p, "ERROR :Server %s already exists", name);
 	
-      sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
 	                   "Link %s cancelled, server %s already exists",
 		 	   get_client_name(client_p, SHOW_IP), name);
-      sendto_realops_flags(FLAGS_ALL, L_OPER,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
 	                   "Link %s cancelled, server %s already exists",
 		 	   client_p->name, name);
       
@@ -356,10 +356,10 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
        * for a while and servers to send stuff to the wrong place.
        */
       sendto_one(client_p,"ERROR :Nickname %s already exists!", name);
-      sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
 			   "Link %s cancelled: Server/nick collision on %s",
 		/* inpath */ get_client_name(client_p, HIDE_IP), name);
-      sendto_realops_flags(FLAGS_ALL, L_OPER,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
           "Link %s cancelled: Server/nick collision on %s",
 	  get_client_name(client_p, MASK_IP), name);
       exit_client(client_p, client_p, client_p, "Nick as Server");
@@ -431,10 +431,10 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
   if (!hlined || (IsCapable(client_p, CAP_LL) && !IsCapable(client_p, CAP_HUB)))
     {
       /* OOOPs nope can't HUB */
-      sendto_realops_flags(FLAGS_ALL, L_ADMIN, "Non-Hub link %s introduced %s.",
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN, "Non-Hub link %s introduced %s.",
                 get_client_name(client_p, HIDE_IP), name);
 
-      sendto_realops_flags(FLAGS_ALL, L_OPER,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
           "Non-Hub link %s introduced %s.",
 	  get_client_name(client_p, MASK_IP), name);
 
@@ -446,10 +446,10 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
   if (llined)
     {
       /* OOOPs nope can't HUB this leaf */
-      sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
             "Link %s introduced leafed server %s.",
 	    get_client_name(client_p, HIDE_IP), name);
-      sendto_realops_flags(FLAGS_ALL, L_OPER, 
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER, 
             "Link %s introduced leafed server %s.",
             client_p->name, name);
       /* If it is new, we are probably misconfigured, so split the
@@ -484,10 +484,10 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
 
   if(strlen(name) > HOSTLEN)
   {
-    sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
  		         "Link %s introduced server with invalid servername %s",
 		         get_client_name(client_p, HIDE_IP), name);
-    sendto_realops_flags(FLAGS_ALL, L_OPER,
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER,
 		         "Link %s introduced server with invalid servername %s",
 			 client_p->name, name);
     
@@ -505,7 +505,7 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
   
   set_server_gecos(target_p, info);
   
-  if (IsUlined(target_p)) sendto_realops_flags(FLAGS_ALL, L_ALL, "Link %s introduced a dynamic Ulined server %s", client_p->name, target_p->name);
+  if (IsUlined(target_p)) sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Link %s introduced a dynamic Ulined server %s", client_p->name, target_p->name);
 
   target_p->serv->up = find_or_add(parv[0]);
   target_p->servptr = source_p;
@@ -533,10 +533,10 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
 	continue;
       if (!(aconf = bclient_p->serv->sconf))
 	{
-	  sendto_realops_flags(FLAGS_ALL, L_ADMIN, 
+	  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN, 
 	        "Lost N-line for %s on %s. Closing",
 		get_client_name(client_p, HIDE_IP), name);
-	  sendto_realops_flags(FLAGS_ALL, L_OPER, 
+	  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_OPER, 
 	        "Lost N-line for %s on %s. Closing",
 		get_client_name(client_p, MASK_IP), name);
 	  exit_client(client_p, client_p, client_p, "Lost N line");
@@ -553,7 +553,7 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
 		 target_p->info);
     }
       
-  sendto_realops_flags(FLAGS_EXTERNAL, L_ALL,
+  sendto_realops_flags(FLAGS_EXTERNAL|FLAGS_REMOTE, L_ALL,
                        "Server %s being introduced by %s",
 		       target_p->name, source_p->name);
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_lljoin.c,v 1.5 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_lljoin.c,v 1.6 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ _moddeinit(void)
   mod_del_cmd(&lljoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 /*
  * m_lljoin
@@ -100,7 +100,7 @@ static void ms_lljoin(struct Client *client_p,
 
   if(uplink && !IsCapable(uplink,CAP_LL))
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 			   "*** LLJOIN requested from non LL server %s",
 			   client_p->name);
       return;

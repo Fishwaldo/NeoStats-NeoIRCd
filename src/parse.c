@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: parse.c,v 1.5 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: parse.c,v 1.6 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -377,7 +377,7 @@ handle_command(struct Message *mptr, struct Client *client_p,
 	    return(-1);
 	}
 
-      sendto_realops_flags(FLAGS_ALL, L_ALL, 
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, 
 			   "Dropping server %s due to (invalid) command '%s'"
 			   "with only %d arguments (expecting %d).",
 			   client_p->name, mptr->cmd, i, mptr->parameters);
@@ -634,7 +634,7 @@ cancel_clients(struct Client *client_p, struct Client *source_p, char *cmd)
 			   
       if (IsServer(client_p))
         {
-          sendto_realops_flags(FLAGS_DEBUG, L_ALL,
+          sendto_realops_flags(FLAGS_DEBUG|FLAGS_REMOTE, L_ALL,
                              "Not dropping server %s (%s) for Fake Direction",
                              client_p->name, source_p->name);
           return -1;
@@ -697,7 +697,7 @@ remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
 
   if (IsClient(client_p))
     {
-      sendto_realops_flags(FLAGS_DEBUG, L_ALL,
+      sendto_realops_flags(FLAGS_DEBUG|FLAGS_REMOTE, L_ALL,
                  "Weirdness: Unknown client prefix (%s) from %s, Ignoring %s",
                          lbuffer,
                          get_client_name(client_p, HIDE_IP), lsender);
@@ -723,11 +723,11 @@ remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
                me.name, lsender, me.name);
   else
     {
-      sendto_realops_flags(FLAGS_DEBUG, L_ADMIN,
+      sendto_realops_flags(FLAGS_DEBUG|FLAGS_REMOTE, L_ADMIN,
                            "Unknown prefix (%s) from %s, Squitting %s",
                            lbuffer, get_client_name(client_p, SHOW_IP), lsender);
    
-      sendto_realops_flags(FLAGS_DEBUG, L_OPER,
+      sendto_realops_flags(FLAGS_DEBUG|FLAGS_REMOTE, L_OPER,
                            "Unknown prefix (%s) from %s, Squitting %s",
 			   lbuffer, client_p->name, lsender);
 			   
@@ -812,7 +812,7 @@ do_numeric(char numeric[],
        * unfortunately, it did not work. --Dianora
        */
       if(atoi(numeric) != ERR_NOSUCHNICK)
-        sendto_realops_flags(FLAGS_ALL, L_ADMIN,
+        sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN,
 			     "*** %s(via %s) sent a %s numeric to me: %s",
 			     source_p->name, client_p->name, numeric, buffer);
       return;

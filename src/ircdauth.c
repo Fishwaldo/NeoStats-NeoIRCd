@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircdauth.c,v 1.4 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: ircdauth.c,v 1.5 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -603,7 +603,7 @@ GreetUser(struct Client *client)
   client->servptr = find_server(client->user->server);
   if (!client->servptr)
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,"Ghost killed: %s on invalid server %s",
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,"Ghost killed: %s on invalid server %s",
 			   client->name,
 			   client->user->server);
 

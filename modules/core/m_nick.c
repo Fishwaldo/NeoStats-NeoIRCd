@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.7 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.8 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.7 $";
+const char *_version = "$Revision: 1.8 $";
 #endif
 
 /*
@@ -338,7 +338,7 @@ static void ms_nick(struct Client *client_p, struct Client *source_p,
       strcat(tbuf, " ");
     }
 
-    sendto_realops_flags(FLAGS_ALL, L_ALL,
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                          "Dropping server %s due to (invalid) command 'NICK' "
                          "with only %d arguments.  (Buf: '%s')",
                          client_p->name, parc, tbuf);
@@ -363,7 +363,7 @@ static void ms_nick(struct Client *client_p, struct Client *source_p,
       /* check the length of the clients gecos */
       if(strlen(parv[9]) > REALLEN)
         {
-          sendto_realops_flags(FLAGS_ALL, L_ALL, "Long realname from server %s for %s",
+          sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Long realname from server %s for %s",
                          parv[7], parv[1]);
           parv[9][REALLEN] = '\0';
         }
@@ -438,7 +438,7 @@ static void ms_client(struct Client *client_p, struct Client *source_p,
   /* check length of clients gecos */
   if (strlen(name) > REALLEN)
   {
-    sendto_realops_flags(FLAGS_ALL, L_ALL, "Long realname from server %s for %s",
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Long realname from server %s for %s",
                          parv[0], parv[1]);
     name[REALLEN] = '\0';			 
   }
@@ -451,7 +451,7 @@ static void ms_client(struct Client *client_p, struct Client *source_p,
    */
   if((target_p = find_id(id)))
   {
-    sendto_realops_flags(FLAGS_ALL, L_ALL,
+    sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 		         "ID collision on %s(%s <- %s)(both killed)",
 			 target_p->name, target_p->from->name,
 			 client_p->name);
@@ -714,7 +714,7 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
 	 /* we only allow Ulined Servers to set +s */
 	 if ((flag & FLAGS_SERVICES) && (!IsUlined(source_p->from))) {
 		sendto_one(source_p, ":%s NOTICE %s :*** Only Ulined Services can set +S", me.name, source_p->name);
-		sendto_realops_flags(FLAGS_ALL, L_ALL, "Warning, Non-Ulined Server %s tried to set %s as +S", source_p->from->name, source_p->name);
+		sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Warning, Non-Ulined Server %s tried to set %s as +S", source_p->from->name, source_p->name);
 		/* we don't allow them to get +S, so do a continue */
 		continue;
 	 }
@@ -823,7 +823,7 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
     if(!newts || !target_p->tsinfo ||
        (newts == target_p->tsinfo))
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "Nick collision on %s(%s <- %s)(both killed)",
 			   target_p->name, target_p->from->name,
 			   client_p->name);
@@ -861,12 +861,12 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
       else
       {
         if(sameuser)
-	  sendto_realops_flags(FLAGS_ALL, L_ALL,
+	  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 	                  "Nick collision on %s(%s <- %s)(older killed)",
 			  target_p->name, target_p->from->name,
 			  client_p->name);
         else
-	  sendto_realops_flags(FLAGS_ALL, L_ALL,
+	  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 	                  "Nick collision on %s(%s <- %s)(newer killed)",
 			  target_p->name, target_p->from->name,
 			  client_p->name);
@@ -899,7 +899,7 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
   if(!newts || !target_p->tsinfo || (newts == target_p->tsinfo) ||
        !source_p->user)
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                  "Nick change collision from %s to %s(%s <- %s)(both killed)",
 		 source_p->name, target_p->name, target_p->from->name,
 		 client_p->name);
@@ -937,12 +937,12 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
           (!sameuser && newts > target_p->tsinfo))
       {
         if(sameuser)
-	  sendto_realops_flags(FLAGS_ALL, L_ALL,
+	  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
  	       "Nick change collision from %s to %s(%s <- %s)(older killed)",
 	       source_p->name, target_p->name, target_p->from->name,
 	       client_p->name);
         else
-	  sendto_realops_flags(FLAGS_ALL, L_ALL,
+	  sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 	       "Nick change collision from %s to %s(%s <- %s)(newer killed)",
 	       source_p->name, target_p->name, target_p->from->name,
 	       client_p->name);
@@ -965,12 +965,12 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
      else
      {
        if(sameuser)
-         sendto_realops_flags(FLAGS_ALL, L_ALL,
+         sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 	                      "Nick collision on %s(%s <- %s)(older killed)",
 			      target_p->name, target_p->from->name,
 			      client_p->name);
        else
-         sendto_realops_flags(FLAGS_ALL, L_ALL,
+         sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 	                      "Nick collision on %s(%s <- %s)(newer killed)",
 			      target_p->name, target_p->from->name,
 			      client_p->name);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.7 2002/09/13 09:17:14 fishwaldo Exp $
+ *  $Id: channel.c,v 1.8 2002/09/13 16:30:04 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1198,12 +1198,12 @@ check_spambot_warning(struct Client *source_p, const char *name)
     {
       /* Its already known as a possible spambot */
       if (name != NULL)
-        sendto_realops_flags(FLAGS_BOTS, L_ALL,
+        sendto_realops_flags(FLAGS_BOTS|FLAGS_REMOTE, L_ALL,
                              "User %s (%s@%s) trying to join %s is a possible spambot",
                              source_p->name, source_p->username,
                              source_p->host, name);
       else
-        sendto_realops_flags(FLAGS_BOTS, L_ALL,
+        sendto_realops_flags(FLAGS_BOTS|FLAGS_REMOTE, L_ALL,
                              "User %s (%s@%s) is a possible spambot",
                              source_p->name, source_p->username,
                              source_p->host);
@@ -1256,7 +1256,7 @@ void check_splitmode(void *unused)
       {
         splitmode = 1;
 
-        sendto_realops_flags(FLAGS_ALL,L_ALL,
+        sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE,L_ALL,
                            "Network split, activating splitmode");
         eventAddIsh("check_splitmode", check_splitmode, NULL, 60);
       }
@@ -1265,7 +1265,7 @@ void check_splitmode(void *unused)
     {
       splitmode = 0;
     
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "Network rejoined, deactivating splitmode");
       eventDelete(check_splitmode, NULL);
     }

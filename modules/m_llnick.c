@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_llnick.c,v 1.3 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_llnick.c,v 1.4 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -60,7 +60,7 @@ _moddeinit(void)
   mod_del_cmd(&llnick_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
  * m_llnick
@@ -84,7 +84,7 @@ static void ms_llnick(struct Client *client_p,
   
   if(!IsCapable(client_p,CAP_LL) || !IsCapable(client_p, CAP_HUB))
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 			   "*** LLNICK requested from non LL server %s",
 			   client_p->name);
       return;

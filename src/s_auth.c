@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_auth.c,v 1.4 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: s_auth.c,v 1.5 2002/09/13 16:30:05 fishwaldo Exp $
  */
 
 /*
@@ -306,7 +306,7 @@ static int start_auth_query(struct AuthRequest* auth)
     }
   if ((MAXCONNECTIONS - 10) < fd)
     {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,"Can't allocate fd for auth on %s",
+      sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,"Can't allocate fd for auth on %s",
 			   get_client_name(auth->client, SHOW_IP));
       fd_close(fd);
       return 0;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_gline.c,v 1.6 2002/09/13 09:17:13 fishwaldo Exp $
+ *  $Id: m_gline.c,v 1.7 2002/09/13 16:30:03 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -70,12 +70,14 @@ static int invalid_gline(struct Client *, char *, char *, char *);
 static void ms_gline(struct Client*, struct Client*, int, char**);
 static void mo_gline(struct Client*, struct Client*, int, char**);
 static void mo_ungline(struct Client*, struct Client*, int, char**);
+static void ms_ungline(struct Client *, struct Client *,int ,char **);
+
 
 struct Message gline_msgtab[] = {
     {"GLINE", 0, 0, 3, 0, MFLG_SLOW, 0,
       {m_unregistered, m_not_oper, ms_gline, mo_gline}},
     {"UNGLINE", 0, 0, 2, 0, MFLG_SLOW, 0,
-      {m_unregistered, m_not_oper, m_error, mo_ungline}}
+      {m_unregistered, m_not_oper, ms_ungline, mo_ungline}}
 };
 
 #ifndef STATIC_MODULES
@@ -95,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&gline_msgtab[1]);
 }
 
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 /*
  * mo_gline()
@@ -243,7 +245,7 @@ static void ms_gline(struct Client *client_p,
   const char *reason = NULL;           /* reason for "victims" demise */
   struct Client *acptr;
 
-  /* hyb-7 style gline (post beta3) */
+  /* Gline has just been set by a user */
   if(parc == 4 && IsPerson(source_p))
     {
       oper_nick = parv[0];
@@ -254,29 +256,39 @@ static void ms_gline(struct Client *client_p,
       host = parv[2];
       reason = parv[3];
     }
-  /* none of the above */
-  else
+  /* gline coming in from a recently connected server */
+  else if (IsServer(source_p)) {
+      oper_server = parv[0];
+      user = parv[1];
+      host = parv[2];
+      reason = parv[3];
+  }
+  else 
     return;
 
   /* Its plausible that the server and/or client dont actually exist,
    * and its faked, as the oper isnt sending the gline..
    * check they're real --fl_ */
   /* we need acptr for LL introduction anyway -davidt */
-  if((acptr = find_server(oper_server)))
-  {
-    if((acptr = find_client(oper_nick)) == NULL)
+  if (IsServer(source_p))
+  	acptr = find_server(source_p->name);
+  else {
+    if((acptr = find_server(oper_server)))
+    {
+      if((acptr = find_client(oper_nick)) == NULL)
+        return;
+    }
+    else
       return;
   }
-  else
-    return;
 
- if(invalid_gline(acptr, user, host, (char *)reason))
+  if(invalid_gline(acptr, user, host, (char *)reason))
     return;
     
   /* send in hyb-7 to compatable servers */
   sendto_server(client_p, acptr, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
                 ":%s GLINE %s %s :%s",
-                oper_nick, user, host, reason);
+                parv[0], user, host, reason);
   if (ConfigFileEntry.glines)
     {
      /* I dont like the idea of checking for x non-wildcard chars in a
@@ -286,20 +298,21 @@ static void ms_gline(struct Client *client_p,
 
      if (check_wild_gline(user, host))
         {
-          sendto_realops_flags(FLAGS_ALL, L_ALL, 
+          if (!IsServer(source_p))
+          sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, 
                        "%s!%s@%s on %s is requesting a gline without %d non-wildcard characters for [%s@%s] [%s]",
                        oper_nick, oper_user, oper_host, oper_server, ConfigFileEntry.min_nonwildcard,
                        user, host, reason);
           return;
         }
-
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
-			   "%s!%s@%s on %s is requesting gline for [%s@%s] [%s]",
-			   oper_nick, oper_user, oper_host, oper_server,
-			   user, host, reason);
+      if(!IsServer(source_p))
+        sendto_realops_flags(FLAGS_ALL, L_ALL,
+  			   "%s!%s@%s on %s is requesting gline for [%s@%s] [%s]",
+  			   oper_nick, oper_user, oper_host, oper_server,
+  			   user, host, reason);
 
       set_local_gline(oper_nick, oper_user, oper_host, oper_server, user, host, reason);	
-      log_gline(oper_nick, oper_user, oper_host, oper_server, user, host, reason);
+      if (!IsServer(source_p)) log_gline(oper_nick, oper_user, oper_host, oper_server, user, host, reason);
 
     }
 }
@@ -370,6 +383,7 @@ invalid_gline(struct Client *source_p, char *luser, char *lhost,
 {
   if(strchr(luser, '!'))
   {
+    if (!IsServer(source_p))
     sendto_one(source_p, ":%s NOTICE %s :Invalid character '!' in gline",
                me.name, source_p->name);
     return 1;
@@ -418,7 +432,7 @@ set_local_gline(const char *oper_nick,
   aconf->hold = CurrentTime + ConfigFileEntry.gline_time;
   add_gline(aconf);
       
-  sendto_realops_flags(FLAGS_ALL, L_ALL,
+  if (oper_host) sendto_realops_flags(FLAGS_ALL, L_ALL,
 		       "%s!%s@%s on %s has triggered gline for [%s@%s] [%s]",
 		       oper_nick, oper_user, oper_host, oper_server,
 		       user, host, reason);
@@ -558,6 +572,7 @@ static void mo_ungline(struct Client *client_p, struct Client *source_p,
     {
       sendto_one(source_p, ":%s NOTICE %s :Un-glined [%s@%s]",
                  me.name, parv[0],user, host);
+      sendto_server(NULL, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s UNGLINE %s@%s", source_p->name, user, host);
       sendto_realops_flags(FLAGS_ALL, L_ALL,
 			   "%s has removed the G-Line for: [%s@%s]",
 			   get_oper_name(source_p), user, host );
@@ -569,6 +584,59 @@ static void mo_ungline(struct Client *client_p, struct Client *source_p,
     {
       sendto_one(source_p, ":%s NOTICE %s :No G-Line for %s@%s",
                  me.name, parv[0],user,host);
+      return;
+    }
+}
+
+/*
+** ms_ungline
+**
+**      parv[0] = sender nick
+**      parv[1] = gline to remove
+*/
+
+static void ms_ungline(struct Client *client_p, struct Client *source_p,
+                      int parc,char *parv[])
+{
+  char  *user,*host;
+
+  if (!ConfigFileEntry.glines)
+    {
+      return;
+    }
+
+  if ( (host = strchr(parv[1], '@')) || *parv[1] == '*' )
+    {
+      /* Explicit user@host mask given */
+
+      if(host)                  /* Found user@host */
+        {
+          user = parv[1];       /* here is user part */
+          *(host++) = '\0';     /* and now here is host */
+        }
+      else
+        {
+          user = "*";           /* no @ found, assume its *@somehost */
+          host = parv[1];
+        }
+    }
+  else
+    {
+      return;
+    }
+
+  if(remove_gline_match(user, host))
+    {
+      sendto_realops_flags(FLAGS_ALL, L_ALL,
+			   "%s has removed the G-Line for: [%s@%s]",
+			   get_oper_name(source_p), user, host );
+      ilog(L_NOTICE, "%s removed G-Line for [%s@%s]",
+          get_oper_name(source_p), user, host);
+      return;
+    }
+  else
+    {
+      /* if its not on this server, just ignore it */
       return;
     }
 }

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.15 2003/01/29 09:28:49 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.16 2003/03/06 11:33:33 fishwaldo Exp $
  */
 
 %{
@@ -2572,6 +2572,7 @@ umode_item:	T_BOTS
 general_min_nonwildcard:    MIN_NONWILDCARD '=' NUMBER ';'
   {
     ConfigFileEntry.min_nonwildcard = $3;
+    ilog(L_INFO, "WildCard %d", ConfigFileEntry.min_nonwildcard);
   };
 general_default_floodcount:    DEFAULT_FLOODCOUNT '=' NUMBER ';'
   {

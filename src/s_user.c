@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.42 2003/01/29 09:28:50 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.43 2003/03/06 11:33:33 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1112,20 +1112,20 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
   if(badflag)
     sendto_one(target_p, form_str(ERR_UMODEUNKNOWNFLAG), me.name, parv[0]);
 
-  if ((flag & FLAGS_NCHANGE) && !IsOperN(target_p))
+  if ((target_p->umodes & FLAGS_NCHANGE) && !IsOperN(target_p))
     {
       sendto_one(source_p,":%s NOTICE %s :*** You need oper and N flag for +n",
                  me.name,parv[0]);
       target_p->umodes &= ~FLAGS_NCHANGE; /* only tcm's really need this */
     }
 
-  if (MyConnect(target_p) && (flag & FLAGS_ADMIN) && !IsOperAdmin(target_p))
+  if (MyConnect(target_p) && (target_p->umodes & FLAGS_ADMIN) && !IsOperAdmin(target_p))
     {
       sendto_one(source_p,":%s NOTICE %s :*** You need oper and A flag for +a",
                  me.name, parv[0]);
       target_p->umodes &= ~FLAGS_ADMIN;
     }
-  if (!IsUlined(target_p->servptr) && (flag & FLAGS_SERVICES) && !(setflags & FLAGS_SERVICES))
+  if (!IsUlined(target_p->servptr) && (target_p->umodes & FLAGS_SERVICES))
     { 
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +S", 
       		me.name, parv[0]);
@@ -1134,7 +1134,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
   /* if the +r isn't from a U lined server, or from the clients server
   ** then its a error
   */
-  if ((!IsUlined(source_p) && (source_p != target_p->servptr)) && (flag & FLAGS_REGNICK) && !(setflags & FLAGS_REGNICK))
+  if ((!IsUlined(source_p) && (source_p != target_p->servptr)) && (target_p->umodes & FLAGS_REGNICK) )
     {
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +r",
       		me.name, parv[0]);

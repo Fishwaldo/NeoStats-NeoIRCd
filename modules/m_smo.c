@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_smo.c,v 1.1 2002/09/13 16:30:03 fishwaldo Exp $
+ *   $Id: m_smo.c,v 1.2 2002/09/16 07:56:55 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -81,7 +81,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 /*
@@ -107,7 +107,6 @@ static void ms_smo(struct Client *client_p, struct Client *source_p,
 	if (IsClient(source_p) && (!IsServices(source_p)))
 		return;
 	
-	printf("gothere %x %d\n", flags, flags);
 	sendto_realops_flags(flags, atoi(parv[2]), "From %s: %s", source_p->name, parv[3]);
 
 	sendto_server(client_p, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s SMO %s %s :%s", source_p->name, parv[1], parv[2], parv[3]);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.17 2002/09/24 13:25:29 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.18 2002/09/26 12:34:45 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.17 $";
+const char *_version = "$Revision: 1.18 $";
 #endif
 
 /*
@@ -926,9 +926,9 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
         target_p->flags |= FLAGS_KILLED;
 	(void)exit_client(client_p, target_p, &me, "Nick collision");
 	
-	if(parc == 10)
+	if(parc == 11)
 	  nick_from_server(client_p,source_p,parc,parv,newts,nick);
-	else if(parc == 11)
+	else if(parc == 12)
 	  client_from_server(client_p,source_p,parc,parv,newts,nick);
 	  
 	return 0;

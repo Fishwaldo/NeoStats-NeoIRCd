@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.18 2002/09/23 10:47:30 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.19 2002/09/26 12:34:45 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -703,7 +703,7 @@ chm_simple(struct Client *client_p, struct Client *source_p,
   }
 
   /* don't allow users to set +r */
-  if ((!IsServices(source_p) || !IsUlined(source_p->from)) && (mode_type == MODE_REGCHAN)) {
+  if ((!IsServices(source_p) || !IsUlined(source_p->servptr)) && (mode_type == MODE_REGCHAN)) {
     sendto_one(source_p, ":%s NOTICE %s :Only Services can (un)set +r", me.name, source_p->name);   
     return;
   }

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c,v 1.8 2002/09/19 05:41:11 fishwaldo Exp $
+ *  $Id: s_conf.c,v 1.9 2002/09/26 12:34:46 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1336,7 +1336,7 @@ set_default_conf(void)
   ConfigFileEntry.maximum_links = MAXIMUM_LINKS_DEFAULT;
   ConfigFileEntry.max_targets = MAX_TARGETS_DEFAULT;
   DupString(ConfigFileEntry.servlink_path, SLPATH);
-  strlcpy(ConfigFileEntry.operautojoin, "#ircop", CHANNELLEN);
+  strlcpy(ConfigFileEntry.operautojoin, "", CHANNELLEN);
   ConfigFileEntry.egdpool_path = NULL;
   
 #ifdef HAVE_LIBCRYPTO

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.31 2002/09/26 12:17:45 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.32 2002/09/26 12:34:46 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -984,7 +984,6 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
       sendto_one(source_p, form_str(RPL_UMODEIS), me.name, parv[0], buf);
       return 0;
     }
-sendto_realops_flags(FLAGS_ALL, L_ALL, "source: %s client %s target %s mode %s", source_p->name, client_p->name, target_p->name, parv[2]);
 
   /* find flags already set for user */
   setflags = target_p->umodes;
@@ -1200,13 +1199,10 @@ send_umode_out(struct Client *source_p, struct Client *client_p,
 		    struct Client *target_p,
 		    int old)
 {
-  struct Client *starget_p;
   char buf[BUFSIZE];
-  dlink_node *ptr;
 
   send_umode(target_p, target_p, old, ALL_UMODES, buf);
   sendto_server(IsServer(client_p) ? client_p : NULL, target_p, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s MODE %s :%s", IsUlined(source_p) ? source_p->name : target_p->servptr->name, target_p->name, buf);
-  sendto_realops_flags(FLAGS_ALL, L_ALL, "sending client %s (from %s) source %s target %s mode %s", client_p->name, IsUlined(source_p) ? source_p->name : target_p->servptr->name, source_p->name, target_p->name, buf);
 }
 
 /* 

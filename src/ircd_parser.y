@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.9 2002/09/19 05:41:11 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.10 2002/09/26 12:34:46 fishwaldo Exp $
  */
 
 %{
@@ -1904,13 +1904,11 @@ general_oper_autojoin:	   OPERAUTOJOIN '=' QSTRING ';'
     if (!check_channel_name(ConfigFileEntry.operautojoin) || !IsChannelName(ConfigFileEntry.operautojoin)) {
 	sendto_realops_flags(FLAGS_ALL, L_ALL, "Invalid Autojoin Channelname %s", ConfigFileEntry.operautojoin);
 	ilog(L_ERROR, "Invalid autojoin Channelname %s", ConfigFileEntry.operautojoin);
-	strlcpy(ConfigFileEntry.operautojoin, "#ircop", CHANNELLEN);
 	return 0;
     }
     if (ConfigFileEntry.operautojoin[0] == '&') {
 	sendto_realops_flags(FLAGS_ALL, L_ALL, "Cannot set Autojoin Channel to a local channel");
 	ilog(L_ERROR, "Cannot set Autojoin Channel to a local channel");
-	strlcpy(ConfigFileEntry.operautojoin, "#ircop", CHANNELLEN);
 	return 0;
     }
   } ;

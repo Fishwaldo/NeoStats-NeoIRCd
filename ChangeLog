@@ -52,3 +52,4 @@ Symbols are:
 (F)	- Added SWHOIS to whois. Opers and servers can set swhois
 (F)	- Fixed a hook api issue with hooks not getting added correctly (Patch sent to hybird team)
 (F)	- Fixed a chanadmin bug that eggy found (Duh), Stupid Bug
+(F)	- Admin mode is now represented by ¤

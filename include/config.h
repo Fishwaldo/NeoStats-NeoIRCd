@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: config.h,v 1.4 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: config.h,v 1.5 2002/09/16 07:36:01 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_config_h
@@ -27,7 +27,12 @@
 
 #include "setup.h"
 
+
+#ifdef NDEBUG
 #define DEBUG
+#endif
+
+#undef DEBUG
 /*
  * NeoIRCd COMPILE TIME CONFIGURATION OPTIONS
  *

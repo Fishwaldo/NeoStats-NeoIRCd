@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.9 2002/09/14 17:03:00 fishwaldo Exp $
+ *  $Id: channel.c,v 1.10 2002/09/16 07:36:01 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -335,7 +335,7 @@ send_channel_modes(struct Client *client_p, struct Channel *chptr)
 
 
   send_members(client_p, modebuf, parabuf, chptr, &chptr->halfops, "%");
-  send_members(client_p, modebuf, parabuf, chptr, &chptr->chanadmins, "*");
+  send_members(client_p, modebuf, parabuf, chptr, &chptr->chanadmins, "¤");
   send_members(client_p, modebuf, parabuf, chptr, &chptr->voiced, "+");
   send_members(client_p, modebuf, parabuf, chptr, &chptr->peons, "");
 
@@ -869,7 +869,7 @@ channel_chanop_or_voice(struct Channel *chptr, struct Client *target_p)
   else if (find_user_link(&chptr->voiced, target_p))
     return ("+");
   else if (find_user_link(&chptr->chanadmins, target_p))
-    return ("*");
+    return ("¤");
   return ("");
 }
 

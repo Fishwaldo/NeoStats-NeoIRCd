@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_who.c,v 1.9 2002/09/14 17:03:00 fishwaldo Exp $
+ *  $Id: m_who.c,v 1.10 2002/09/16 07:36:01 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -60,7 +60,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&who_msgtab);
 }
-const char *_version = "$Revision: 1.9 $";
+const char *_version = "$Revision: 1.10 $";
 #endif
 static void do_who_on_channel(struct Client *source_p,
 			      struct Channel *chptr, char *real_name,
@@ -207,7 +207,7 @@ static void m_who(struct Client *client_p,
 	  else if(is_voiced(chptr,target_p))
 	    do_who(source_p, target_p, chname, flags[2]);
 	  else if(is_chan_admin(chptr, target_p))
-	    do_who(source_p, target_p, chname, flags[4]);
+	    do_who(source_p, target_p, chname, flags[3]);
 	  else
 	    do_who(source_p, target_p, chname, "");
 	}
@@ -302,6 +302,7 @@ static void who_global(struct Client *source_p,char *mask, int server_oper)
   for (lp = source_p->user->channel.head; lp; lp = lp->next)
   {
      chptr = lp->data;
+     who_common_channel(source_p,chptr->chanadmins,mask,server_oper,&maxmatches);
      who_common_channel(source_p,chptr->chanops,mask,server_oper,&maxmatches);
      who_common_channel(source_p,chptr->halfops,mask,server_oper,&maxmatches);
      who_common_channel(source_p,chptr->voiced,mask,server_oper,&maxmatches);
@@ -373,7 +374,7 @@ static void do_who_on_channel(struct Client *source_p,
               flags[0],
               flags[1],
               flags[2],
-              flags[4],
+              flags[3],
               chname, member);
 
 }

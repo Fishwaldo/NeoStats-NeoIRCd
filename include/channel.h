@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.h,v 1.7 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: channel.h,v 1.8 2002/09/16 07:36:01 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_channel_h
@@ -154,7 +154,7 @@ struct Ban          /* also used for exceptions -orabidoo */
 
 /* Number of chanops, peon, voiced, halfops, chanadmins sublists */
 
-#define NUMLISTS 5
+#define NUMLISTS 4
 
 #ifdef INTENSIVE_DEBUG
 void do_channel_integrity_check(void);

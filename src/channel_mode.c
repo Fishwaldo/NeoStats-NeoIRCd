@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.12 2002/09/14 17:03:00 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.13 2002/09/16 07:36:01 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -2088,20 +2088,18 @@ set_channel_mode_flags(char flags_ptr[NUMLISTS][2], struct Channel *chptr,
     flags_ptr[1][0] = '\0';
     flags_ptr[2][0] = '\0';
     flags_ptr[3][0] = '\0';
-    flags_ptr[4][0] = '\0';
   }
   else
   {
     flags_ptr[0][0] = '@';
     flags_ptr[1][0] = '%';
     flags_ptr[2][0] = '+';
-    flags_ptr[3][0] = '\0';
-    flags_ptr[4][0] = '*';
+    flags_ptr[3][0] = '¤';
 
     flags_ptr[0][1] = '\0';
     flags_ptr[1][1] = '\0';
     flags_ptr[2][1] = '\0';
-    flags_ptr[4][1] = '\0';
+    flags_ptr[3][1] = '\0';
   }
 }
 
@@ -2461,8 +2459,7 @@ do_channel_integrity_check(void)
       for (ptr2=ch->loc ## listname.head; ptr2; ptr2=ptr2->next) \
         if (ptr2->data == cl) \
         { \
-          assert(matched_local == 0); \
-          matched_local = -1; \
+          assert(matched_local == 0); \ matched_local = -1; \
         }
       SEARCH_LIST(chanops)
       SEARCH_LIST(halfops)

@@ -8,7 +8,6 @@
 /Makefile.in -text
 /NeoStats-team -text
 /README.FIRST -text
-/README.PLATFORMS -text
 /README.VMS -text
 /TODO -text
 adns/.cvsignore -text
@@ -78,6 +77,7 @@ doc/old/ChangeLog-Hybrid7Rc1 -text
 doc/old/Etiquette -text
 doc/old/Hybrid-team -text
 doc/old/README -text
+doc/old/README.PLATFORMS -text
 doc/old/ircd.8 -text
 doc/operguide.txt -text
 doc/opermyth.txt -text

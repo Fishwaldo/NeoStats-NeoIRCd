@@ -24,4 +24,4 @@ Usermodes: (* designates that the umode is oper only)
        * +A     - Is marked as a server admin in whois.
          +g     - "caller id" mode only allow accept clients to message you
          +r	- Registered Nickname (only can be set by Services)
-         +S     - Services Bot 
+       * +S     - Services Bot 

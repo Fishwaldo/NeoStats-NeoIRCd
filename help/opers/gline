@@ -1,7 +1,7 @@
-GLINE <user@host> :[reason]
+GLINE <user@host> <time in minutes> :[reason]
 
 -- if glines are enabled --
 Attempts to add a global IRC-network wide ban on
-<user@host> for the reason [reason].
+<user@host> for the reason [reason] that will expire in <time in minutes>
 
 - Requires Oper Priv: G

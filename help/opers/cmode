@@ -43,6 +43,9 @@ NO PARAMETERS:
               Invite exceptions can be used to help non-opers join the 
               channel.
 
+     +r     - 'Registered Channel'. The Channel has been registered with
+              Chanserv, or applicable services.
+
 
 WITH PARAMETERS:
 ----------------

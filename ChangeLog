@@ -29,3 +29,8 @@ Symbols are:
 (F)	- Removed all OANDVcode as its not going to be used at all
 (F)	- Removed all Vchan Code and finished rc2 patch from hybrid merge
 (F)	- Added svshost and svsnick commands in module m_svscmds.c for begining of service support
+(F)	- Added services ID to nick command and in the process broke all Hybrid Compatibility (Needed for services (ie, Epona) support)
+(F)	- Added svsid to set services ID on a nickname. Must come from the server, not a client (in m_svscmds.c)
+(F)	- Added Chanmode +R and username +r for registered channels and registered users 
+(F)	- No more need for 3 opers to vote on a Gline. One oper does it now. 
+(F)	- Moved ungline to m_gline, and unkline, undline to m_kline. removed m_unkline now.

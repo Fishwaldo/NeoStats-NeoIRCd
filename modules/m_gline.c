@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_gline.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
+ *  $Id: m_gline.c,v 1.4 2002/09/12 05:45:19 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -47,6 +47,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "list.h"
+#include "s_log.h"
 
 /* internal functions */
 static void set_local_gline(
@@ -58,45 +59,23 @@ static void set_local_gline(
                             const char *host,
                             const char *reason);
 
-static void log_gline_request(const char*,const char*,const char*,
-                              const char* oper_server,
-                              const char *,const char *,const char *);
-
-static void log_gline(struct Client *,struct gline_pending *,
-                      const char *, const char *,const char *,
+static void log_gline(const char *, const char *,const char *,
                       const char* oper_server,
                       const char *,const char *,const char *);
 
-
-static void check_majority_gline(struct Client *source_p,
-                                 const char *oper_nick,
-                                 const char *oper_user,
-                                 const char *oper_host,
-                                 const char *oper_server,
-                                 const char *user, const char *host,
-                                 const char *reason);
-
-static int majority_gline(struct Client *source_p,
-                          const char *oper_nick, const char *oper_username,
-                          const char *oper_host, 
-                          const char *oper_server,
-                          const char *user,
-                          const char *host,
-                          const char *reason); 
-
-static void add_new_majority_gline(const char *, const char *, const char *,
-                                   const char *, const char *, const char *,
-                                   const char *);
 
 static int check_wild_gline(char *, char *);
 static int invalid_gline(struct Client *, char *, char *, char *);
 		       
 static void ms_gline(struct Client*, struct Client*, int, char**);
 static void mo_gline(struct Client*, struct Client*, int, char**);
+static void mo_ungline(struct Client*, struct Client*, int, char**);
 
-struct Message gline_msgtab = {
-    "GLINE", 0, 0, 3, 0, MFLG_SLOW, 0,
-      {m_unregistered, m_not_oper, ms_gline, mo_gline}
+struct Message gline_msgtab[] = {
+    {"GLINE", 0, 0, 3, 0, MFLG_SLOW, 0,
+      {m_unregistered, m_not_oper, ms_gline, mo_gline}},
+    {"UNGLINE", 0, 0, 2, 0, MFLG_SLOW, 0,
+      {m_unregistered, m_not_oper, m_error, mo_ungline}}
 };
 
 #ifndef STATIC_MODULES
@@ -104,16 +83,19 @@ struct Message gline_msgtab = {
 void
 _modinit(void)
 {
-    mod_add_cmd(&gline_msgtab);
+    mod_add_cmd(&gline_msgtab[0]);
+    mod_add_cmd(&gline_msgtab[1]);
+
 }
 
 void
 _moddeinit(void)
 {
-  mod_del_cmd(&gline_msgtab);
+  mod_del_cmd(&gline_msgtab[0]);
+  mod_del_cmd(&gline_msgtab[1]);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
  * mo_gline()
@@ -209,15 +191,9 @@ mo_gline(struct Client *client_p, struct Client *source_p,
 			"%s!%s@%s on %s is requesting gline for [%s@%s] [%s]",
 			source_p->name, source_p->username, source_p->host,
 			me.name, user, host, reason);
-      log_gline_request(source_p->name,
-                        (const char *)source_p->username,
-                        source_p->host,me.name, user, host, reason);
 
-      /* If at least 3 opers agree this user should be G lined then do it */
-      check_majority_gline(source_p,
-			   source_p->name,
-			   (const char *)source_p->username,
-			   source_p->host, me.name, user, host, reason);
+      set_local_gline(source_p->name, source_p->username, source_p->host, me.name, user, host, reason);
+      log_gline(source_p->name, source_p->username, source_p->host, me.name, user, host, reason);
 
       /* 4 param version for hyb-7 servers */
       sendto_server(NULL, source_p, NULL, CAP_GLN|CAP_UID, NOCAPS,
@@ -229,17 +205,6 @@ mo_gline(struct Client *client_p, struct Client *source_p,
                     ":%s GLINE %s %s :%s",
                     source_p->name, user, host, reason);
 
-      /* 8 param for hyb-6 */
-      sendto_server(NULL, NULL, NULL, CAP_UID, CAP_GLN, NOFLAGS,
-                    ":%s GLINE %s %s %s %s %s %s :%s",
-                    me.name, ID(source_p), source_p->username,
-                    source_p->host, source_p->user->server, user, host,
-                    reason);
-      sendto_server(NULL, NULL, NULL, NOCAPS, CAP_GLN|CAP_UID, NOFLAGS,
-                    ":%s GLINE %s %s %s %s %s %s :%s",
-                    me.name, source_p->name, source_p->username,
-                    source_p->host, source_p->user->server, user, host,
-                    reason);
     }
   else
     {
@@ -289,17 +254,6 @@ static void ms_gline(struct Client *client_p,
       host = parv[2];
       reason = parv[3];
     }
-  /* or it's a hyb-6 style */
-  else if(parc == 8 && IsServer(source_p))
-    {
-      oper_nick = parv[1];
-      oper_user = parv[2];
-      oper_host = parv[3];
-      oper_server = parv[4];
-      user = parv[5];
-      host = parv[6];
-      reason = parv[7];      
-    }
   /* none of the above */
   else
     return;
@@ -323,12 +277,6 @@ static void ms_gline(struct Client *client_p,
   sendto_server(client_p, acptr, NULL, CAP_GLN, NOCAPS, LL_ICLIENT,
                 ":%s GLINE %s %s :%s",
                 oper_nick, user, host, reason);
-  /* hyb-6 version to the rest */
-  sendto_server(client_p, NULL, NULL, NOCAPS, CAP_GLN, NOFLAGS,
-                ":%s GLINE %s %s %s %s %s %s :%s",
-                oper_server, oper_nick, oper_user, oper_host,
-                oper_server, user, host, reason);
-
   if (ConfigFileEntry.glines)
     {
      /* I dont like the idea of checking for x non-wildcard chars in a
@@ -345,17 +293,14 @@ static void ms_gline(struct Client *client_p,
           return;
         }
 
-      log_gline_request(oper_nick,oper_user,oper_host,oper_server,
-			user,host,reason);
-
       sendto_realops_flags(FLAGS_ALL, L_ALL,
 			   "%s!%s@%s on %s is requesting gline for [%s@%s] [%s]",
 			   oper_nick, oper_user, oper_host, oper_server,
 			   user, host, reason);
 
-      /* If at least 3 opers agree this user should be G lined then do it */
-      check_majority_gline(source_p, oper_nick, oper_user, oper_host,
-			   oper_server, user, host, reason);
+      set_local_gline(oper_nick, oper_user, oper_host, oper_server, user, host, reason);	
+      log_gline(oper_nick, oper_user, oper_host, oper_server, user, host, reason);
+
     }
 }
 
@@ -434,44 +379,6 @@ invalid_gline(struct Client *source_p, char *luser, char *lhost,
 }
 
 /*
- * check_majority_gline
- *
- * inputs	- pointer to source client
- * 		- name of operator requesting gline
- * 		- username of operator requesting gline
- * 		- hostname of operator requesting gline
- * 		- servername of operator requesting gline
- * 		- username covered by the gline
- * 		- hostname covered by the gline
- * 		- reason for the gline
- * output	- NONE
- * side effects	- if a majority agree, place the gline locally
- * Note that because of how gline "votes" are done, we take a
- * number of strings as input to easily check for duplicated
- * votes. Also since we don't necessarily have a client to
- * match the target of the gline too, we use user@host type
- * inputs here to figure out who is the target. This function
- * checks to make sure that given the above, a majority of
- * people accept placement of the gline.
- */
-static void
-check_majority_gline(struct Client *source_p,
-		     const char *oper_nick, const char *oper_user,
-		     const char *oper_host, const char *oper_server,
-		     const char *user, const char *host,
-		     const char *reason)
-{
-  /* set the actual gline in majority_gline() so we can pull the
-   * initial reason and use that as the trigger reason. --fl
-   */
-  if(majority_gline(source_p,oper_nick,oper_user, oper_host,
-		    oper_server, user, host, reason))
-  {
-    cleanup_glines();
-  }
-}
-
-/*
  * set_local_gline
  *
  * inputs	- pointer to oper nick
@@ -520,61 +427,11 @@ set_local_gline(const char *oper_nick,
 
 
 /*
- * log_gline_request()
- *
- */
-static void
-log_gline_request(
-		  const char *oper_nick, const char *oper_user,
-		  const char *oper_host, const char* oper_server,
-		  const char *user, const char *host, const char *reason)
-{
-  char        buffer[2*BUFSIZE];
-  char        filenamebuf[PATH_MAX + 1];
-  static char timebuffer[MAX_DATE_STRING];
-  struct tm*  tmptr;
-  FBFILE*     out;
-
-  if(ConfigFileEntry.glinefile == NULL)
-    {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,"*** Problem opening glinefile");
-      return;
-    }
-
-  ircsprintf(filenamebuf, "%s.%s", 
-             ConfigFileEntry.glinefile, small_file_date((time_t)0));
-  if ( (out = fbopen(filenamebuf, "+a")) == NULL )
-    {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,"*** Problem opening %s: %s",
-                     filenamebuf, strerror(errno));
-      return;
-    }
-
-  tmptr = localtime((const time_t*)&CurrentTime);
-  strftime(timebuffer, MAX_DATE_STRING, "%Y/%m/%d %H:%M:%S", tmptr);
-
-  ircsprintf(buffer,
-           "#Gline for %s@%s [%s] requested by %s!%s@%s on %s at %s\n",
-           user,host,reason,
-           oper_nick,oper_user,oper_host,oper_server,
-           timebuffer);
-
-  if (fbputs(buffer, out) == -1)
-    {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,"*** Problem writing to %s (%s)",
-				     filenamebuf, strerror(errno));
-    }
-  fbclose(out);
-}
-
-/*
  * log_gline()
  *
  */
 static void
-log_gline(struct Client *source_p,
-	  struct gline_pending *gline_pending_ptr,
-	  const char *oper_nick, const char *oper_user, const char *oper_host,
+log_gline(const char *oper_nick, const char *oper_user, const char *oper_host,
 	  const char *oper_server, const char *user, const char *host,
 	  const char *reason)
 {
@@ -615,35 +472,6 @@ log_gline(struct Client *source_p,
     }
 
   ircsprintf(buffer, "#%s!%s@%s on %s [%s]\n",
-                   gline_pending_ptr->oper_nick1,
-                   gline_pending_ptr->oper_user1,
-                   gline_pending_ptr->oper_host1,
-                   gline_pending_ptr->oper_server1,
-                   (gline_pending_ptr->reason1)?
-                   (gline_pending_ptr->reason1):"No reason");
-
-  if (fbputs(buffer,out) == -1)
-    {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,"*** Problem writing to %s",filenamebuf);
-      return;
-    }
-
-  ircsprintf(buffer, "#%s!%s@%s on %s [%s]\n",
-                   gline_pending_ptr->oper_nick2,
-                   gline_pending_ptr->oper_user2,
-                   gline_pending_ptr->oper_host2,
-                   gline_pending_ptr->oper_server2,
-                   (gline_pending_ptr->reason2)?
-                   (gline_pending_ptr->reason2):"No reason");
-
-  if (fbputs(buffer,out) == -1)
-    {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,"*** Problem writing to %s",filenamebuf);
-      fbclose(out);
-      return;
-    }
-
-  ircsprintf(buffer, "#%s!%s@%s on %s [%s]\n",
                    oper_nick,
                    oper_user,
                    oper_host,
@@ -676,149 +504,71 @@ log_gline(struct Client *source_p,
 }
 
 
-/*
- * add_new_majority_gline
- * 
- * inputs       - name of operator requesting gline
- * 		- username of operator requesting gline
- * 		- hostname of operator requesting gline
- * 		- servername of operator requesting gline
- * 		- username covered by the gline
- * 		- hostname covered by the gline
- * 		- reason for the gline
- * output       - NONE
- * side effects -
- * This function is called once a majority of opers
- * have agreed on a gline, and it can be placed. The
- * information about an operator being passed to us
- * happens to be the operator who pushed us over the
- * "majority" level needed. See check_majority_gline()
- * for more information.
- */
-static void
-add_new_majority_gline(const char* oper_nick, const char* oper_user,
-		       const char* oper_host, const char* oper_server,
-		       const char* user, const char* host,
-		       const char* reason)
-{
-  dlink_node *pending_node;
-
-  struct gline_pending *pending = (struct gline_pending*)
-    MyMalloc(sizeof(struct gline_pending));
-
-  strlcpy(pending->oper_nick1, oper_nick, NICKLEN + 1);
-  strlcpy(pending->oper_user1, oper_user, USERLEN + 1);
-  strlcpy(pending->oper_host1, oper_host, HOSTLEN + 1);
-
-  pending->oper_server1 = find_or_add(oper_server);
-
-  strlcpy(pending->user, user, USERLEN + 1);
-  strlcpy(pending->host, host, HOSTLEN + 1);
-  DupString(pending->reason1, reason);
-  pending->reason2 = NULL;
-
-  pending->last_gline_time = CurrentTime;
-  pending->time_request1 = CurrentTime;
-
-  pending_node = make_dlink_node();
-  dlinkAdd(pending, pending_node, &pending_glines);
-}
 
 /*
- * majority_gline()
- *
- * inputs       - oper_nick, oper_user, oper_host, oper_server
- *                user,host reason
- *
- * output       - YES if there are 3 different opers on 3 different servers
- *                agreeing to this gline, NO if there are not.
- * Side effects -
- *      See if there is a majority agreement on a GLINE on the given user
- *      There must be at least 3 different opers agreeing on this GLINE
- *
- */
-static int
-majority_gline(struct Client *source_p, const char *oper_nick,
-	       const char *oper_user, const char *oper_host,
-	       const char* oper_server, const char *user,
-	       const char *host, const char *reason)
+** m_ungline
+** added May 29th 2000 by Toby Verrall <toot@melnet.co.uk>
+** added to hybrid-7 7/11/2000 --is
+**
+**      parv[0] = sender nick
+**      parv[1] = gline to remove
+*/
+
+static void mo_ungline(struct Client *client_p, struct Client *source_p,
+                      int parc,char *parv[])
 {
-  dlink_node *pending_node;
-  struct gline_pending *gline_pending_ptr;
+  char  *user,*host;
 
-  /* if its already glined, why bother? :) -- fl_ */
-  if(find_is_glined(host, user))
-    return (NO);
-    
-  /* special case condition where there are no pending glines */
-
-  if (dlink_list_length(&pending_glines) == 0) /* first gline request placed */
+  if (!ConfigFileEntry.glines)
     {
-      add_new_majority_gline(oper_nick, oper_user, oper_host, oper_server,
-                             user, host, reason);
-      return (NO);
+      sendto_one(source_p,":%s NOTICE %s :UNGLINE disabled",me.name,parv[0]);
+      return;
     }
 
-  for (pending_node = pending_glines.head;
-       pending_node; pending_node = pending_node->next)
+  if (!IsOperUnkline(source_p) || !IsOperGline(source_p))
     {
-      gline_pending_ptr = pending_node->data;
+      sendto_one(source_p,":%s NOTICE %s :You need unkline = yes;",
+                 me.name,parv[0]);
+      return;
+    }
 
-      if ((irccmp(gline_pending_ptr->user,user) == 0) &&
-         (irccmp(gline_pending_ptr->host,host) == 0))
+  if ( (host = strchr(parv[1], '@')) || *parv[1] == '*' )
+    {
+      /* Explicit user@host mask given */
+
+      if(host)                  /* Found user@host */
         {
-          if (((irccmp(gline_pending_ptr->oper_user1,oper_user) == 0) ||
-              (irccmp(gline_pending_ptr->oper_host1,oper_host) == 0)) ||
-              (irccmp(gline_pending_ptr->oper_server1,oper_server) == 0) )
-            {
-              /* This oper or server has already "voted" */
-              sendto_realops_flags(FLAGS_ALL, L_ALL,
-				   "oper or server has already voted");
-              return (NO);
-            }
-
-          if (gline_pending_ptr->oper_user2[0] != '\0')
-            {
-              /* if two other opers on two different servers have voted yes */
-
-              if(((irccmp(gline_pending_ptr->oper_user2,oper_user)==0) ||
-                  (irccmp(gline_pending_ptr->oper_host2,oper_host)==0)) ||
-                  (irccmp(gline_pending_ptr->oper_server2,oper_server)==0))
-                {
-                  /* This oper or server has already "voted" */
-                  sendto_realops_flags(FLAGS_ALL, L_ALL,
-				       "oper or server has already voted");
-                  return (NO);
-                }
-
-              log_gline(source_p,gline_pending_ptr,
-                        oper_nick,oper_user,oper_host,oper_server,
-                        user,host,reason);
-
-              /* trigger the gline using the original reason --fl */
-              set_local_gline(oper_nick, oper_user, oper_host, oper_server,
-		              user, host, gline_pending_ptr->reason1);
-              return (YES);
-            }
-          else
-            {
-              strlcpy(gline_pending_ptr->oper_nick2, oper_nick, NICKLEN + 1);
-              strlcpy(gline_pending_ptr->oper_user2, oper_user, USERLEN + 1);
-              strlcpy(gline_pending_ptr->oper_host2, oper_host, HOSTLEN + 1);
-              DupString(gline_pending_ptr->reason2, reason);
-              gline_pending_ptr->oper_server2 = find_or_add(oper_server);
-              gline_pending_ptr->last_gline_time = CurrentTime;
-              gline_pending_ptr->time_request2 = CurrentTime;
-              return (NO);
-            }
+          user = parv[1];       /* here is user part */
+          *(host++) = '\0';     /* and now here is host */
+        }
+      else
+        {
+          user = "*";           /* no @ found, assume its *@somehost */
+          host = parv[1];
         }
     }
-  /* Didn't find this user@host gline in pending gline list
-   * so add it.
-   */
-  add_new_majority_gline(oper_nick, oper_user, oper_host, oper_server,
-                         user, host, reason);
-  return NO;
+  else
+    {
+      sendto_one(source_p, ":%s NOTICE %s :Invalid parameters",
+                 me.name, parv[0]);
+      return;
+    }
+
+  if(remove_gline_match(user, host))
+    {
+      sendto_one(source_p, ":%s NOTICE %s :Un-glined [%s@%s]",
+                 me.name, parv[0],user, host);
+      sendto_realops_flags(FLAGS_ALL, L_ALL,
+			   "%s has removed the G-Line for: [%s@%s]",
+			   get_oper_name(source_p), user, host );
+      ilog(L_NOTICE, "%s removed G-Line for [%s@%s]",
+          get_oper_name(source_p), user, host);
+      return;
+    }
+  else
+    {
+      sendto_one(source_p, ":%s NOTICE %s :No G-Line for %s@%s",
+                 me.name, parv[0],user,host);
+      return;
+    }
 }
-
-

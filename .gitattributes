@@ -381,7 +381,6 @@ modules/m_testline.c -text
 modules/m_time.c -text
 modules/m_topic.c -text
 modules/m_trace.c -text
-modules/m_unkline.c -text
 modules/m_user.c -text
 modules/m_userhost.c -text
 modules/m_users.c -text

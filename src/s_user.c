@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.8 2002/09/05 10:48:36 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.9 2002/09/12 05:45:20 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -461,6 +461,8 @@ register_local_user(struct Client *client_p, struct Client *source_p,
   
   source_p->umodes |= FLAGS_INVISIBLE;
 
+  /* set the services id to 0 */
+  source_p->svsid = 0;
 
 
   SetHidden(source_p);
@@ -644,23 +646,23 @@ introduce_client(struct Client *client_p, struct Client *source_p,
     {
       if (IsCapable(uplink, CAP_UID) && HasID(source_p))
 	{
-	  sendto_one(uplink, "CLIENT %s %d %lu %s %s %s %s %s :%s",
+	  sendto_one(uplink, "CLIENT %s %d %lu %s %s %s %s %s %lu :%s",
 		     nick,
 		     source_p->hopcount+1,
 		     (unsigned long) source_p->tsinfo,
 		     ubuf,
 		     source_p->username, source_p->host, user->server,
-		     user->id, source_p->info);
+		     user->id, source_p->svsid, source_p->info);
 	}
       else
 	{
-	  sendto_one(uplink, "NICK %s %d %lu %s %s %s %s :%s",
+	  sendto_one(uplink, "NICK %s %d %lu %s %s %s %s %lu :%s",
 		     nick,
 		     source_p->hopcount+1,
 		     (unsigned long) source_p->tsinfo,
 		     ubuf,
 		     source_p->username, source_p->host, user->server,
-		     source_p->info);
+		     source_p->svsid, source_p->info);
 	}
     }
   else
@@ -673,21 +675,21 @@ introduce_client(struct Client *client_p, struct Client *source_p,
 	    continue;
 		  
 	  if (IsCapable(server, CAP_UID) && HasID(source_p))
-	    sendto_one(server, "CLIENT %s %d %lu %s %s %s %s %s :%s",
+	    sendto_one(server, "CLIENT %s %d %lu %s %s %s %s %s %lu :%s",
 		       nick,
 		       source_p->hopcount+1,
 		       (unsigned long) source_p->tsinfo,
 		       ubuf,
 		       source_p->username, source_p->host, user->server,
-		       user->id, source_p->info);
+		       user->id, source_p->svsid, source_p->info);
 	  else
-	    sendto_one(server, "NICK %s %d %lu %s %s %s %s :%s",
+	    sendto_one(server, "NICK %s %d %lu %s %s %s %s %lu :%s",
 		       nick,
 		       source_p->hopcount+1,
 		       (unsigned long) source_p->tsinfo,
 		       ubuf,
 		       source_p->username, source_p->host, user->server,
-		       source_p->info);
+		       source_p->svsid, source_p->info);
 	}
     }
   
@@ -896,7 +898,7 @@ do_local_user(char* nick, struct Client* client_p, struct Client* source_p,
 int
 do_remote_user(char* nick, struct Client* client_p, struct Client* source_p,
 		   char* username, char *host, char *server, char *realname,
-		   char *id)
+		   char *id, unsigned int svsid)
 {
   unsigned int oflags;
   struct User* user;
@@ -917,6 +919,7 @@ do_remote_user(char* nick, struct Client* client_p, struct Client* source_p,
   strlcpy(source_p->host, host, HOSTLEN); 
   strlcpy(source_p->vhost, host, HOSTLEN);
   strlcpy(source_p->info, realname, REALLEN);
+  source_p->svsid = svsid;
   if (id != NULL)
     strcpy(source_p->user->id, id);
   

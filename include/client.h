@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h,v 1.5 2002/09/02 07:41:15 fishwaldo Exp $
+ *  $Id: client.h,v 1.6 2002/09/12 05:45:19 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_client_h
@@ -136,6 +136,7 @@ struct Client
   unsigned int      umodes;     /* opers, normal users subset */
   unsigned int      flags;      /* client flags */
   unsigned int      flags2;     /* ugh. overflow */
+  unsigned long	    svsid;	/* services ID if set */
 
   int               slink_pid;  /* pid of servlink process if any */
   int               hopcount;   /* number of servers to this 0 = local */

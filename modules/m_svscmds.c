@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_svscmds.c,v 1.1 2002/09/05 10:48:36 fishwaldo Exp $
+ *   $Id: m_svscmds.c,v 1.2 2002/09/12 05:45:20 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -54,6 +54,9 @@ static void ms_svshost(struct Client *client_p, struct Client *source_p,
 static void ms_svsnick(struct Client *client_p, struct Client *source_p,
 		    int parc, char *parv[]);
 
+static void ms_svsid(struct Client *client_p, struct Client *source_p,
+		    int parc, char *parv[]);
+
 
 static int clean_nick_name(char *);
 
@@ -71,6 +74,11 @@ struct Message svsnick_msgtab = {
 };
 
 
+struct Message svsid_msgtab = {
+  "SVSID", 0, 0, 3, 3, MFLG_SLOW, 0,
+  {m_ignore, m_ignore, ms_svsid, m_ignore}
+};
+
 /* Thats the msgtab finished */
 
 #ifndef STATIC_MODULES
@@ -81,6 +89,7 @@ _modinit(void)
   /* This will add the commands in test_msgtab (which is above) */
   mod_add_cmd(&svshost_msgtab);
   mod_add_cmd(&svsnick_msgtab);
+  mod_add_cmd(&svsid_msgtab);
 }
 
 /* here we tell it what to do when the module is unloaded */
@@ -90,11 +99,12 @@ _moddeinit(void)
   /* This will remove the commands in test_msgtab (which is above) */
   mod_del_cmd(&svshost_msgtab);
   mod_del_cmd(&svsnick_msgtab);
+  mod_del_cmd(&svsid_msgtab);
 }
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 /*
@@ -218,4 +228,40 @@ static int clean_nick_name(char *nick)
   }
 
   return 1;
+}
+
+
+/*
+ * ms_svsid
+ *	Sets/Changes the Services ID for a particular Nickname
+ * 	parv[0] = sender prefix
+ *	parv[1] = target 
+ *	parv[2] = newsvsid
+ *
+ */
+static void ms_svsid(struct Client *client_p, struct Client *source_p,
+		    int parc, char *parv[])
+{
+	struct Client *target_p;
+
+
+	target_p = find_person(parv[1]);
+	if (target_p == NULL) {
+		ilog(L_WARN, "SVSNICK from %s was invalid. Can't find the client", parv[1]);
+		return;
+	}
+	if (!IsClient(target_p)) 
+		return;
+	if (!IsUlined(source_p)) {
+		sendto_realops_flags(FLAGS_ALL, L_ALL, "Non U-Lined Server %s is attempting to use svsid on %s", source_p->name, target_p->name);
+		return;
+	}
+	/* set the new ID */
+	target_p->svsid = atol(parv[2]);
+
+	/* and now send it to the rest of the network */
+	sendto_server(client_p, target_p, NULL, 0, 0, LL_ICLIENT, ":%s SVSID %s %lu", source_p->name, target_p->name, target_p->svsid);
+
+	return;
+
 }

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.7 2002/09/05 10:48:36 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.8 2002/09/12 05:45:20 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -836,21 +836,21 @@ void sendnick_TS(struct Client *client_p, struct Client *target_p)
   }
  
   if (HasID(target_p) && IsCapable(client_p, CAP_UID))
-	  sendto_one(client_p, "CLIENT %s %d %lu %s %s %s %s %s :%s",
+	  sendto_one(client_p, "CLIENT %s %d %lu %s %s %s %s %s %lu :%s",
 				 target_p->name,
 				 target_p->hopcount + 1,
 				 (unsigned long) target_p->tsinfo,
 				 ubuf,
 				 target_p->username, target_p->host,
-				 target_p->user->server, target_p->user->id, target_p->info);
+				 target_p->user->server, target_p->user->id, target_p->svsid, target_p->info);
   else
-	  sendto_one(client_p, "NICK %s %d %lu %s %s %s %s :%s",
+	  sendto_one(client_p, "NICK %s %d %lu %s %s %s %s %lu :%s",
 				 target_p->name, 
 				 target_p->hopcount + 1,
 				 (unsigned long) target_p->tsinfo,
 				 ubuf,
 				 target_p->username, target_p->host,
-				 target_p->user->server, target_p->info);
+				 target_p->user->server, target_p->svsid, target_p->info);
 
   if (IsHidden(target_p)) sendto_one(client_p, ":%s SETHOST %s :%s", me.name, target_p->name, target_p->vhost);					
 

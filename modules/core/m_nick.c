@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.5 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.6 2002/09/12 05:45:20 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 
 /*
@@ -310,7 +310,8 @@ static void mr_nick(struct Client *client_p, struct Client *source_p,
  *    parv[5] = username
  *    parv[6] = hostname
  *    parv[7] = server
- *    parv[8] = ircname
+ *    parv[8] = svsid
+ *    parv[9] = ircname
  */
 static void ms_nick(struct Client *client_p, struct Client *source_p,
                     int parc, char *parv[])
@@ -325,8 +326,8 @@ static void ms_nick(struct Client *client_p, struct Client *source_p,
     return;
   }
 
-  /* parc == 3 on nickchange, parc == 9 on new nick */
-  if((IsClient(source_p) && (parc != 3)) || (IsServer(source_p) && (parc != 9)))
+  /* parc == 3 on nickchange, parc == 10 on new nick */
+  if((IsClient(source_p) && (parc != 3)) || (IsServer(source_p) && (parc != 10)))
   {
     char tbuf[BUFSIZE] = { 0 };
     int j;
@@ -353,18 +354,18 @@ static void ms_nick(struct Client *client_p, struct Client *source_p,
   if(check_clean_nick(client_p, source_p, nick, parv[1], parv[7]))
     return;
 
-  if (parc == 9)
+  if (parc == 10)
     {
       if (check_clean_user(client_p, nick, parv[5], parv[7]) ||
           check_clean_host(client_p, nick, parv[6], parv[7]))
         return;
 
       /* check the length of the clients gecos */
-      if(strlen(parv[8]) > REALLEN)
+      if(strlen(parv[9]) > REALLEN)
         {
           sendto_realops_flags(FLAGS_ALL, L_ALL, "Long realname from server %s for %s",
                          parv[7], parv[1]);
-          parv[8][REALLEN] = '\0';
+          parv[9][REALLEN] = '\0';
         }
 
       if (IsServer(source_p))
@@ -423,7 +424,7 @@ static void ms_client(struct Client *client_p, struct Client *source_p,
   char    *name;
 
   id = parv[8];
-  name = parv[9];
+  name = parv[10];
 
   /* parse the nickname */
   strlcpy(nick, parv[1], NICKLEN);
@@ -723,7 +724,7 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
       }
 
       return do_remote_user(nick, client_p, source_p, parv[5], parv[6],
-                            parv[7], parv[8], NULL);
+                            parv[7], parv[9], NULL, atol(parv[8]));
     }
   }
   else if(source_p->name[0])
@@ -772,7 +773,7 @@ client_from_server(struct Client *client_p, struct Client *source_p, int parc,
   char *m;
 
   id = parv[8];
-  name = parv[9];
+  name = parv[10];
 
   source_p = make_client(client_p);
   add_client_to_list(source_p);
@@ -805,7 +806,7 @@ client_from_server(struct Client *client_p, struct Client *source_p, int parc,
   }
 
   return do_remote_user(nick, client_p, source_p, parv[5], parv[6],
-                        parv[7], name, id);
+                        parv[7], name, id, atol(parv[9]));
 }			
   
 static int 

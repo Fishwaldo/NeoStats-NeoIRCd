@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_gline.h,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
+ *  $Id: s_gline.h,v 1.3 2002/09/12 05:45:19 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_gline_h
@@ -38,32 +38,6 @@ extern void   cleanup_glines();
 extern void   add_gline(struct ConfItem *);
 
 
-typedef struct gline_pending
-{
-  char oper_nick1[NICKLEN + 1];
-  char oper_user1[USERLEN + 1];
-  char oper_host1[HOSTLEN + 1];
-  const char* oper_server1;     /* point to scache */
-  char *reason1;
-  time_t time_request1;
-
-  char oper_nick2[NICKLEN + 1];
-  char oper_user2[USERLEN + 1];
-  char oper_host2[HOSTLEN + 1];
-  const char* oper_server2;     /* point to scache */
-  char *reason2;
-  time_t time_request2;
-  
-  time_t last_gline_time;       /* for expiring entry */
-  char user[USERLEN + 1];
-  char host[HOSTLEN + 1];
-}gline_pending_t;
-
-/* how long a pending G line can be around
- * 10 minutes should be plenty
- */
-
-#define GLINE_PENDING_EXPIRE 600
 #define CLEANUP_GLINES_TIME  300
 
 dlink_list pending_glines;

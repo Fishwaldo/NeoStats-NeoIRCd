@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_gline.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: s_gline.c,v 1.3 2002/09/12 05:45:20 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -53,7 +53,6 @@
 dlink_list glines;
 
 static void expire_glines(void);
-static void expire_pending_glines(void);
 
 /* add_gline
  *
@@ -81,7 +80,7 @@ find_gkill(struct Client* client_p, char* username)
   assert(NULL != client_p);
   if(client_p == NULL)
     return NULL;
-  if(IsServices(client_p)) return 0;
+  if(IsServices(client_p) || IsUlined(client_p)) return 0;
   return (IsExemptKline(client_p)) ? 0 : find_is_glined(client_p->host, username);
 }
 
@@ -151,7 +150,6 @@ void
 cleanup_glines()
 {
   expire_glines();
-  expire_pending_glines();
 }
 
 /*
@@ -184,37 +182,3 @@ expire_glines()
     }
 }
 
-/*
- * expire_pending_glines
- * 
- * inputs       - NONE
- * output       - NONE
- * side effects -
- *
- * Go through the pending gline list, expire any that haven't had
- * enough "votes" in the time period allowed
- */
-static void
-expire_pending_glines()
-{
-  dlink_node *pending_node;
-  dlink_node *next_node;
-  struct gline_pending *glp_ptr;
-
-  for(pending_node = pending_glines.head; pending_node; pending_node = next_node)
-    {
-      glp_ptr = pending_node->data;
-      next_node = pending_node->next;
-
-      if(((glp_ptr->last_gline_time + GLINE_PENDING_EXPIRE) <= CurrentTime)
-        || find_is_glined(glp_ptr->host, glp_ptr->user))
-      
-        {
-          MyFree(glp_ptr->reason1);
-          MyFree(glp_ptr->reason2);
-          MyFree(glp_ptr);
-          dlinkDelete(pending_node, &pending_glines);
-          free_dlink_node(pending_node);
-        }
-    }
-}

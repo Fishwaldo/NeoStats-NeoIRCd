@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.h,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: s_user.h,v 1.3 2002/09/12 05:45:19 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_user_h
@@ -44,7 +44,7 @@ extern int   do_local_user(char* ,struct Client* ,struct Client*,
 			   char* ,char *,char *,char *);
 
 extern int   do_remote_user(char* ,struct Client* ,struct Client*,
-			    char* ,char *,char *,char *,char *);
+			    char* ,char *,char *,char *,char *, unsigned int svsid);
 
 extern int   user_modes_from_c_to_bitmask[];
 extern void  show_isupport(struct Client *);

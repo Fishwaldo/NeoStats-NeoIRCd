@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_stats.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
+ *  $Id: m_stats.c,v 1.4 2002/09/12 05:45:20 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -80,7 +80,7 @@ _moddeinit(void)
   mod_del_cmd(&stats_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 
 const char* Lformat = ":%s %d %s %s %u %u %u %u %u :%u %u %s";
@@ -386,51 +386,11 @@ static void stats_glines(struct Client *source_p)
 {
   if(ConfigFileEntry.glines)
   {
-    dlink_node *pending_node;
     dlink_node *gline_node;
-    struct gline_pending *glp_ptr;
     struct ConfItem *kill_ptr;
-    char timebuffer[MAX_DATE_STRING];
-    struct tm *tmptr;
     char *host;
     char *name;
     char *reason;
-
-    if (dlink_list_length(&pending_glines) > 0)
-      sendto_one(source_p, ":%s NOTICE %s :Pending G-lines",
-                 me.name, source_p->name);
-
-    for(pending_node = pending_glines.head; pending_node; 
-        pending_node = pending_node->next)
-    {
-      glp_ptr = pending_node->data;
-      
-      tmptr = localtime(&glp_ptr->time_request1);
-      strftime(timebuffer, MAX_DATE_STRING, "%Y/%m/%d %H:%M:%S", tmptr);
-
-      sendto_one(source_p,
-         ":%s NOTICE %s :1) %s!%s@%s on %s requested gline at %s for %s@%s [%s]",
-	         me.name, source_p->name, glp_ptr->oper_nick1,
-		 glp_ptr->oper_user1, glp_ptr->oper_host1,
-		 glp_ptr->oper_server1, timebuffer,
-		 glp_ptr->user, glp_ptr->host, glp_ptr->reason1);
-
-      if(glp_ptr->oper_nick2[0])
-      {
-        tmptr = localtime(&glp_ptr->time_request2);
-	strftime(timebuffer, MAX_DATE_STRING, "%Y/%m/%d %H:%M:%S", tmptr);
-	sendto_one(source_p,
-	    ":%s NOTICE %s :2) %s!%s@%s on %s requested gline at %s for %s@%s [%s]",
-	           me.name, source_p->name, glp_ptr->oper_nick2,
-		   glp_ptr->oper_user2, glp_ptr->oper_host2,
-		   glp_ptr->oper_server2, timebuffer,
-		   glp_ptr->user, glp_ptr->host, glp_ptr->reason2);
-      }
-    }
-
-    if (dlink_list_length(&pending_glines) > 0)
-      sendto_one(source_p, ":%s NOTICE %s :End of Pending G-lines",
-                 me.name, source_p->name);
 
     for(gline_node = glines.head; gline_node; gline_node = gline_node->next)
     {

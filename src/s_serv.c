@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.3 2002/08/15 06:05:02 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -2130,7 +2130,7 @@ serv_connect(struct ConfItem *aconf, struct Client *by)
 
 	comm_connect_tcp(client_p->localClient->fd, aconf->host, aconf->port,
 			 (struct sockaddr *)&SOCKADDR(ipn), sizeof(struct irc_sockaddr), 
-			 serv_connect_callback, client_p, aconf->aftype, 30);
+			 serv_connect_callback, client_p, aconf->aftype, CONNECTTIMEOUT);
       }
     else if((aconf->aftype == AF_INET) && ServerInfo.specific_ipv4_vhost)
       {
@@ -2143,7 +2143,7 @@ serv_connect(struct ConfItem *aconf, struct Client *by)
 
 	comm_connect_tcp(client_p->localClient->fd, aconf->host, aconf->port,
 			 (struct sockaddr *)&SOCKADDR(ipn), sizeof(struct irc_sockaddr), 
-			 serv_connect_callback, client_p, aconf->aftype, 30);
+			 serv_connect_callback, client_p, aconf->aftype, CONNECTTIMEOUT);
       }
 #ifdef IPV6
     else if((aconf->aftype == AF_INET6) && ServerInfo.specific_ipv6_vhost)
@@ -2157,13 +2157,13 @@ serv_connect(struct ConfItem *aconf, struct Client *by)
 
 	comm_connect_tcp(client_p->localClient->fd, aconf->host, aconf->port,
 			 (struct sockaddr *)&SOCKADDR(ipn), sizeof(struct irc_sockaddr),
-			 serv_connect_callback, client_p, aconf->aftype, 30);
+			 serv_connect_callback, client_p, aconf->aftype, CONNECTTIMEOUT);
       }
 #endif
     else
       {
 	comm_connect_tcp(client_p->localClient->fd, aconf->host, aconf->port, NULL, 0, 
-			 serv_connect_callback, client_p, aconf->aftype, 30);
+			 serv_connect_callback, client_p, aconf->aftype, CONNECTTIMEOUT);
       }
 
     return 1;

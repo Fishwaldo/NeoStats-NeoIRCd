@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_who.c,v 1.10 2002/09/16 07:36:01 fishwaldo Exp $
+ *  $Id: m_who.c,v 1.11 2002/09/19 05:41:10 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -60,7 +60,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&who_msgtab);
 }
-const char *_version = "$Revision: 1.10 $";
+const char *_version = "$Revision: 1.11 $";
 #endif
 static void do_who_on_channel(struct Client *source_p,
 			      struct Channel *chptr, char *real_name,
@@ -241,43 +241,43 @@ static void m_who(struct Client *client_p,
  * 		  marks matched clients.
  *
  */
-static void who_common_channel(struct Client *source_p,dlink_list chain,
-		char *mask,int server_oper, int *maxmatches)
+static void
+who_common_channel(struct Client *source_p,dlink_list chain,
+		   char *mask,int server_oper, int *maxmatches)
 {
   dlink_node *clp;
- struct Client *target_p;
+  struct Client *target_p;
 
-  for (clp = chain.head; clp; clp = clp->next)
-   {
-     target_p = clp->data;
+  DLINK_FOREACH(clp, chain.head)
+  {
+    target_p = clp->data;
 
-     if (!IsInvisible(target_p) || IsMarked(target_p))
-       continue;
+    if (!IsInvisible(target_p) || IsMarked(target_p))
+      continue;
 
-     if (server_oper && !IsOper(target_p))
-       continue;
+    if (server_oper && !IsOper(target_p))
+      continue;
 
-     SetMark(target_p);
+    SetMark(target_p);
 
-     if ((mask == NULL) ||
-          match(mask, target_p->name) || match(mask, target_p->username) ||
-          match(mask, target_p->host) || match(mask, target_p->vhost) ||
-	  (match(mask, target_p->user->server) && 
-	   (IsOper(source_p) || !ConfigServerHide.hide_servers)) ||
-	  match(mask, target_p->info))
-     {
+    if ((mask == NULL) ||
+	match(mask, target_p->name) || match(mask, target_p->username) ||
+	match(mask, target_p->host) || 
+	(match(mask, target_p->user->server) && 
+	 (IsOper(source_p) || !ConfigServerHide.hide_servers)) ||
+	match(mask, target_p->info))
+    {
 		
-       do_who(source_p, target_p, NULL, "");
+      do_who(source_p, target_p, NULL, "");
 
-       if (*maxmatches > 0)
-       {
-         --(*maxmatches);
-         if(*maxmatches == 0)
-            return;
-       }
-
-     }
-   }
+      if (*maxmatches > 0)
+      {
+	--(*maxmatches);
+	if(*maxmatches == 0)
+	  return;
+      }
+    }
+  }
 }
 
 /*
@@ -291,7 +291,8 @@ static void who_common_channel(struct Client *source_p,dlink_list chain,
  *		  this is slightly expensive on EFnet ...
  */
 
-static void who_global(struct Client *source_p,char *mask, int server_oper)
+static void
+who_global(struct Client *source_p,char *mask, int server_oper)
 {
   struct Channel *chptr=NULL;
   struct Client *target_p;
@@ -299,7 +300,7 @@ static void who_global(struct Client *source_p,char *mask, int server_oper)
   int   maxmatches = 500;
 
   /* first, list all matching INvisible clients on common channels */
-  for (lp = source_p->user->channel.head; lp; lp = lp->next)
+  DLINK_FOREACH(lp, source_p->user->channel.head)
   {
      chptr = lp->data;
      who_common_channel(source_p,chptr->chanadmins,mask,server_oper,&maxmatches);
@@ -356,10 +357,9 @@ static void who_global(struct Client *source_p,char *mask, int server_oper)
  * side effects - do a who on given channel
  */
 
-static void do_who_on_channel(struct Client *source_p,
-			      struct Channel *chptr,
-			      char *chname,
-			      int server_oper, int member)
+static void
+do_who_on_channel(struct Client *source_p, struct Channel *chptr,
+			      char *chname, int server_oper, int member)
 {
   char flags[NUMLISTS][2];
 
@@ -482,14 +482,13 @@ static void do_who_list(struct Client *source_p, struct Channel *chptr,
  * side effects - do a who on given person
  */
 
-static void do_who(struct Client *source_p,
-                   struct Client *target_p,
-                   char *chname,
-                   char *op_flags)
+static void
+do_who(struct Client *source_p, struct Client *target_p,
+                   char *chname, char *op_flags)
 {
   char  status[5];
-  ircsprintf(status,"%c%s%s", 
-	     target_p->user->away ? 'G' : 'H',
+
+  ircsprintf(status,"%c%s%s", target_p->user->away ? 'G' : 'H',
 	     IsOper(target_p) ? "*" : "", op_flags );
 
   if(ConfigServerHide.hide_servers)
@@ -517,10 +516,9 @@ static void do_who(struct Client *source_p,
 **      parv[1] = nickname mask list
 **      parv[2] = additional selection flag, only 'o' for now.
 */
-static void ms_who(struct Client *client_p,
-                  struct Client *source_p,
-                  int parc,
-                  char *parv[])
+static void
+ms_who(struct Client *client_p, struct Client *source_p,
+       int parc, char *parv[])
 {
   /* If its running as a hub, and linked with lazy links
    * then allow leaf to use normal client m_who()
@@ -528,10 +526,10 @@ static void ms_who(struct Client *client_p,
    */
 
   if( ServerInfo.hub )
-    {
-      if(!IsCapable(client_p->from,CAP_LL))
-	return;
-    }
+  {
+    if(!IsCapable(client_p->from,CAP_LL))
+      return;
+  }
 
   m_who(client_p,source_p,parc,parv);
 }

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_auth.c,v 1.5 2002/09/13 16:30:05 fishwaldo Exp $
+ *  $Id: s_auth.c,v 1.6 2002/09/19 05:41:11 fishwaldo Exp $
  */
 
 /*
@@ -348,6 +348,21 @@ static int start_auth_query(struct AuthRequest* auth)
  * Output        - NULL if no valid ident found, otherwise pointer to name
  * Side effects  -
  */
+/*
+ * A few questions have been asked about this mess, obviously
+ * it should have been commented better the first time.
+ * The original idea was to remove all references to libc from ircd-hybrid.
+ * Instead of having to write a replacement for sscanf(), I did a
+ * rather gruseome parser here so we could remove this function call.
+ * Note, that I had also removed a few floating point printfs as well (though
+ * now we are still stuck with a few...)
+ * Remember, we have a replacement ircd sprintf, we have bleeps fputs lib
+ * it would have been nice to remove some unneeded code.
+ * Oh well. If we don't remove libc stuff totally, then it would be
+ * far cleaner to use sscanf()
+ *
+ * - Dianora
+ */
 static char* GetValidIdent(char *buf)
 {
   int   remp = 0;
@@ -361,42 +376,33 @@ static char* GetValidIdent(char *buf)
   /* All this to get rid of a sscanf() fun. */
   remotePortString = buf;
   
-  colon1Ptr = strchr(remotePortString,':');
-  if(!colon1Ptr)
+  if((colon1Ptr = strchr(remotePortString,':')) == NULL)
     return 0;
-
   *colon1Ptr = '\0';
   colon1Ptr++;
-  colon2Ptr = strchr(colon1Ptr,':');
-  if(!colon2Ptr)
-    return 0;
 
+  if((colon2Ptr = strchr(colon1Ptr,':')) == NULL)
+    return 0;
   *colon2Ptr = '\0';
   colon2Ptr++;
-  commaPtr = strchr(remotePortString, ',');
-
-  if(!commaPtr)
+  
+  if((commaPtr = strchr(remotePortString, ',')) == NULL)
     return 0;
-
   *commaPtr = '\0';
   commaPtr++;
 
-  remp = atoi(remotePortString);
-  if(!remp)
+  if((remp = atoi(remotePortString)) == 0)
     return 0;
               
-  locp = atoi(commaPtr);
-  if(!locp)
+  if((locp = atoi(commaPtr)) == 0)
     return 0;
 
   /* look for USERID bordered by first pair of colons */
-  if(!strstr(colon1Ptr, "USERID"))
+  if(strstr(colon1Ptr, "USERID") == NULL)
     return 0;
 
-  colon3Ptr = strchr(colon2Ptr,':');
-  if(!colon3Ptr)
+  if((colon3Ptr = strchr(colon2Ptr,':')) == NULL)
     return 0;
-  
   *colon3Ptr = '\0';
   colon3Ptr++;
   return(colon3Ptr);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c,v 1.7 2002/09/17 07:08:56 fishwaldo Exp $
+ *  $Id: s_conf.c,v 1.8 2002/09/19 05:41:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -229,9 +229,8 @@ det_confs_butmask(struct Client *client_p, int mask)
   dlink_node *link_next;
   struct ConfItem *aconf;
 
-  for (dlink = client_p->localClient->confs.head; dlink; dlink = link_next)
+  DLINK_FOREACH_SAFE(dlink, link_next, client_p->localClient->confs.head)
   {
-    link_next = dlink->next;
     aconf = dlink->data;
 
     if ((aconf->status & mask) == 0)
@@ -498,7 +497,7 @@ verify_access(struct Client* client_p, const char* username)
 {
   struct ConfItem* aconf;
   struct ConfItem* gkill_conf;
-  char       non_ident[USERLEN + 1];
+  char non_ident[USERLEN + 1];
 
   if (IsGotId(client_p))
     {
@@ -704,7 +703,6 @@ find_or_add_ip(struct irc_inaddr *ip_in)
  *                 and number of ip#'s for that ip decremented.
  *                 if ip # count reaches 0, the IP_ENTRY is returned
  *                 to the free_ip_enties link list.
- * XXX: Broken for IPV6
  */
 
 void 
@@ -744,28 +742,38 @@ remove_one_ip(struct irc_inaddr *ip_in)
  * side effects - hopefully, none
  */
 
-static int 
+#ifndef IPV6
+static int  
 hash_ip(struct irc_inaddr *addr)
 {
-#ifndef IPV6
   int hash;
   u_int32_t ip;
 
   ip = ntohl(PIN_ADDR(addr));
   hash = ((ip >> 12) + ip) & (IP_HASH_SIZE-1);
   return(hash);
-#else
-  unsigned int hash = 0;
-  char *ip = (char *) &PIN_ADDR(addr);
-
-  while (*ip)
-    { 
-      hash = (hash << 4) - (hash + (unsigned char)*ip++);
-    }
-
-  return(hash & (IP_HASH_SIZE - 1));
-#endif
 }
+#else /* IPV6 */
+static int
+hash_ip(struct irc_inaddr *addr)
+{
+  int hash;
+  u_int32_t *ip = (unsigned long *)&PIN_ADDR(addr);
+
+  if(IN6_IS_ADDR_V4MAPPED((struct in6_addr *)ip))
+  {
+     hash = ((ip[3] >> 12) + ip[3]) & (IP_HASH_SIZE-1);
+     return(hash);
+  } 
+    
+  hash = ip[0] ^ ip[3];
+  hash ^= hash >> 16;  
+  hash ^= hash >> 8;   
+  hash = hash & (IP_HASH_SIZE - 1);
+  return(hash);
+}
+#endif /* IPV6 */
+
 
 /*
  * count_ip_hash
@@ -871,32 +879,32 @@ detach_conf(struct Client* client_p,struct ConfItem* aconf)
   if(aconf == NULL)
     return(-1);
 
-  for(ptr = client_p->localClient->confs.head; ptr; ptr = ptr->next)
+  DLINK_FOREACH(ptr, client_p->localClient->confs.head)
+  {
+    if (ptr->data == aconf)
     {
-      if (ptr->data == aconf)
-        {
-          if ((aconf) && (ClassPtr(aconf)))
-            {
-              if (aconf->status & CONF_CLIENT_MASK)
-                {
-                  if (ConfLinks(aconf) > 0)
-                    --ConfLinks(aconf);
-                }
-              if (ConfMaxLinks(aconf) == -1 && ConfLinks(aconf) == 0)
-                {
-                  free_class(ClassPtr(aconf));
-                  ClassPtr(aconf) = NULL;
-                }
-            }
-          if (aconf && !--aconf->clients && IsIllegal(aconf))
-            {
-              free_conf(aconf);
-            }
-	  dlinkDelete(ptr, &client_p->localClient->confs);
-          free_dlink_node(ptr);
-          return(0);
-        }
+      if ((aconf) && (ClassPtr(aconf)))
+      {
+	if (aconf->status & CONF_CLIENT_MASK)
+	{
+	  if (ConfLinks(aconf) > 0)
+	    --ConfLinks(aconf);
+	}
+	if (ConfMaxLinks(aconf) == -1 && ConfLinks(aconf) == 0)
+	{
+	  free_class(ClassPtr(aconf));
+	  ClassPtr(aconf) = NULL;
+	}
+      }
+      if (aconf && !--aconf->clients && IsIllegal(aconf))
+      {
+	free_conf(aconf);
+      }
+      dlinkDelete(ptr, &client_p->localClient->confs);
+      free_dlink_node(ptr);
+      return(0);
     }
+  }
   return(-1);
 }
 
@@ -913,10 +921,11 @@ is_attached(struct Client *client_p, struct ConfItem *aconf)
 {
   dlink_node *ptr=NULL;
 
-  for (ptr = client_p->localClient->confs.head; ptr; ptr = ptr->next)
+  DLINK_FOREACH(ptr, client_p->localClient->confs.head)
+  {
     if (ptr->data == aconf)
       break;
-  
+  }
   return((ptr != NULL) ? 1 : 0);
 }
 
@@ -937,33 +946,32 @@ attach_conf(struct Client *client_p,struct ConfItem *aconf)
   dlink_node *lp;
 
   if (is_attached(client_p, aconf))
-    {
-      return(1);
-    }
+  {
+    return(1);
+  }
   if (IsIllegal(aconf))
-    {
-      return(NOT_AUTHORIZED);
-    }
+  {
+    return(NOT_AUTHORIZED);
+  }
 
   if ((aconf->status & CONF_OPERATOR) == 0)
+  {
+    if ((aconf->status & CONF_CLIENT) &&
+	ConfLinks(aconf) >= ConfMaxLinks(aconf) && ConfMaxLinks(aconf) > 0)
     {
-      if ((aconf->status & CONF_CLIENT) &&
-          ConfLinks(aconf) >= ConfMaxLinks(aconf) && ConfMaxLinks(aconf) > 0)
-        {
-          if (!IsConfExemptLimits(aconf))
-            {
-              return(I_LINE_FULL); 
-            }
-          else
-            {
-              send(client_p->localClient->fd,
-                   "NOTICE FLINE :I: line is full, but you have an >I: line!\n",
-                   56, 0);
-              SetExemptLimits(client_p);
-            }
-
-        }
+      if (!IsConfExemptLimits(aconf))
+      {
+	return(I_LINE_FULL); 
+      }
+      else
+      {
+	send(client_p->localClient->fd,
+	     "NOTICE FLINE :I: line is full, but you have an >I: line!\n",
+	     56, 0);
+	SetExemptLimits(client_p);
+      }
     }
+  }
 
   if(aconf->status & FLAGS2_RESTRICTED)
     SetRestricted(client_p);
@@ -992,7 +1000,7 @@ int
 attach_confs(struct Client* client_p, const char* name, int statmask)
 {
   struct ConfItem* tmp;
-  int              conf_counter = 0;
+  int conf_counter = 0;
   
   for (tmp = ConfigItemList; tmp; tmp = tmp->next)
     {
@@ -1106,13 +1114,13 @@ find_conf_name(dlink_list *list, const char* name, int statmask)
   dlink_node *ptr;
   struct ConfItem* aconf;
   
-  for (ptr = list->head; ptr; ptr = ptr->next)
-    {
-      aconf = ptr->data;
-      if ((aconf->status & statmask) && aconf->name && 
-          (!irccmp(aconf->name, name) || match(aconf->name, name)))
-        return(aconf);
-    }
+  DLINK_FOREACH(ptr, list->head)
+  {
+    aconf = ptr->data;
+    if ((aconf->status & statmask) && aconf->name && 
+	(!irccmp(aconf->name, name) || match(aconf->name, name)))
+      return(aconf);
+  }
   return(NULL);
 }
 
@@ -1526,7 +1534,7 @@ int
 conf_connect_allowed(struct irc_inaddr *addr, int aftype)
 {
   IP_ENTRY *ip_found;
-  struct ConfItem *aconf = find_dline(addr, aftype);
+  struct ConfItem *aconf = find_dline_conf(addr,aftype);
  
   /* DLINE exempt also gets you out of static limits/pacing... */
   if (aconf && (aconf->status & CONF_EXEMPTDLINE))
@@ -1562,9 +1570,10 @@ find_kill(struct Client* client_p)
   assert(client_p != NULL);
   if(client_p == NULL)
     return NULL;
-  aconf = find_address_conf(client_p->host, client_p->username,
-			    &client_p->localClient->ip,
-			    client_p->localClient->aftype);
+
+  aconf = find_kline_conf(client_p->host, client_p->username,
+			  &client_p->localClient->ip,
+			  client_p->localClient->aftype);
   if (aconf == NULL)
     return aconf;
   if(aconf->status & CONF_KILL)
@@ -1616,10 +1625,9 @@ expire_tklines(dlink_list *tklist)
   dlink_node *kill_node;
   dlink_node *next_node;
   struct ConfItem *kill_ptr;
-  for (kill_node = tklist->head; kill_node; kill_node = next_node)
+  DLINK_FOREACH_SAFE(kill_node, next_node, tklist->head)
     {
       kill_ptr = kill_node->data;
-      next_node = kill_node->next;
 
       if (kill_ptr->hold <= CurrentTime)
 	{
@@ -1810,20 +1818,22 @@ get_oper_name(struct Client *client_p)
   static char buffer[NICKLEN+USERLEN+HOSTLEN+HOSTLEN+5];
 
   if (MyConnect(client_p))
+  {
+    DLINK_FOREACH(cnode, client_p->localClient->confs.head)
     {
-      for (cnode=client_p->localClient->confs.head; cnode; cnode=cnode->next)
-	if (((struct ConfItem*)cnode->data)->status & CONF_OPERATOR)
-	  {
-	    ircsprintf(buffer, "%s!%s@%s{%s}", client_p->name,
-		       client_p->username, client_p->host,
-		       ((struct ConfItem*)cnode->data)->name);
-	    return(buffer);
-	  }
-      /* Probably should assert here for now. If there is an oper out there 
-       * with no oper{} conf attached, it would be good for us to know...
-       */
-      assert(0); /* Oper without oper conf! */
+      if (((struct ConfItem*)cnode->data)->status & CONF_OPERATOR)
+      {
+	ircsprintf(buffer, "%s!%s@%s{%s}", client_p->name,
+		   client_p->username, client_p->host,
+		   ((struct ConfItem*)cnode->data)->name);
+	return(buffer);
+      }
     }
+    /* Probably should assert here for now. If there is an oper out there 
+     * with no oper{} conf attached, it would be good for us to know...
+     */
+    assert(0); /* Oper without oper conf! */
+  }
   ircsprintf(buffer, "%s!%s@%s{%s}", client_p->name,
 	     client_p->username, client_p->host, client_p->servptr->name);
   return(buffer);
@@ -2332,10 +2342,6 @@ conf_add_d_conf(struct ConfItem *aconf)
 void 
 conf_add_x_conf(struct ConfItem *aconf)
 {
-  MyFree(aconf->user);
-  aconf->user = NULL;
-  aconf->name = aconf->host;
-  aconf->host = (char *)NULL;
   aconf->next = x_conf;
   x_conf = aconf;
 }

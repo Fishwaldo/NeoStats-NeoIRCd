@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.8 2002/09/13 16:30:04 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.9 2002/09/19 05:41:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.8 $";
+const char *_version = "$Revision: 1.9 $";
 #endif
 
 /*
@@ -106,15 +106,16 @@ const char *_version = "$Revision: 1.8 $";
  *       parv[0] = sender prefix
  *       parv[1] = nickname
  */
-static void mr_nick(struct Client *client_p, struct Client *source_p, 
-                    int parc, char *parv[])
+static void
+mr_nick(struct Client *client_p, struct Client *source_p,
+        int parc, char *parv[])
 {
   struct   Client *target_p, *uclient_p;
   char     nick[NICKLEN];
   char*    s;
   dlink_node *ptr;
    
-  if(parc < 2)
+  if(parc < 2 || BadPtr(parv[1]))
   {
     sendto_one(source_p, form_str(ERR_NONICKNAMEGIVEN),
                me.name, BadPtr(parv[0]) ? "*" : parv[0]);
@@ -124,7 +125,7 @@ static void mr_nick(struct Client *client_p, struct Client *source_p,
   /* Terminate the nick at the first ~ */
   if ((s = strchr(parv[1], '~')))
     *s = '\0';
-
+                               
   /* copy the nick and terminate it */
   strlcpy(nick, parv[1], NICKLEN);
 
@@ -203,7 +204,8 @@ static void mr_nick(struct Client *client_p, struct Client *source_p,
   char     nick[NICKLEN];
   struct   Client *target_p;
 
-  if(parc < 2)
+  /* XXX BadPtr is needed */
+  if(parc < 2 || BadPtr(parv[1]))
   {
     sendto_one(source_p, form_str(ERR_NONICKNAMEGIVEN),
                me.name, parv[0]);
@@ -313,14 +315,16 @@ static void mr_nick(struct Client *client_p, struct Client *source_p,
  *    parv[8] = svsid
  *    parv[9] = ircname
  */
-static void ms_nick(struct Client *client_p, struct Client *source_p,
-                    int parc, char *parv[])
+static void
+ms_nick(struct Client *client_p, struct Client *source_p,
+	int parc, char *parv[])
 {
   struct Client* target_p;
   char     nick[NICKLEN];
   time_t   newts = 0;
 
-  if(parc < 2)
+  /* XXX BadPtr is needed */
+  if(parc < 2 || BadPtr(parv[1]))
   {
     sendto_one(source_p, form_str(ERR_NONICKNAMEGIVEN), me.name, parv[0]);
     return;
@@ -414,8 +418,9 @@ static void ms_nick(struct Client *client_p, struct Client *source_p,
 /*
  * ms_client()
  */
-static void ms_client(struct Client *client_p, struct Client *source_p,
-                      int parc, char *parv[])
+static void
+ms_client(struct Client *client_p, struct Client *source_p,
+	  int parc, char *parv[])
 {
   struct Client* target_p;
   char     nick[NICKLEN];
@@ -424,7 +429,11 @@ static void ms_client(struct Client *client_p, struct Client *source_p,
   char    *name;
 
   id = parv[8];
-  name = parv[10];
+  name = parv[9];
+
+  /* XXX can this happen ? */
+  if (BadPtr(parv[1]))
+    return;
 
   /* parse the nickname */
   strlcpy(nick, parv[1], NICKLEN);
@@ -541,8 +550,9 @@ static int check_clean_nick(struct Client *client_p, struct Client *source_p,
  * output	- none
  * side effects - if username is erroneous, return 1
  */
-static int check_clean_user(struct Client *client_p, char *nick, 
-                            char *user, char *server)
+static int
+check_clean_user(struct Client *client_p, char *nick, 
+		 char *user, char *server)
 {
   if(strlen(user) > USERLEN)
   {
@@ -574,8 +584,9 @@ static int check_clean_user(struct Client *client_p, char *nick,
  * output	- none
  * side effects - if hostname is erroneous, return 1
  */
-static int check_clean_host(struct Client *client_p, char *nick,
-                           char *host, char *server)
+static int
+check_clean_host(struct Client *client_p, char *nick,
+		 char *host, char *server)
 {
   if(strlen(host) > HOSTLEN)
   {
@@ -604,14 +615,17 @@ static int check_clean_host(struct Client *client_p, char *nick,
  * output	- none
  * side effects - walks through the nickname, returning 0 if erroneous
  */
-static int clean_nick_name(char *nick)
+static int
+clean_nick_name(char *nick)
 {
   assert(nick);
   if(nick == NULL)
     return 0;
 
-  /* nicks cant start with a digit or - */
-  if (*nick == '-' || IsDigit(*nick))
+  /* nicks cant start with a digit or - or be 0 length */
+  /* This closer duplicates behaviour of hybrid-6 */
+
+  if (*nick == '-' || IsDigit(*nick) || *nick == '\0')
     return 0;
 
   for(; *nick; nick++)
@@ -629,7 +643,8 @@ static int clean_nick_name(char *nick)
  * output	- none
  * side effects - walks through the username, returning 0 if erroneous
  */
-static int clean_user_name(char *user)
+static int
+clean_user_name(char *user)
 {
   assert(user);
   if(user == NULL)
@@ -650,7 +665,8 @@ static int clean_user_name(char *user)
  * output	- none
  * side effects - walks through the hostname, returning 0 if erroneous
  */
-static int clean_host_name(char *host)
+static int
+clean_host_name(char *host)
 {
   assert(host);
   if(host == NULL)

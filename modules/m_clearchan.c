@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_clearchan.c,v 1.1 2002/09/17 11:03:21 fishwaldo Exp $
+ *   $Id: m_clearchan.c,v 1.2 2002/09/19 05:41:10 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -76,7 +76,7 @@ _moddeinit(void)
   mod_del_cmd(&clearchan_msgtab);
 }
 
-char *_version = "$Revision: 1.1 $";
+char *_version = "$Revision: 1.2 $";
 
 /*
 ** mo_clearchan
@@ -117,11 +117,11 @@ static void mo_clearchan(struct Client *client_p, struct Client *source_p,
 
    sendto_wallops_flags(FLAGS_WALLOP, &me, 
             "CLEARCHAN called for [%s] by %s!%s@%s",
-            parv[1], source_p->name, source_p->username, source_p->host);
+            parv[1], source_p->name, source_p->username, source_p->vhost);
    sendto_server(NULL, source_p, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
                  ":%s WALLOPS :CLEARCHAN called for [%s] by %s!%s@%s",
                  me.name, parv[1], source_p->name, source_p->username,
-                 source_p->host);
+                 source_p->vhost);
    ilog(L_NOTICE, "CLEARCHAN called for [%s] by %s!%s@%s",
        parv[1], source_p->name, source_p->username, source_p->host);
 
@@ -137,7 +137,7 @@ static void mo_clearchan(struct Client *client_p, struct Client *source_p,
   sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN %s",
                        source_p->name,
                        source_p->username,
-                       source_p->host,
+                       source_p->vhost,
                        root_chptr->chname);
   sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s +a %s",
                        me.name, chptr->chname, source_p->name);

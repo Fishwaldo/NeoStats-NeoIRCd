@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_testline.c,v 1.3 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_testline.c,v 1.4 2002/09/19 05:41:10 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -59,7 +59,7 @@ _moddeinit(void)
   mod_del_cmd(&testline_msgtab);
 }
  
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
  * mo_testline
@@ -92,7 +92,7 @@ static void mo_testline(struct Client *client_p, struct Client *source_p,
       {
        if ((t=parse_netmask(given_name, &ip, &host_mask))!= HM_HOST)
        {
-        aconf = find_dline(&ip,
+        aconf = find_dline_conf(&ip,
 #ifdef IPV6
                   (t==HM_IPV6) ? AF_INET6 : AF_INET
 #else

@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab,v 1.5 2002/09/13 16:30:04 fishwaldo Exp $
+ *   $Id: messages.tab,v 1.6 2002/09/19 05:41:11 fishwaldo Exp $
  */
 
 static  char *  replies[] = {
@@ -362,7 +362,7 @@ static  char *  replies[] = {
 /* 335 */       NULL,
 /* 336 */       NULL,
 /* 337 */       NULL,
-/* 338 */       NULL,
+/* 338 RPL_WHOISACTUALLY */	":%s 338 %s :%s is actually %s@%s [%s]",
 /* 339 */       NULL,
 /* 340 */       NULL,
 /* 341 RPL_INVITING, */         ":%s 341 %s %s %s",
@@ -729,7 +729,7 @@ static  char *  replies[] = {
 /* 699 */	NULL,
 /* 700 */	NULL,
 /* 701 */	NULL,
-/* 702 RPL_MODLIST, */		":%s 702 %s %s 0x%x %s",
+/* 702 RPL_MODLIST, */		":%s 702 %s %s 0x%x %s %s",
 /* 703 RPL_ENDOFMODLIST, */	":%s 703 %s :End of /MODLIST.",
 /* 704 RPL_HELPSTART, */	":%s 704 %s %s :%s",
 /* 705 RPL_HELPTXT, */		":%s 705 %s %s :%s",

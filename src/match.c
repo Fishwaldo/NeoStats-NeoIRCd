@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: match.c,v 1.3 2002/09/13 06:56:46 fishwaldo Exp $
+ * $Id: match.c,v 1.4 2002/09/19 05:41:11 fishwaldo Exp $
  *
  */
 
@@ -206,6 +206,75 @@ int match_esc(const char *mask, const char *name)
     }
   }
   return 0;
+}
+
+static inline int 
+comp_with_mask(void *addr, void *dest, u_int mask)
+{
+  if (memcmp(addr, dest, mask / 8) == 0) 
+  {
+    int n = mask / 8;
+    int m = ((-1) << (8 - (mask % 8)));
+    if (mask % 8 == 0 || 
+       (((u_char *) addr)[n] & m) == (((u_char *) dest)[n] & m))  
+      return (1);
+  }
+  return (0);
+}
+
+
+/* match_cidr()
+ *
+ * Input - mask, address
+ * Ouput - 1 = Matched 0 = Did not match
+ */
+
+int
+match_cidr(const char *s1, const char *s2)
+{
+  struct irc_inaddr ipaddr, maskaddr;
+  char address[NICKLEN + USERLEN + HOSTLEN + 6], mask[NICKLEN + USERLEN + HOSTLEN + 6], *ipmask, *ip, *len;
+  int cidrlen, aftype;
+  strcpy(mask, s1);
+  strcpy(address, s2);
+  
+  ipmask = strrchr(mask, '@');
+  if(ipmask == NULL)
+    return 0;
+  
+  *ipmask++ = '\0';
+  
+  ip = strrchr(address, '@');
+  if(ip == NULL)
+    return 0;
+  *ip++ = '\0';
+  
+  len = strrchr(ipmask, '/');
+  if(len == NULL)
+    return 0;
+  
+  *len++ = '\0';
+  
+  cidrlen = atoi(len);
+  if(cidrlen == 0) 
+    return 0;
+  
+#ifdef IPV6
+  if(strchr(ip, ':') && strchr(ipmask, ':'))
+    aftype = AF_INET6;
+  else
+#endif
+  if(!strchr(ip, ':') && !strchr(ipmask, ':'))
+    aftype = AF_INET;
+  else
+    return 0;
+  
+  inetpton(aftype, ip, &ipaddr);
+  inetpton(aftype, ipmask, &maskaddr);
+  if(comp_with_mask(&IN_ADDR(ipaddr), &IN_ADDR(maskaddr), cidrlen) && match(mask, address))
+    return 1;
+  else
+    return 0;
 }
 
 /* collapse()

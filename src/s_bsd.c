@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_bsd.c,v 1.6 2002/09/17 11:23:58 fishwaldo Exp $
+ *  $Id: s_bsd.c,v 1.7 2002/09/19 05:41:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -170,7 +170,8 @@ void report_error(int level, const char* text, const char* who, int error)
  * output       - returns true (1) if successful, false (0) otherwise
  * side effects -
  */
-int set_sock_buffers(int fd, int size)
+int
+set_sock_buffers(int fd, int size)
 {
   if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*) &size, sizeof(size)) ||
       setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char*) &size, sizeof(size)))
@@ -186,7 +187,8 @@ int set_sock_buffers(int fd, int size)
  * side effects - disable_sock_options - if remote has any socket options set,
  *                disable them 
  */
-int disable_sock_options(int fd)
+int
+disable_sock_options(int fd)
 {
 #if defined(IP_OPTIONS) && defined(IPPROTO_IP) && !defined(IPV6)
   if (setsockopt(fd, IPPROTO_IP, IP_OPTIONS, NULL, 0))

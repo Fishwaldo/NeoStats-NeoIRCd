@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_gline.c,v 1.5 2002/09/13 16:30:05 fishwaldo Exp $
+ *  $Id: s_gline.c,v 1.6 2002/09/19 05:41:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,16 +97,16 @@ find_is_glined(const char* host, const char* name)
   dlink_node *gline_node;
   struct ConfItem *kill_ptr; 
 
-  for(gline_node = glines.head; gline_node; gline_node = gline_node->next)
+  DLINK_FOREACH(gline_node, glines.head)
+  {
+    kill_ptr = gline_node->data;
+    if( (kill_ptr->name && (!name || match(kill_ptr->name,name)))
+	&&
+	(kill_ptr->host && (!host || match(kill_ptr->host,host))))
     {
-      kill_ptr = gline_node->data;
-      if( (kill_ptr->name && (!name || match(kill_ptr->name,name)))
-	  &&
-	  (kill_ptr->host && (!host || match(kill_ptr->host,host))))
-        {
-          return(kill_ptr);
-        }
+      return(kill_ptr);
     }
+  }
 
   return((struct ConfItem *)NULL);
 }
@@ -124,18 +124,18 @@ remove_gline_match(const char* user, const char* host)
   dlink_node *gline_node;
   struct ConfItem *kill_ptr;
 
-  for(gline_node = glines.head; gline_node; gline_node = gline_node->next)
+  DLINK_FOREACH(gline_node, glines.head)
+  {
+    kill_ptr = gline_node->data;
+    if(!irccmp(kill_ptr->host,host) && !irccmp(kill_ptr->name,user))
     {
-      kill_ptr = gline_node->data;
-      if(!irccmp(kill_ptr->host,host) && !irccmp(kill_ptr->name,user))
-	{
-          free_conf(kill_ptr);
-          dlinkDelete(gline_node, &glines);
-          free_dlink_node(gline_node);
-          return 1;
-	}
+      free_conf(kill_ptr);
+      dlinkDelete(gline_node, &glines);
+      free_dlink_node(gline_node);
+      return (1);
     }
-  return 0;
+  }
+  return (0);
 }
 
 /*
@@ -168,18 +168,17 @@ expire_glines()
   dlink_node *next_node;
   struct ConfItem *kill_ptr;
 
-  for(gline_node = glines.head; gline_node; gline_node = next_node)
-    {
-      kill_ptr = gline_node->data;
-      next_node = gline_node->next;
+  DLINK_FOREACH_SAFE(gline_node, next_node, glines.head)
+  {
+    kill_ptr = gline_node->data;
 
-      if(kill_ptr->hold <= CurrentTime)
-	{
-	  free_conf(kill_ptr);
-          dlinkDelete(gline_node, &glines);
-          free_dlink_node(gline_node);
-	}
+    if(kill_ptr->hold <= CurrentTime)
+    {
+      free_conf(kill_ptr);
+      dlinkDelete(gline_node, &glines);
+      free_dlink_node(gline_node);
     }
+  }
 }
 
 /* 

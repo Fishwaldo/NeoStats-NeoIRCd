@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.15 2002/09/17 06:09:35 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.16 2002/09/19 05:41:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -136,7 +136,7 @@ static int mode_count;
 
 static int hideops_changed;
 
-static int mode_limit;
+static int mode_limit;		/* number of modes set other than simple */
 
 extern BlockHeap *ban_heap;
 
@@ -214,7 +214,7 @@ add_id(struct Client *client_p, struct Channel *chptr, char *banid, int type)
       return 0;
   }
 
-  for (ban = list->head; ban; ban = ban->next)
+  DLINK_FOREACH(ban, list->head)
   {
     actualBan = ban->data;
     if (match(actualBan->banstr, banid))
@@ -256,6 +256,12 @@ add_id(struct Client *client_p, struct Channel *chptr, char *banid, int type)
  * from orabidoo
  * modified 8/9/00 by is: now we handle add ban types here
  * (invex/excemp/etc)
+ *
+ * inputs	- pointer to channel
+ *		- pointer to ban id
+ *		- type of ban, i.e. ban, exception, invex
+ * output	- 0 for failure, 1 for success
+ * side effects	-
  */
 static int
 del_id(struct Channel *chptr, char *banid, int type)
@@ -264,8 +270,8 @@ del_id(struct Channel *chptr, char *banid, int type)
   dlink_node *ban;
   struct Ban *banptr;
 
-  if (!banid)
-    return 0;
+  if (banid == NULL)
+    return (0);
 
   switch (type)
   {
@@ -281,10 +287,10 @@ del_id(struct Channel *chptr, char *banid, int type)
     default:
       sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
                            "del_id() called with unknown ban type %d!", type);
-      return 0;
+      return (0);
   }
 
-  for (ban = list->head; ban; ban = ban->next)
+  DLINK_FOREACH(ban, list->head)
   {
     banptr = ban->data;
 
@@ -303,10 +309,10 @@ del_id(struct Channel *chptr, char *banid, int type)
       dlinkDelete(ban, list);
       free_dlink_node(ban);
 
-      return 1;
+      return (1);
     }
   }
-  return 0;
+  return (0);
 }
 
 /*
@@ -701,7 +707,7 @@ chm_simple(struct Client *client_p, struct Client *source_p,
     sendto_one(source_p, ":%s NOTICE %s :Only Services can (un)set +r", me.name, source_p->name);   
     return;
   }
-  
+
   /* setting + */
   if ((dir == MODE_ADD) && !(chptr->mode.mode & mode_type))
   {
@@ -738,7 +744,7 @@ chm_hideops(struct Client *client_p, struct Client *source_p,
   if (alev < CHACCESS_ADMIN)
   {
     if (!(*errors & SM_ERR_NOOPS))
-      sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED), me.name,
+      sendto_one(source_p, form_str(ERR_CHANAPRIVSNEEDED), me.name,
                  source_p->name, chname);
     *errors |= SM_ERR_NOOPS;
     return;
@@ -784,7 +790,7 @@ chm_ban(struct Client *client_p, struct Client *source_p,
     *errors |= SM_ERR_RPL_B;
 
     if ((chptr->mode.mode & MODE_HIDEOPS) && (alev < CHACCESS_HALFOP))
-      for (ptr = chptr->banlist.head; ptr; ptr = ptr->next)
+      DLINK_FOREACH(ptr, chptr->banlist.head)
       {
         banptr = ptr->data;
         sendto_one(client_p, form_str(RPL_BANLIST),
@@ -792,7 +798,7 @@ chm_ban(struct Client *client_p, struct Client *source_p,
                    banptr->banstr, me.name, banptr->when);
       }
     else
-      for (ptr = chptr->banlist.head; ptr; ptr = ptr->next)
+      DLINK_FOREACH(ptr, chptr->banlist.head)
       {
         banptr = ptr->data;
         sendto_one(client_p, form_str(RPL_BANLIST),
@@ -823,12 +829,9 @@ chm_ban(struct Client *client_p, struct Client *source_p,
   else
     mask = pretty_mask(raw_mask);
     
-  /* Cant do this - older servers dont.. it WILL cause a desync, but should
-   * be limited by our input buffer anyway --fl_
-   * 
-   * if (strlen(mask) > HOSTLEN+NICKLEN+USERLEN)
-   *   return;
-   */
+  /* We'd have problems parsing this, hyb6 does it too */
+    if (strlen(mask) > (MODEBUFLEN - 2))
+      return;
 
   /* if we're adding a NEW id */
   if (dir == MODE_ADD) 
@@ -844,10 +847,10 @@ chm_ban(struct Client *client_p, struct Client *source_p,
   }
   else if (dir == MODE_DEL)
   {
-    if (del_id(chptr, mask, CHFL_BAN) != 0)
+    if (del_id(chptr, mask, CHFL_BAN) == 0)
     {
       /* mask isn't a valid ban, check raw_mask */
-      if((del_id(chptr, raw_mask, CHFL_BAN) != 0) && MyClient(source_p))
+      if((del_id(chptr, raw_mask, CHFL_BAN) == 0) && MyClient(source_p))
       {
         /* nope */
         return;
@@ -888,7 +891,7 @@ chm_except(struct Client *client_p, struct Client *source_p,
       return;
     *errors |= SM_ERR_RPL_E;
 
-    for (ptr = chptr->exceptlist.head; ptr; ptr = ptr->next)
+    DLINK_FOREACH(ptr, chptr->exceptlist.head)
     {
       banptr = ptr->data;
       sendto_one(client_p, form_str(RPL_EXCEPTLIST),
@@ -909,6 +912,10 @@ chm_except(struct Client *client_p, struct Client *source_p,
   else
     mask = pretty_mask(raw_mask);
 
+  /* We'd have problems parsing this, hyb6 does it too */
+    if (strlen(mask) > (MODEBUFLEN - 2)) 
+      return; 
+
   /* If we're adding a NEW id */
   if (dir == MODE_ADD)
   {
@@ -923,10 +930,10 @@ chm_except(struct Client *client_p, struct Client *source_p,
   }
   else if (dir == MODE_DEL)
   {
-    if (del_id(chptr, mask, CHFL_EXCEPTION) != 0)
+    if (del_id(chptr, mask, CHFL_EXCEPTION) == 0)
     {
       /* mask isn't a valid ban, check raw_mask */
-      if((del_id(chptr, raw_mask, CHFL_EXCEPTION) != 0) && MyClient(source_p))
+      if((del_id(chptr, raw_mask, CHFL_EXCEPTION) == 0) && MyClient(source_p))
       {
         /* nope */
         return;
@@ -967,7 +974,7 @@ chm_invex(struct Client *client_p, struct Client *source_p,
       return;
     *errors |= SM_ERR_RPL_I;
 
-    for (ptr = chptr->invexlist.head; ptr; ptr = ptr->next)
+    DLINK_FOREACH(ptr, chptr->invexlist.head)
     {
       banptr = ptr->data;
       sendto_one(client_p, form_str(RPL_INVITELIST), me.name,
@@ -988,6 +995,10 @@ chm_invex(struct Client *client_p, struct Client *source_p,
   else
     mask = pretty_mask(raw_mask);
 
+  /* We'd have problems parsing this, hyb6 does it too */
+    if (strlen(mask) > (MODEBUFLEN - 2)) 
+      return; 
+
   if(dir == MODE_ADD)
   {
     if((add_id(source_p, chptr, mask, CHFL_INVEX) == 0) && MyClient(source_p))
@@ -1001,10 +1012,10 @@ chm_invex(struct Client *client_p, struct Client *source_p,
   }
   else if (dir == MODE_DEL)
   {
-    if (del_id(chptr, mask, CHFL_INVEX) != 0)
+    if (del_id(chptr, mask, CHFL_INVEX) == 0)
     {
       /* mask isn't a valid ban, check raw_mask */
-      if((del_id(chptr, raw_mask, CHFL_INVEX) != 0) && MyClient(source_p))
+      if((del_id(chptr, raw_mask, CHFL_INVEX) == 0) && MyClient(source_p))
       {
         /* nope */
         return;
@@ -1730,14 +1741,9 @@ get_channel_access(struct Client *source_p, struct Channel *chptr)
  * of the number of servers which each combination as an optimisation, so
  * the capabs combinations which are not needed are not worked out. -A1kmm
  */
-
-
-/* THIS needs to be re-coded, but tonight I'm to tired to think straigh */
-
-
-
 static void
-send_cap_mode_changes(struct Client *client_p, struct Client *source_p, struct Channel *chptr)
+send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
+                      struct Channel *chptr)
 {
   int i, mbl, pbl, nc, mc;
   char *arg;
@@ -1898,9 +1904,9 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
       mc = 0;
 
       if (IsServer(source_p))
-        mbl = ircsprintf(modebuf, ":%s MODE %s -", me.name, chname);
+        mbl = ircsprintf(modebuf, ":%s MODE %s ", me.name, chname);
       else
-        mbl = ircsprintf(modebuf, ":%s!%s@%s MODE %s -", source_p->name,
+        mbl = ircsprintf(modebuf, ":%s!%s@%s MODE %s ", source_p->name,
                    source_p->username, source_p->vhost, chname);
 
       pbl = 0;
@@ -2142,7 +2148,7 @@ send_oplist(const char *chname, struct Client *client_p, dlink_list * list,
   *mcbuf = *opbuf = '\0';
   t = opbuf;
 
-  for (ptr = list->head; ptr && ptr->data; ptr = ptr->next)
+  DLINK_FOREACH (ptr, list->head)
   {
     target_p = ptr->data;
     if (dir == MODE_DEL && *prefix == 'v' && target_p == client_p)
@@ -2241,7 +2247,8 @@ static void mode_get_status(struct Channel *chptr, struct Client *target_p,
   }
 }
 
-static void update_channel_info(struct Channel *chptr)
+static void
+update_channel_info(struct Channel *chptr)
 {
   int i;
   int t_voice, t_hop, t_op, t_admin;
@@ -2256,36 +2263,34 @@ static void update_channel_info(struct Channel *chptr)
   {
     if(chptr->mode.mode & MODE_HIDEOPS)
     {
-      for (ptr = chptr->locpeons.head; ptr != NULL && ptr->data != NULL;
-           ptr = ptr->next)
+      DLINK_FOREACH(ptr, chptr->locpeons.head)
       {
         mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 0);
         if (!t_hop && !t_op && !t_admin)
           sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       }
 
-      for (ptr = chptr->locvoiced.head; ptr != NULL && ptr->data != NULL;
-           ptr = ptr->next)
+      DLINK_FOREACH(ptr, chptr->locvoiced.head)
       {
         mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 0);
         if (!t_hop && !t_op && !t_admin)
           sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       }
 
-      for(ptr = chptr->lochalfops.head; ptr != NULL; ptr = ptr->next)
+      DLINK_FOREACH(ptr, chptr->lochalfops.head)
       {
         mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 1);
         if(!t_hop && !t_op && !t_admin)
           sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       }
 
-      for(ptr = chptr->locchanops.head; ptr != NULL; ptr = ptr->next)
+      DLINK_FOREACH(ptr, chptr->locchanops.head)
       {
         mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 1);
         if(!t_hop && !t_op && !t_admin)
           sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       }
-      for(ptr = chptr->locchanadmins.head; ptr != NULL; ptr = ptr->next)
+      DLINK_FOREACH(ptr, chptr->locchanadmins.head)
       {
         mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 1);
         if(!t_hop && !t_op && !t_admin)
@@ -2346,16 +2351,15 @@ static void update_channel_info(struct Channel *chptr)
     }
 
     /* ..and send a resync to them */
-    for (ptr=deopped.head; ptr != NULL && ptr->data != NULL; ptr=ptr_next)
+    DLINK_FOREACH_SAFE(ptr, ptr_next, deopped.head)
     {
       ptr_next = ptr->next;
       sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       free_dlink_node(ptr);
     }
 
-    for(ptr = opped.head; ptr != NULL; ptr = ptr_next)
+    DLINK_FOREACH_SAFE(ptr, ptr_next, opped.head)
     {
-      ptr_next = ptr->next;
       sync_oplists(chptr, ptr->data, MODE_ADD, chptr->chname);
       free_dlink_node(ptr);
     }
@@ -2441,7 +2445,7 @@ do_channel_integrity_check(void)
   {
     if (!IsRegisteredUser(cl) || IsDead(cl))
       continue;
-    for (ptr=cl->user->channel.head; ptr; ptr=ptr->next)
+    DLINK_FOREACH(ptr, cl->user->channel.head)
     {
       dlink_node *ptr2;
       int matched = 0, matched_local;
@@ -2452,7 +2456,7 @@ do_channel_integrity_check(void)
         matched_local = 0;
       /* Make sure that they match once, and only once... */
 #define SEARCH_LIST(listname) \
-      for (ptr2=ch->listname.head; ptr2; ptr2=ptr2->next) \
+      DLINK_FOREACH(ptr2, ch->listname.head) \
         if (ptr2->data == cl) \
         { \
           assert(matched == 0); \
@@ -2461,7 +2465,8 @@ do_channel_integrity_check(void)
       for (ptr2=ch->loc ## listname.head; ptr2; ptr2=ptr2->next) \
         if (ptr2->data == cl) \
         { \
-          assert(matched_local == 0); \ matched_local = -1; \
+          assert(matched_local == 0); \
+          matched_local = -1; \
         }
       SEARCH_LIST(chanops)
       SEARCH_LIST(halfops)

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: irc_string.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: irc_string.h,v 1.4 2002/09/19 05:41:10 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_irc_string_h
@@ -30,9 +30,11 @@
  * match - returns 1 on successful match, 0 otherwise
  *
  * match_esc - compare with support for escaping chars
+ * match_cidr - compares u!h@addr with u!h@addr/cidr
  */
 extern int match(const char *mask, const char *name);
 extern int match_esc(const char *mask, const char *name);
+extern int match_cidr(const char *mask, const char *name);
 
 /*
  * collapse - collapse a string in place, converts multiple adjacent *'s 

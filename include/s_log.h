@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_log.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: s_log.h,v 1.4 2002/09/19 05:41:10 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_log_h
@@ -44,5 +44,6 @@ extern const char *get_log_level_as_string(int level);
 
 extern void log_user_exit(struct Client *);
 extern void log_oper(struct Client *, char *name);
+extern void log_failed_oper(struct Client *, char *name);
 
 #endif /* INCLUDED_s_log_h */

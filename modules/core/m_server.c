@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c,v 1.6 2002/09/13 16:30:04 fishwaldo Exp $
+ *  $Id: m_server.c,v 1.7 2002/09/19 05:41:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&server_msgtab);
 }
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 
 int bogus_host(char *host);
@@ -505,7 +505,7 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
   
   set_server_gecos(target_p, info);
   
-  if (IsUlined(target_p)) sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Link %s introduced a dynamic Ulined server %s", client_p->name, target_p->name);
+  if (IsUlined(target_p)) sendto_realops_flags(FLAGS_ALL, L_ALL, "Link %s introduced a dynamic Ulined server %s", client_p->name, target_p->name);
 
   target_p->serv->up = find_or_add(parv[0]);
   target_p->servptr = source_p;
@@ -553,7 +553,7 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
 		 target_p->info);
     }
       
-  sendto_realops_flags(FLAGS_EXTERNAL|FLAGS_REMOTE, L_ALL,
+  sendto_realops_flags(FLAGS_EXTERNAL, L_ALL,
                        "Server %s being introduced by %s",
 		       target_p->name, source_p->name);
 

@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+# $Id: Makefile.in,v 1.3 2002/09/19 05:41:11 fishwaldo Exp $
 
 CC		= @CC@
 INSTALL		= @INSTALL@
@@ -32,23 +32,16 @@ localstatedir	= @localstatedir@
 moduledir	= @prefix@/modules
 automoduledir	= @prefix@/modules/autoload
 
-PROGS		= viconf mkpasswd convertconf convertilines convertklines encspeed
+PROGS		= viconf mkpasswd encspeed
 
 mkpasswd_SOURCES = mkpasswd.c
 mkpasswd_OBJECTS = mkpasswd.o
 viconf_SOURCES = viconf.c
 viconf_OBJECTS = viconf.o
-convertconf_SOURCES = convertconf.c
-convertconf_OBJECTS = convertconf.o
-convertklines_SOURCES = convertklines.c
-convertklines_OBJECTS = convertklines.o
-convertilines_SOURCES = convertilines.c
-convertilines_OBJECTS = convertilines.o
 encspeed_SOURCES = encspeed.c
 encspeed_OBJECTS = encspeed.o
 
-all_OBJECTS = $(viconf_OBJECTS) $(mkpasswd_OBJECTS) $(convertconf_OBJECTS)\
-        $(convertklines_OBJECTS) $(encspeed_OBJECTS) $(convertilines_OBJECTS)
+all_OBJECTS = $(viconf_OBJECTS) $(mkpasswd_OBJECTS) $(encspeed_OBJECTS) 
 
 all: $(PROGS)
 
@@ -62,23 +55,14 @@ mkpasswd: $(mkpasswd_OBJECTS)
 viconf: $(viconf_OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o viconf $(viconf_OBJECTS) $(IRCDLIBS)
 
-convertilines: convertilines.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -o convertilines $(convertilines_OBJECTS) $(IRCDLIBS)
-
-convertklines: convertklines.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -o convertklines $(convertklines_OBJECTS) $(IRCDLIBS)
-
-convertconf: convertconf.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -o convertconf $(convertconf_OBJECTS) $(IRCDLIBS)
-
 clean:
-	$(RM) -f $(all_OBJECTS) convertconf encspeed viconf chkconf mkpasswd *~ core *.exe convertklines convertilines
+	$(RM) -f $(all_OBJECTS) encspeed viconf chkconf mkpasswd *~ core *.exe 
 
 distclean: clean
 	$(RM) -f Makefile
 
 lint:
-	lint -aacgprxhH $(CPPFLAGS) -DIRCD_PREFIX=\"@prefix@\" $(convertconf_SOURCES) $(convertklines_SOURCES) $(mkpasswd_SOURCES) $(viconf_SOURCES) $(encspeed_SOURCES) >>../lint.out
+	lint -aacgprxhH $(CPPFLAGS) -DIRCD_PREFIX=\"@prefix@\" $(mkpasswd_SOURCES) $(viconf_SOURCES) $(encspeed_SOURCES) >>../lint.out
 
 depend:
 

@@ -464,9 +464,6 @@ tools/.cvsignore -text
 tools/Makefile.in -text
 tools/README -text
 tools/README.mkpasswd -text
-tools/convertconf.c -text
-tools/convertilines.c -text
-tools/convertklines.c -text
 tools/descrip.mms -text
 tools/encspeed.c -text
 tools/mkkeypair -text

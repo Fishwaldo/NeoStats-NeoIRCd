@@ -4,6 +4,10 @@ Symbols are:
 (F)	- Fish (fish@dynam.ac)
 (S)	- Shmad (shmad@#neostats.net)
 (HP)	- Hybrid Team Patches to Hybrid Source
+* NeoIRCd Version 0.9.3 - 19th Sept, 2002 - Fish
+(HP)	- Merged in Hybrid rc4 Patches (including Rc3 and Rc3 fixes)
+(F)	- Fixed up Persistant Channels.
+
 
 * NeoIRCd Version 0.9.2 - 17th Sept, 2002 - Fish
 (F)	- Fixed a problem with servers setting modes
@@ -13,6 +17,7 @@ Symbols are:
 (F)	- Moved m_opme m_ojoin and m_clearchan to standard modules (and fixed them up)
 (F)	- added svsjoin and svspart (based on m_force.c contrib module)
 (F)	- Maybe fixed a segfault when a server gets disconnected
+(F)	- Fix some of the global oper messages being broadcast network wide by each server.
 
 * NeoIRCd Version 0.9.1 - 12th August, 2002 - Fish
 (F)	- Added +S UserMode. For Services. Allow them to override anything

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_stats.c,v 1.3 2002/09/13 06:50:09 fishwaldo Exp $
+ *  $Id: s_stats.c,v 1.4 2002/09/19 05:41:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -39,7 +39,8 @@
 static struct ServerStatistics  ircst;
 struct ServerStatistics* ServerStats = &ircst;
 
-void init_stats()
+void
+init_stats()
 {
   memset(&ircst, 0, sizeof(ircst));
 }
@@ -51,17 +52,19 @@ void init_stats()
  * output	- NONE 
  * side effects	-
  */
-void tstats(struct Client *source_p)
+void
+tstats(struct Client *source_p)
 {
-  struct Client*           target_p;
-  struct ServerStatistics* sp;
+  struct Client *target_p;
+  struct ServerStatistics *sp;
   struct ServerStatistics  tmp;
   dlink_node *ptr;
 
   sp = &tmp;
   memcpy(sp, ServerStats, sizeof(struct ServerStatistics));
 
-  for(ptr = serv_list.head; ptr; ptr = ptr->next)
+  sp->is_sv = dlink_list_length(&serv_list);
+  DLINK_FOREACH(ptr, serv_list.head)
     {
       target_p = ptr->data;
 
@@ -70,7 +73,6 @@ void tstats(struct Client *source_p)
       sp->is_sks += target_p->localClient->sendK;
       sp->is_skr += target_p->localClient->receiveK;
       sp->is_sti += CurrentTime - target_p->firsttime;
-      sp->is_sv++;
       if (sp->is_sbs > 1023)
 	{
 	  sp->is_sks += (sp->is_sbs >> 10);
@@ -83,7 +85,8 @@ void tstats(struct Client *source_p)
 	}
     }
 
-  for(ptr = lclient_list.head; ptr; ptr = ptr->next)
+  sp->is_cl = dlink_list_length(&lclient_list);
+  DLINK_FOREACH(ptr, lclient_list.head)
     {
       target_p = ptr->data;
 
@@ -92,7 +95,6 @@ void tstats(struct Client *source_p)
       sp->is_cks += target_p->localClient->sendK;
       sp->is_ckr += target_p->localClient->receiveK;
       sp->is_cti += CurrentTime - target_p->firsttime;
-      sp->is_cl++;
       if (sp->is_cbs > 1023)
 	{
 	  sp->is_cks += (sp->is_cbs >> 10);
@@ -106,10 +108,7 @@ void tstats(struct Client *source_p)
       
     }
 
-  for(ptr = unknown_list.head; ptr; ptr = ptr->next)
-    {
-      sp->is_ni++;
-    }
+  sp->is_ni = dlink_list_length(&unknown_list);
 
   sendto_one(source_p, ":%s %d %s :accepts %u refused %u",
              me.name, RPL_STATSDEBUG, source_p->name, sp->is_ac, sp->is_ref);
@@ -119,16 +118,17 @@ void tstats(struct Client *source_p)
              me.name, RPL_STATSDEBUG, source_p->name, sp->is_kill, sp->is_ni);
   sendto_one(source_p, ":%s %d %s :wrong direction %u empty %u",
              me.name, RPL_STATSDEBUG, source_p->name, sp->is_wrdi, sp->is_empt);
-  sendto_one(source_p, ":%s %d %s :numerics seen %u mode fakes %u",
-             me.name, RPL_STATSDEBUG, source_p->name, sp->is_num, sp->is_fake);
+  sendto_one(source_p, ":%s %d %s :numerics seen %u",
+             me.name, RPL_STATSDEBUG, source_p->name, sp->is_num);
   sendto_one(source_p, ":%s %d %s :auth successes %u fails %u",
              me.name, RPL_STATSDEBUG, source_p->name, sp->is_asuc, sp->is_abad);
-  sendto_one(source_p, ":%s %d %s :local connections %u udp packets %u",
-             me.name, RPL_STATSDEBUG, source_p->name, sp->is_loc, sp->is_udp);
   sendto_one(source_p, ":%s %d %s :Client Server",
              me.name, RPL_STATSDEBUG, source_p->name);
-  sendto_one(source_p, ":%s %d %s :connected %u %u",
-             me.name, RPL_STATSDEBUG, source_p->name, sp->is_cl, sp->is_sv);
+
+  sendto_one(source_p, ":%s %d %s :connected %lu %lu",
+             me.name, RPL_STATSDEBUG, source_p->name, 
+	     dlink_list_length(&lclient_list), 
+	     dlink_list_length(&serv_list));
   sendto_one(source_p, ":%s %d %s :bytes sent %d.%uK %d.%uK",
              me.name, RPL_STATSDEBUG, source_p->name,
              (int)sp->is_cks, sp->is_cbs, (int)sp->is_sks, sp->is_sbs);
@@ -136,7 +136,8 @@ void tstats(struct Client *source_p)
              me.name, RPL_STATSDEBUG, source_p->name,
              (int)sp->is_ckr, sp->is_cbr, (int)sp->is_skr, sp->is_sbr);
   sendto_one(source_p, ":%s %d %s :time connected %d %d",
-             me.name, RPL_STATSDEBUG, source_p->name, (int)sp->is_cti, (int)sp->is_sti);
+             me.name, RPL_STATSDEBUG, source_p->name, (int)sp->is_cti,
+	     (int)sp->is_sti);
 }
 
 

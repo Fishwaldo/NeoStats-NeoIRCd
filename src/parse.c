@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: parse.c,v 1.6 2002/09/13 16:30:04 fishwaldo Exp $
+ *  $Id: parse.c,v 1.7 2002/09/19 05:41:11 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -240,7 +240,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
     { 
       int ii = 0;
 
-      if( (s = strchr(ch, ' ')) )
+      if((s = strchr(ch, ' ')) != NULL)
         *s++ = '\0';
 
       mptr = hash_parse(ch);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_knock.c,v 1.6 2002/09/13 09:17:13 fishwaldo Exp $
+ *  $Id: m_knock.c,v 1.7 2002/09/19 05:41:10 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -80,7 +80,7 @@ _moddeinit(void)
   mod_del_cmd(&knockll_msgtab);
 }
 
-const char *_version = "$Revision: 1.6 $";
+const char *_version = "$Revision: 1.7 $";
 #endif
 
 /* m_knock
@@ -102,9 +102,9 @@ const char *_version = "$Revision: 1.6 $";
  *  dont know about, for us to answer.
  */
 
-static void m_knock(struct Client *client_p,
-                    struct Client *source_p,
-                    int parc, char *parv[])
+static void
+m_knock(struct Client *client_p, struct Client *source_p, int parc,
+	char *parv[])
 {
   char *sockhost = NULL;
   
@@ -143,10 +143,9 @@ static void m_knock(struct Client *client_p,
  *	parv[2] = vchan id
  */
  
-static void ms_knock(struct Client *client_p,
-                     struct Client *source_p,
-		     int parc,
-		     char *parv[])
+static void
+ms_knock(struct Client *client_p, struct Client *source_p,
+		     int parc, char *parv[])
 {
   if(IsClient(source_p))
     parse_knock_remote(client_p, source_p, parc, parv);
@@ -166,8 +165,8 @@ static void ms_knock(struct Client *client_p,
  *                or sends failure message to source_p
  */
 
-static void parse_knock_local(struct Client *client_p,
-                              struct Client *source_p,
+static void
+parse_knock_local(struct Client *client_p, struct Client *source_p,
                               int parc, char *parv[], char *sockhost)
 {
   /* We will cut at the first comma reached, however we will not *
@@ -179,7 +178,7 @@ static void parse_knock_local(struct Client *client_p,
   name = parv[1];
   key = (parc > 2) ? parv[2] : NULL;
 
-  if( (p = strchr(name,',')) )
+  if((p = strchr(name,',')) != NULL)
     *p = '\0';
 
   if(!IsChannelName(name))
@@ -274,9 +273,9 @@ static void parse_knock_local(struct Client *client_p,
  * side effects - knock is checked for validity, if valid send_knock() is
  * 		  called
  */
-static void parse_knock_remote(struct Client *client_p,
-			       struct Client *source_p,
-			       int parc, char *parv[])
+static void
+parse_knock_remote(struct Client *client_p, struct Client *source_p,
+		   int parc, char *parv[])
 {
   struct Channel *chptr;
   char *p, *name, *key;
@@ -284,7 +283,7 @@ static void parse_knock_remote(struct Client *client_p,
   name = parv[1];
   key = (parc > 2) ? parv[2] : NULL;
 
-  if( (p = strchr(name,',')) )
+  if((p = strchr(name,',')) != NULL)
     *p = '\0';
 
   if(!IsChannelName(name) || !(chptr = hash_find_channel(name)))
@@ -315,9 +314,9 @@ static void parse_knock_remote(struct Client *client_p,
  * side effects - knock is sent locally (if enabled) and propagated
  */
 
-static void send_knock(struct Client *client_p, struct Client *source_p,
-                       struct Channel *chptr, char *name, char *key,
-		       int llclient)
+static void
+send_knock(struct Client *client_p, struct Client *source_p,
+	   struct Channel *chptr, char *name, char *key, int llclient)
 {
   chptr->last_knock = CurrentTime;
 
@@ -393,7 +392,7 @@ static int check_banned_knock(struct Channel *chptr, struct Client *who,
   struct Ban *actualBan = NULL;
   struct Ban *actualExcept = NULL;
 
-  for (ban = chptr->banlist.head; ban; ban = ban->next)
+  DLINK_FOREACH(ban, chptr->banlist.head)
   {
     actualBan = ban->data;
 
@@ -405,7 +404,7 @@ static int check_banned_knock(struct Channel *chptr, struct Client *who,
 
   if ((actualBan != NULL))
   {
-    for (except = chptr->exceptlist.head; except; except = except->next)
+    DLINK_FOREACH(except, chptr->exceptlist.head)
     {
       actualExcept = except->data;
 

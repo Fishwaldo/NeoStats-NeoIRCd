@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c,v 1.1 2002/08/14 05:47:41 fishwaldo Exp $
+ *  $Id: m_server.c,v 1.2 2002/08/14 06:29:46 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&server_msgtab);
 }
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 int bogus_host(char *host);
@@ -245,7 +245,19 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
    */
 
   strlcpy(client_p->name, name, HOSTLEN+1);
+  
+  /* clear the Ulined flag before looking into the info field for (U) (dynamic Uline) */
+  client_p->flags &= ~FLAGS_ULINED;
   set_server_gecos(client_p, info);
+  
+  /* if this server is trying to set itself Ulined, its Not allowed, so exit it */
+  if (IsUlined(client_p)) {
+  	sendto_realops_flags(FLAGS_ALL, L_ALL, "Server %s trying to U line itself. No Way, Nadda, I dun think so", client_p->name);
+  	exit_client(client_p, client_p, client_p, "Got a Gline Instead");
+  	return;
+  }
+  
+  
   client_p->hopcount = hop;
   server_estab(client_p);
 }
@@ -477,7 +489,12 @@ static void ms_server(struct Client *client_p, struct Client *source_p,
 
   strlcpy(target_p->name, name, HOSTLEN+1);
   
+  /* clear the Ulined flag before we look at info for (U) */
+  target_p->flags &= ~FLAGS_ULINED;
+  
   set_server_gecos(target_p, info);
+  
+  if (IsUlined(target_p)) sendto_realops_flags(FLAGS_ALL, L_ALL, "Link %s introduced a dynamic Ulined server %s", client_p->name, target_p->name);
 
   target_p->serv->up = find_or_add(parv[0]);
   target_p->servptr = source_p;
@@ -581,6 +598,16 @@ static int set_server_gecos(struct Client *client_p, char *info)
 	  s = ++p;
 	else
 	  s = NULL;
+      }
+      /* check for (U) which is a U lined Server */
+      if (!strcmp(s, "(U)"))
+      {
+      	SetUlined(client_p);
+       
+        if(p)
+          s = ++p;
+        else
+          s = NULL;
       }
       else if(p)
         *p = ' ';

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.3 2002/08/14 06:29:46 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -74,7 +74,7 @@ struct flag_item
 static struct flag_item user_modes[] =
 {
   {FLAGS_SERVICES, 'S'},
-  {FLAGS_ADMIN, 'a'},
+  {FLAGS_ADMIN, 'A'},
   {FLAGS_BOTS,  'b'},
   {FLAGS_CCONN, 'c'},
   {FLAGS_DEBUG, 'd'},
@@ -105,7 +105,7 @@ int user_modes_from_c_to_bitmask[] =
   /* 0x20 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x2F */
   /* 0x30 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x3F */
   0,            /* @ */
-  0,            /* A */
+  FLAGS_ADMIN,  /* A */
   0,            /* B */
   0,            /* C */
   0,            /* D */
@@ -133,7 +133,7 @@ int user_modes_from_c_to_bitmask[] =
   0,            /* Z 0x5A */
   0, 0, 0, 0, 0, /* 0x5F */ 
   /* 0x60 */       0,
-  FLAGS_ADMIN,  /* a */
+  0,  		/* a */
   FLAGS_BOTS,   /* b */
   FLAGS_CCONN,  /* c */
   FLAGS_DEBUG,  /* d */
@@ -1117,7 +1117,6 @@ int user_mode(struct Client *client_p, struct Client *source_p, int parc, char *
     { 
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +S", 
       		me.name, parv[0]);
-      sendto_realops_flags(FLAGS_ALL, L_ALL, "Warning Non-Ulined Server |%s| tried to set %s as Services", source_p->from->name, source_p->name);
       source_p->umodes &= ~FLAGS_SERVICES;
     }
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.11 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.12 2002/10/31 13:18:11 fishwaldo Exp $
  */
 
 %{
@@ -1900,7 +1900,7 @@ general_item:       general_failed_oper_notice |
                     general_compression_level | general_client_flood |
                     general_throttle_time | general_havent_read_conf |
                     general_dot_in_ip6_addr | general_ping_cookie |
-                    general_fallback_to_ip6_int | 
+                    general_fallback_to_ip6_int | general_oper_autojoin |
                     error;
 
 general_failed_oper_notice:   FAILED_OPER_NOTICE '=' TYES ';'

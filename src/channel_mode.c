@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.21 2003/01/29 09:28:49 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.22 2003/03/06 14:01:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -872,7 +872,9 @@ chm_ban(struct Client *client_p, struct Client *source_p,
  * I'd like to see this hack go away in the future.
  */
       if(del_id(chptr, raw_mask, CHFL_BAN))
-       mask = raw_mask;
+       	mask = raw_mask;
+      else
+      	del_id(chptr, mask, CHFL_BAN);
 #endif
 
     mode_changes[mode_count].letter = c;
@@ -1644,6 +1646,9 @@ chm_key(struct Client *client_p, struct Client *source_p,
   {
     if (!(*chptr->mode.key))
       return;
+
+    if (parc > *parn)
+    	(*parn)++;
 
     *chptr->mode.key = 0;
 

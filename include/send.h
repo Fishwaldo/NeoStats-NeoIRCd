@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.h,v 1.5 2002/10/31 13:01:54 fishwaldo Exp $
+ *  $Id: send.h,v 1.6 2003/03/06 14:01:46 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_send_h
@@ -48,7 +48,7 @@ unsigned long current_serial;
 
 /* send.c prototypes */
 
-extern void send_queued_write(int fd, void *data);
+extern void send_queued_write(int fd, struct Client *to);
 
 extern void send_queued_slink_write(int fd, void *data);
 
@@ -62,8 +62,10 @@ extern  void sendto_channel_butone(struct Client *one,
 extern  void sendto_one_prefix(struct Client *, struct Client *,
                                const char *, ...) AFP(3, 4);
 
-extern  void sendto_common_channels_local(struct Client *, const char *,
-                                          ...) AFP(2, 3);
+extern  void sendto_common_channels_local(struct Client *,
+                                          int,
+                                          const char *,
+                                          ...) AFP(3, 4);
 
 extern  void sendto_channel_local(int type, struct Channel *,
                                   const char *, ...) AFP(3, 4);

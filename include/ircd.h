@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.h,v 1.4 2003/01/29 09:28:48 fishwaldo Exp $
+ *  $Id: ircd.h,v 1.5 2003/03/06 14:01:46 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_ircd_h
@@ -105,8 +105,7 @@ extern dlink_list lclient_list;
 extern dlink_list serv_list;
 extern dlink_list global_serv_list;
 extern dlink_list oper_list;
-extern dlink_list dead_list;
-extern dlink_list abort_list;
+extern dlink_list closing_list;
 extern dlink_list lazylink_channels;
 extern int callbacks_called;
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h,v 1.13 2003/01/29 09:28:48 fishwaldo Exp $
+ *  $Id: client.h,v 1.14 2003/03/06 14:01:46 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_client_h
@@ -230,6 +230,8 @@ struct LocalUser
   SSL		    *ssl;	/* clients SSL info, if ssl client */
   struct X509		    *ssl_cert;   /* clients SSL cert info, if ssl client */
 #endif
+
+  dlink_node	    lclient_node;
 
   /* Send and receive linebuf queues .. */
   buf_head_t        buf_sendq;
@@ -518,7 +520,7 @@ struct LocalUser
 #define IsSSL(x)		((x)->flags & FLAGS_SSL)
 #define SetSSLOK(x)		((x)->flags2 |= FLAGS2_SSLOK)
 #define IsSSLOK(x)		((x)->flags2 & FLAGS2_SSLOK)
-#define IsDefunct(x)            ((x)->flags & (FLAGS_DEADSOCKET|FLAGS_CLOSING))
+#define IsDefunct(x)            ((x)->flags & (FLAGS_DEADSOCKET|FLAGS_CLOSING|FLAGS_KILLED))
 
 /* oper flags */
 #define MyOper(x)               (MyConnect(x) && IsOper(x))
@@ -558,10 +560,16 @@ struct LocalUser
 #define SetWallops(x)           ((x)->umodes |= FLAGS_WALLOP)
 #define SetCallerId(x)		((x)->umodes |= FLAGS_CALLERID)
 #define IsSetCallerId(x)	((x)->umodes & FLAGS_CALLERID)
+#define SetSendQExceeded(x)     ((x)->flags |= FLAGS_SENDQEX)
+#define IsSendQExceeded(x)      ((x)->flags & FLAGS_SENDQEX)
 
 #define SetIpHash(x)            ((x)->flags |= FLAGS_IPHASH)
 #define ClearIpHash(x)          ((x)->flags &= ~FLAGS_IPHASH)
 #define IsIpHash(x)             ((x)->flags & FLAGS_IPHASH)
+
+#define SetPingSent(x)          ((x)->flags |= FLAGS_PINGSENT)
+#define IsPingSent(x)           ((x)->flags & FLAGS_PINGSENT)
+#define ClearPingSent(x)        ((x)->flags &= ~FLAGS_PINGSENT)
 
 #define SetNeedId(x)            ((x)->flags |= FLAGS_NEEDID)
 #define IsNeedId(x)             (((x)->flags & FLAGS_NEEDID) != 0)
@@ -647,5 +655,7 @@ extern int change_local_nick(struct Client *client_p, struct Client *source_p,
 extern void dead_link_on_write(struct Client *client_p, int ierrno);
 extern void dead_link_on_read(struct Client *client_p, int error);
 extern void make_virthost(char *curr, char *host, char *new);
+extern void exit_aborted_clients(void);
+extern void free_exited_clients(void);
 #endif /* INCLUDED_client_h */
 

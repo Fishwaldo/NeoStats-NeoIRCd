@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c,v 1.10 2003/01/29 09:28:49 fishwaldo Exp $
+ *  $Id: ircd.c,v 1.11 2003/03/06 14:01:50 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -90,13 +90,12 @@ struct  Counter Count;
 struct  ServerState_t server_state;
 
 struct timeval SystemTime;
-int     ServerRunning;          /* GLOBAL - server execution state */
+int    ServerRunning;           /* GLOBAL - server execution state */
 struct Client me;               /* That's me */
 struct LocalUser meLocalUser;	/* That's also part of me */
 
 struct Client* GlobalClientList = 0; /* Pointer to beginning of Client list */
 
-struct JupedChannel *JupedChannelList = 0;
 
 /* unknown/client pointer lists */ 
 dlink_list unknown_list;        /* unknown clients ON this server only */
@@ -170,7 +169,8 @@ static unsigned long get_vm_top(void)
 /*
  * get_maxrss - get the operating systems notion of the resident set size
  */
-unsigned long get_maxrss(void)
+unsigned long
+get_maxrss(void)
 {
   return get_vm_top() - initialVMTop;
 }
@@ -330,7 +330,9 @@ io_loop(void)
       irc_sleep(st);
 
       comm_select(0);
-  
+      exit_aborted_clients();
+      free_exited_clients();
+
       /*
        * Check to see whether we have to rehash the configuration ..
        */
@@ -612,6 +614,11 @@ int main(int argc, char *argv[])
   setup_signals();
   /* We need this to initialise the fd array before anything else */
   fdlist_init();
+  if (!server_state.foreground)
+  {
+    close_all_connections(); /* this needs to be before init_netio()! */
+  }
+  init_log(logFileName);
   init_netio();         /* This needs to be setup early ! -- adrian */
   /* Check if there is pidfile and daemon already running */
   check_pidfile(pidFileName);
@@ -619,11 +626,6 @@ int main(int argc, char *argv[])
   eventInit();
   init_sys();
 
-  if (!server_state.foreground)
-  {
-    close_all_connections();
-  }
-  init_log(logFileName);
   initBlockHeap();
   init_dlink_nodes();
   initialize_message_files();
@@ -631,7 +633,7 @@ int main(int argc, char *argv[])
   init_hash();
   id_init();
   clear_scache_hash_table();    /* server cache name table */
-  clear_ip_hash_table();        /* client host ip hash table */
+  init_ip_hash_table();        /* client host ip hash table */
   init_host_hash();             /* Host-hashtable. */
   clear_hash_parse();
   init_client();

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_close.c,v 1.4 2002/09/19 05:41:10 fishwaldo Exp $
+ *  $Id: m_close.c,v 1.5 2003/03/06 14:01:46 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -54,7 +54,7 @@ _moddeinit(void)
   mod_del_cmd(&close_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 /*
  * mo_close - CLOSE message handler
@@ -83,7 +83,11 @@ mo_close(struct Client *client_p, struct Client *source_p,
 #endif
       sendto_one(source_p, form_str(RPL_CLOSING), me.name, parv[0],
                  get_client_name(target_p, SHOW_IP), target_p->status);
-      (void)exit_client(target_p, target_p, target_p, "Oper Closing");
+      /*
+       * exit here is safe, because it is guaranteed not to be source_p
+       * because it is unregistered and source_p is an oper.
+       */
+      exit_client(target_p, target_p, target_p, "Oper Closing");
       closed++;
     }
   sendto_one(source_p, form_str(RPL_CLOSEEND), me.name, parv[0], closed);

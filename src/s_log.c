@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_log.c,v 1.5 2002/11/01 01:32:37 fishwaldo Exp $
+ *  $Id: s_log.c,v 1.6 2003/03/06 14:01:51 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -86,6 +86,12 @@ static const char *logLevelToString[] =
 static int 
 open_log(const char* filename)
 {
+#ifndef DEBUG
+  if (!server_state.foreground)
+  {
+    close(2); /* let the logfile grab fd 2 to catch stderr */
+  }
+#endif
   logFile = fbopen(filename, "a");
   if (logFile == NULL)
   {

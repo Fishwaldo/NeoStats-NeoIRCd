@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kick.c,v 1.7 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_kick.c,v 1.8 2003/03/06 14:01:47 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -59,7 +59,7 @@ _moddeinit(void)
   mod_del_cmd(&kick_msgtab);
 }
 
-const char *_version = "$Revision: 1.7 $";
+const char *_version = "$Revision: 1.8 $";
 #endif
 /*
 ** m_kick
@@ -68,10 +68,9 @@ const char *_version = "$Revision: 1.7 $";
 **      parv[2] = client to kick
 **      parv[3] = kick comment
 */
-static void m_kick(struct Client *client_p,
-                  struct Client *source_p,
-                  int parc,
-                  char *parv[])
+static void 
+m_kick(struct Client *client_p, struct Client *source_p,
+                  int parc, char *parv[])
 {
   struct Client *who;
   struct Channel *chptr;
@@ -234,17 +233,17 @@ static void m_kick(struct Client *client_p,
                     ":%s KICK %s %s :%s",
                     parv[0], chptr->chname,
                     who->name, comment);
-      remove_user_from_channel(chptr, who);
+      if (!IsDefunct(who))
+	remove_user_from_channel(chptr, who);
     }
   else
     sendto_one(source_p, form_str(ERR_USERNOTINCHANNEL),
                me.name, parv[0], user, name);
 }
 
-static void ms_kick(struct Client *client_p,
-                   struct Client *source_p,
-                   int parc,
-                   char *parv[])
+static void
+ms_kick(struct Client *client_p, struct Client *source_p,
+                   int parc, char *parv[])
 {
   if (*parv[2] == '\0')
     {

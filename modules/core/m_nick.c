@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.20 2002/10/31 13:01:57 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.21 2003/03/06 14:01:48 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.20 $";
+const char *_version = "$Revision: 1.21 $";
 #endif
 
 /*
@@ -199,8 +199,9 @@ mr_nick(struct Client *client_p, struct Client *source_p,
  *     parv[0] = sender prefix
  *     parv[1] = nickname
  */
- static void m_nick(struct Client *client_p, struct Client *source_p,
-                   int parc, char *parv[])
+ static void
+ m_nick(struct Client *client_p, struct Client *source_p,
+	int parc, char *parv[])
 {
   char     nick[NICKLEN];
   struct   Client *target_p;
@@ -476,7 +477,7 @@ ms_client(struct Client *client_p, struct Client *source_p,
 
     ServerStats->is_kill++;
 	    
-    target_p->flags |= FLAGS_KILLED;
+    SetKilled(target_p);
     exit_client(client_p, target_p, &me, "ID Collision");
     return;
   }
@@ -511,8 +512,9 @@ ms_client(struct Client *client_p, struct Client *source_p,
  * side effects - if nickname is erroneous, or a different length to
  *                truncated nickname, return 1
  */
-static int check_clean_nick(struct Client *client_p, struct Client *source_p, 
-                            char *nick, char *newnick, char *server)
+static int
+check_clean_nick(struct Client *client_p, struct Client *source_p, 
+		 char *nick, char *newnick, char *server)
 {
   /* the old code did some wacky stuff here, if the nick is invalid, kill it
    * and dont bother messing at all
@@ -534,14 +536,14 @@ static int check_clean_nick(struct Client *client_p, struct Client *source_p,
       kill_client_ll_serv_butone(client_p, source_p,
                                  "%s (Bad Nickname)",
 				 me.name);
-      source_p->flags |= FLAGS_KILLED;
+      SetKilled(source_p);
       exit_client(client_p, source_p, &me, "Bad Nickname");
     }
 
-    return 1;
+    return (1);
   }
 
-  return 0;
+  return (0);
 }
 
 /* check_clean_user()
@@ -567,7 +569,7 @@ check_clean_user(struct Client *client_p, char *nick,
     sendto_one(client_p, ":%s KILL %s :%s (Bad Username)",
                me.name, nick, me.name);
   
-    return 1;
+    return (1);
   }
 
   if(!clean_user_name(user))
@@ -575,7 +577,7 @@ check_clean_user(struct Client *client_p, char *nick,
                          "Bad Username: %s Nickname: %s From: %s(via %s)",
 			 user, nick, server, client_p->name);
 			 
-  return 0;
+  return (0);
 }
 
 /* check_clean_host()
@@ -601,7 +603,7 @@ check_clean_host(struct Client *client_p, char *nick,
     sendto_one(client_p, ":%s KILL %s :%s (Bad Hostname)",
                me.name, nick, me.name);
 
-    return 1;
+    return (1);
   }
 
   if(!clean_host_name(host))
@@ -609,7 +611,7 @@ check_clean_host(struct Client *client_p, char *nick,
                          "Bad Hostname: %s Nickname: %s From: %s(via %s)",
 			 host, nick, server, client_p->name);
 
-  return 0;
+  return (0);
 }
 
 /* clean_nick_name()
@@ -623,21 +625,21 @@ clean_nick_name(char *nick)
 {
   assert(nick);
   if(nick == NULL)
-    return 0;
+    return (0);
 
   /* nicks cant start with a digit or - or be 0 length */
   /* This closer duplicates behaviour of hybrid-6 */
 
   if (*nick == '-' || IsDigit(*nick) || *nick == '\0')
-    return 0;
+    return (0);
 
   for(; *nick; nick++)
   {
     if(!IsNickChar(*nick))
-      return 0;
+      return (0);
   }
 
-  return 1;
+  return (1);
 }
 
 /* clean_user_name()
@@ -762,7 +764,7 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
     if(irccmp(parv[0], nick))
       source_p->tsinfo = newts ? newts : CurrentTime;
 
-    sendto_common_channels_local(source_p, ":%s!%s@%s NICK :%s",
+    sendto_common_channels_local(source_p, 1, ":%s!%s@%s NICK :%s",
                                  source_p->name,source_p->username,source_p->vhost,
                                  nick);
 
@@ -886,7 +888,7 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
       sendto_one(target_p, form_str(ERR_NICKCOLLISION),
                  me.name, target_p->name, target_p->name);
 
-      target_p->flags |= FLAGS_KILLED;
+      SetKilled(target_p);
       exit_client(client_p, target_p, &me, "Nick collision (new)");
       return 0;
     }
@@ -930,8 +932,8 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 	                           "%s (Nick collision (new))",
 				   me.name);
 
-        target_p->flags |= FLAGS_KILLED;
-	(void)exit_client(client_p, target_p, &me, "Nick collision");
+        SetKilled(target_p);
+	exit_client(client_p, target_p, &me, "Nick collision");
 	
 	if(parc == 11)
 	  nick_from_server(client_p,source_p,parc,parv,newts,nick);
@@ -970,9 +972,9 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
                                  "%s (Nick change collision)",
 				 me.name);
 
-      target_p->flags |= FLAGS_KILLED;
+      SetKilled(target_p);
       exit_client(NULL, target_p, &me, "Nick collision(new)");
-      source_p->flags |= FLAGS_KILLED;
+      SetKilled(source_p);
       exit_client(client_p, source_p, &me, "Nick collision(old)");
       return 0;
     }
@@ -1002,7 +1004,7 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 	                           "%s (Nick change collision)",
 				   me.name);
 
-        source_p->flags |= FLAGS_KILLED;
+        SetKilled(source_p);
 	
 	if(sameuser)
 	  exit_client(client_p, source_p, &me, "Nick collision(old)");
@@ -1031,8 +1033,8 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
        sendto_one(target_p, form_str(ERR_NICKCOLLISION),
                   me.name, target_p->name, target_p->name);
 
-       target_p->flags |= FLAGS_KILLED;
-       (void)exit_client(client_p, target_p, &me, "Nick collision");
+       SetKilled(target_p);
+       exit_client(client_p, target_p, &me, "Nick collision");
      }
    }
 

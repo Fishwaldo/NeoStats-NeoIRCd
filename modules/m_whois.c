@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whois.c,v 1.11 2002/11/20 14:13:57 fishwaldo Exp $
+ *  $Id: m_whois.c,v 1.12 2003/03/06 14:01:47 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -76,7 +76,7 @@ _moddeinit(void)
   mod_del_cmd(&whois_msgtab);
 }
 
-const char *_version = "$Revision: 1.11 $";
+const char *_version = "$Revision: 1.12 $";
 #endif
 /*
 ** m_whois
@@ -238,9 +238,7 @@ do_whois(struct Client *client_p, struct Client *source_p,
     found = global_whois(source_p,nick,wilds,glob);
   }
 
-  if(found)
-    sendto_one(source_p, form_str(RPL_ENDOFWHOIS), me.name, parv[0], parv[1]);
-  else
+  if (!found)
     sendto_one(source_p, form_str(ERR_NOSUCHNICK), me.name, parv[0], nick);
 
   return (0);

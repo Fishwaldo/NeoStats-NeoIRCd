@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c,v 1.16 2003/01/29 09:28:49 fishwaldo Exp $
+ *  $Id: channel.c,v 1.17 2003/03/06 14:01:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1165,7 +1165,9 @@ is_voiced(struct Channel *chptr, struct Client *who)
 int
 can_send(struct Channel *chptr, struct Client *source_p)
 {
-  if(MyClient(source_p) && find_channel_resv(chptr->chname) && !(IsOper(source_p)) && ConfigChannel.oper_pass_resv)
+  if(MyClient(source_p) &&
+     (find_channel_resv(chptr->chname) &&
+      !(IsOper(source_p)) && ConfigChannel.oper_pass_resv))
     return (CAN_SEND_NO);
     
   if (is_any_op(chptr, source_p))

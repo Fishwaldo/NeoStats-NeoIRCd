@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_defs.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: ircd_defs.h,v 1.4 2003/03/06 14:01:46 fishwaldo Exp $
  */
 
 /*
@@ -59,6 +59,8 @@
 #define MAX_DATE_STRING 32      /* maximum string length for a date string */
 
 #define HELPLEN         400
+
+#define LOWEST_SAFE_FD  4	/* skip stdin, stdout, stderr, and profiler */
 
 /* 
  * message return values 

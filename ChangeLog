@@ -12,6 +12,8 @@ Symbols are:
 (F)	- Can invite non-Z clients into +S channels
 (F) 	- SSL conf file support and restart of neoircd coding :)
 (HP)	- Hybrid Team Patches. (RC6, RC7, RC8) Woo0oo.. Wonder what they broke this time.
+(F)	- Fix a Umode Problem
+(HP)	- Hybrid Team Patches (RC9)
  
 * NeoIRCd Version 0.9.5 - 12th Oct, 2002 - Fish
 (S)     - Fixed up event.c for a possible serious bug reported by Dianora from hybrid team

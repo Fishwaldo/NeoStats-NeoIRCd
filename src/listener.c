@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: listener.c,v 1.5 2002/11/04 08:14:00 fishwaldo Exp $
+ *  $Id: listener.c,v 1.6 2003/03/06 14:01:50 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -393,6 +393,14 @@ accept_connection(int pfd, void *data)
 
   fd = comm_accept(listener->fd, &sai);
 
+  if (fd < 0)
+  {
+    /* Re-register a new IO request for the next accept .. */
+    comm_setselect(listener->fd, FDLIST_SERVICE, COMM_SELECT_READ,
+                   accept_connection, listener, 0);
+    return;
+  }
+
   copy_s_addr(IN_ADDR(addr), S_ADDR(sai));
 
 #ifdef IPV6
@@ -406,13 +414,6 @@ accept_connection(int pfd, void *data)
   }
 #endif
 
-  if (fd < 0)
-    {
-      /* Re-register a new IO request for the next accept .. */
-      comm_setselect(listener->fd, FDLIST_SERVICE, COMM_SELECT_READ,
-                     accept_connection, listener, 0);
-      return;
-    }
   /*
    * check for connection limit
    */

@@ -1,4 +1,4 @@
-$Id: TODO,v 1.17 2003/03/04 13:05:30 fishwaldo Exp $
+$Id: TODO,v 1.18 2003/03/06 14:01:45 fishwaldo Exp $
 
 put back "expire_channels" stuff
 
@@ -19,3 +19,4 @@ POST 1.0
 */silence
 */watch
 */knock on +klO chans, but not when banned
+*/kill templates (/kill <nick> <code> = /kill <nick> Abusive user

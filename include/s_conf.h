@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h,v 1.9 2003/01/29 09:28:48 fishwaldo Exp $
+ *  $Id: s_conf.h,v 1.10 2003/03/06 14:01:46 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -320,7 +320,7 @@ extern struct admin_info  AdminInfo;        /* defined in ircd.c */
 dlink_list temporary_klines;
 dlink_list temporary_ip_klines;
 
-extern void clear_ip_hash_table(void);
+extern void init_ip_hash_table(void);
 extern void iphash_stats(struct Client *,struct Client *,int,char **,FBFILE*);
 extern void count_ip_hash(int *, u_long *);
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: fileio.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: fileio.c,v 1.4 2003/03/06 14:01:50 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -45,7 +45,7 @@ file_open(const char *filename, int mode, int fmode)
     int fd;
     fd = open(filename, mode, fmode);
     if (fd == MASTER_MAX) {
-        fd_close(fd); /* Too many FDs! */
+        close(fd); /* Too many FDs! */
         errno = ENFILE;
         fd = -1;
     } else if (fd >= 0)

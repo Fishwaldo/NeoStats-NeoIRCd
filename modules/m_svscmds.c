@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_svscmds.c,v 1.9 2002/10/31 13:01:56 fishwaldo Exp $
+ *   $Id: m_svscmds.c,v 1.10 2003/03/06 14:01:46 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -134,7 +134,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.9 $";
+const char *_version = "$Revision: 1.10 $";
 #endif
 
 /*
@@ -206,7 +206,7 @@ static void ms_svsnick(struct Client *client_p, struct Client *source_p,
 			return;
 		}
 		target_p->tsinfo = parv[4] ? atol(parv[3]) : CurrentTime;
-		sendto_common_channels_local(target_p, ":%s!%s@%s NICK :%s", target_p->name, target_p->username, target_p->vhost, parv[2]);
+		sendto_common_channels_local(target_p, 1, ":%s!%s@%s NICK :%s", target_p->name, target_p->username, target_p->vhost, parv[2]);
 		/* send it to the other servers */	
 		if (target_p->user) {
 			add_history(target_p, 1);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_squit.c,v 1.2 2002/09/13 06:50:07 fishwaldo Exp $
+ *  $Id: m_squit.c,v 1.3 2003/03/06 14:01:49 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -58,7 +58,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&squit_msgtab);
 }
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 struct squit_parms 
 {
@@ -131,35 +131,35 @@ static void ms_squit(struct Client *client_p, struct Client *source_p,
   char  *comment = (parc > 2 && parv[2]) ? parv[2] : client_p->name;
 
   if(parc < 2)
+  {
+    exit_client(client_p, client_p, source_p, comment);
+    return;
+  }
+
+  if((found_squit = find_squit(client_p, source_p, parv[1])))
+  {
+    /*
+    **  Notify all opers, if my local link is remotely squitted
+    */
+    if (MyConnect(found_squit->target_p))
     {
-      exit_client(client_p, client_p, source_p, comment);
-      return;
+      sendto_wallops_flags(FLAGS_WALLOP, &me,
+			   "Remote SQUIT %s from %s (%s)",
+			   found_squit->server_name,
+			   source_p->name, comment);
+      
+      sendto_server(NULL, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS,
+		    ":%s WALLOPS :Remote SQUIT %s from %s (%s)",
+		    me.name, found_squit->server_name,
+		    source_p->name, comment);
+
+      ilog(L_TRACE, "SQUIT From %s : %s (%s)", parv[0],
+	   found_squit->server_name, comment);
+
     }
-
-  if( (found_squit = find_squit(client_p, source_p, parv[1])) )
-    {
-      /*
-      **  Notify all opers, if my local link is remotely squitted
-      */
-      if (MyConnect(found_squit->target_p))
-	{
-	  sendto_wallops_flags(FLAGS_WALLOP, &me,
-				 "Remote SQUIT %s from %s (%s)",
-				 found_squit->server_name,
-				 source_p->name, comment);
-
-          sendto_server(NULL, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS,
-                        ":%s WALLOPS :Remote SQUIT %s from %s (%s)",
-                        me.name, found_squit->server_name,
-                        source_p->name, comment);
-
-	  ilog(L_TRACE, "SQUIT From %s : %s (%s)", parv[0],
-	       found_squit->server_name, comment);
-
-	}
-      exit_client(client_p, found_squit->target_p, source_p, comment);
-      return;
-    }
+    exit_client(client_p, found_squit->target_p, source_p, comment);
+    return;
+  }
 }
 
 
@@ -171,9 +171,8 @@ static void ms_squit(struct Client *client_p, struct Client *source_p,
  * output	- pointer to struct containing found squit or none if not found
  * side effects	-
  */
-static struct squit_parms *find_squit(struct Client *client_p,
-                                      struct Client *source_p,
-                                      char *server)
+static struct squit_parms *
+find_squit(struct Client *client_p, struct Client *source_p, char *server)
 {
   static struct squit_parms found_squit;
   static struct Client *target_p;
@@ -232,5 +231,5 @@ static struct squit_parms *find_squit(struct Client *client_p,
   if(found_squit.target_p != NULL)
     return &found_squit;
   else
-    return( NULL );
+    return(NULL);
 }

@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.7 2002/11/04 08:14:00 fishwaldo Exp $
+dnl $Id: configure.in,v 1.8 2003/03/06 14:01:46 fishwaldo Exp $
 dnl Process this file with autoconf to produce a configure script.
 dnl AC_INIT(include/class.h) <- what is this ? -TimeMr14C
 
@@ -18,6 +18,17 @@ dnl Checks for programs.
 AC_PROG_CC
 dnl Make sure autoconf doesnt interfere with cflags -jmallett
 CFLAGS="$OLD_CFLAGS"
+
+dnl check for /dev/null so we can use it to hold evil fd's
+AC_MSG_CHECKING(for /dev/null)
+if test -c /dev/null ; then
+  AC_DEFINE(PATH_DEVNULL,"/dev/null")
+  AC_MSG_RESULT(yes)
+else
+  AC_DEFINE(PATH_DEVNULL,"devnull.log")
+  AC_MSG_RESULT(no - using devnull.log)
+fi
+
 
 dnl Check for various compilers. -jmallett
 SGS=no

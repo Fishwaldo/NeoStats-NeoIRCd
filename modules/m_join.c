@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c,v 1.12 2002/10/31 13:01:55 fishwaldo Exp $
+ *  $Id: m_join.c,v 1.13 2003/03/06 14:01:46 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -64,7 +64,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&join_msgtab);
 }
-const char *_version = "$Revision: 1.12 $";
+const char *_version = "$Revision: 1.13 $";
 
 #endif
 static void do_join_0(struct Client *client_p, struct Client *source_p);
@@ -438,6 +438,7 @@ do_join_0(struct Client *client_p, struct Client *source_p)
       sendto_channel_local(ALL_MEMBERS,chptr, ":%s!%s@%s PART %s",
 			   source_p->name, source_p->username,
 			   source_p->vhost, chptr->chname);
-      remove_user_from_channel(chptr, source_p);
+      if (!IsDefunct(source_p))
+	remove_user_from_channel(chptr, source_p);
     }
 }

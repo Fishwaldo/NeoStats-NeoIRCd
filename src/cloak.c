@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: cloak.c,v 1.3 2002/09/24 11:50:16 fishwaldo Exp $
+ *  $Id: cloak.c,v 1.4 2002/10/16 05:01:53 fishwaldo Exp $
  */
 /*
 **
@@ -54,14 +54,11 @@
 #include "s_conf.h"
 #include "memory.h"
 
-/* Hidden host code below */
-
-#define KEY 94214
-#define KEY2 83645
-#define KEY3 29734
+#define KEY 23857
+#define KEY2 38447
+#define KEY3 64709
 
 int str2arr (char **, char *, char *);
-
 unsigned long crc32 (const unsigned char *s, unsigned int len);
 
 
@@ -202,11 +199,12 @@ str2arr (char **pparv, char *string, char *delim)
 
 
 /* Regular user host */
-char
-*make_virthost (char *curr, char *host, int mode)
+void
+make_virthost (char *curr, char *host, char *new)
 {
-  static char mask[HOSTLEN +1];
-  char *parv[HOSTLEN + 1], *parv2[HOSTLEN + 1], s[HOSTLEN + 1], s2[HOSTLEN + 2];
+  static char mask[HOSTLEN + 1];
+  char *parv[HOSTLEN + 1], *parv2[HOSTLEN + 1], s[HOSTLEN + 1],
+    s2[HOSTLEN + 2];
   int parc = 0, parc2 = 0, len = 0;
   unsigned long hash[8];
 
@@ -230,11 +228,11 @@ char
   hash[1] >>= 2;
 
   /* Check if host could be IPv4 */
-  if (parc == 4)
+  if (parc2 == 4)
     {
-      len = strlen (parv[3]);
+      len = strlen (parv2[3]);
       /* Check if its an IPv4 for sure */
-      if (strchr ("0123456789", parv[3][len - 1]))
+      if (strchr ("0123456789", parv2[3][len - 1]))
 	{
 	  hash[2] = ((crc32 (parv[1], strlen (parv[1])) + KEY2) ^ KEY) ^ KEY3;
 	  hash[3] = ((crc32 (parv[0], strlen (parv[0])) + KEY2) ^ KEY) ^ KEY3;
@@ -245,37 +243,30 @@ char
 	  hash[3] <<= 2;
 	  hash[3] >>= 2;
 
-	  ircsprintf (mask, "%lX.%lX.%lX.%lXX",
+	  ircsprintf (mask, "%lx.%lx.%lx.%lxX",
 		      hash[0], hash[1], hash[2], hash[3]);
 	}
       else
 	{
-	  ircsprintf (mask, "%lX.%lX.%s.%s.%s",
-		      hash[0], hash[1], parv[parc - 3], parv[parc - 2],
-		      parv[parc - 1]);
+	  ircsprintf (mask, "%lx.%lx.%s.%s.%s",
+		      hash[0], hash[1], parv2[parc2 - 3], parv2[parc2 - 2],
+		      parv2[parc2 - 1]);
 	}
     }
   else
     {
-      if (parc >= 4)		/* There are isp's like *.isp.co.uk etc out there */
+      if (parc2 >= 4)		/* There are isp's like *.isp.co.uk etc out there */
 	{
-	  ircsprintf (mask, "%lX.%lX.%s.%s.%s",
-		      hash[0], hash[1], parv[parc - 3], parv[parc - 2],
-		      parv[parc - 1]);
+	  ircsprintf (mask, "%lx.%lx.%s.%s.%s",
+		      hash[0], hash[1], parv2[parc2 - 3], parv2[parc2 - 2],
+		      parv2[parc2 - 1]);
 	}
       else
 	{
-	  ircsprintf (mask, "%lX.%lX.%s.%s",
-		      hash[0], hash[1], parv[parc - 2], parv[parc - 1]);
+	  ircsprintf (mask, "%lx.%lx.%s.%s",
+		      hash[0], hash[1], parv2[parc2 - 2], parv2[parc2 - 1]);
 	}
     }
-  if (mode == 0)
-  	{
-  		strncpy(host, mask, HOSTLEN);	/* */
-	}
-  return host;
-  	  
-
+  strncpy (new, mask, HOSTLEN);
+  return;
 }
-
-

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c,v 1.9 2002/09/26 12:34:46 fishwaldo Exp $
+ *  $Id: s_conf.c,v 1.10 2002/10/16 05:01:53 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -313,7 +313,7 @@ report_configured_links(struct Client* source_p, int mask)
 
               sendto_one(source_p, form_str(p->rpl_stats), me.name,
                          source_p->name, c,
-                         "*@127.0.0.1",
+                         host,
 			 buf,
                          name,
                          port,

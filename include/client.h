@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h,v 1.8 2002/09/13 16:30:03 fishwaldo Exp $
+ *  $Id: client.h,v 1.9 2002/10/16 05:04:23 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_client_h
@@ -625,6 +625,6 @@ extern int change_local_nick(struct Client *client_p, struct Client *source_p,
                              char *nick);
 extern void dead_link(struct Client *client_p);
 extern void exit_aborted_clients(void);
-extern char *make_virthost(char *curr, char *new, int mode);
+extern void make_virthost(char *curr, char *host, char *new);
 #endif /* INCLUDED_client_h */
 

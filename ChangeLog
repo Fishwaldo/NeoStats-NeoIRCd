@@ -4,14 +4,16 @@ Symbols are:
 (F)	- Fish (fish@dynam.ac)
 (S)	- Shmad (shmad@neostats.net)
 (HP)	- Hybrid Team Patches to Hybrid Source
+
 * NeoIRCd Version 0.9.5 - 12th Oct, 2002 - Fish
-(F)	- Fixed up Server info lines not being propogated correctly
-(F)	- fixed up m_message.so so that opers/services can send to anyhost with /msg $$* (For operserv global compat)
-
-
-* NeoIRCd Version 0.9.4 - 24th Sept, 2002 - Fish
 (S)     - Fixed up event.c for a possible serious bug reported by Dianora from hybrid team
 	  Also thanks for the reference and event code in question.
+(F)	- Fixed up Server info lines not being propogated correctly
+(F)	- fixed up m_message.so so that opers/services can send to anyhost with /msg $$* (For operserv global compat)
+(F)	- Fixed up Hidden Servers to work correctly... (/map /links /whois etc)
+(F)	- Fixed Usermode problems.
+
+* NeoIRCd Version 0.9.4 - 24th Sept, 2002 - Fish
 (F)	- Changed HiddenHost System to Use Ultimates version instead... 
 (F)	- Changed NICK and Client Messages to include vhost, so we dont have to burst SETHOST
 (F)	- Don't burst SETHOST when we remove -x

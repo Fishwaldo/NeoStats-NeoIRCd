@@ -17,6 +17,8 @@ Symbols are:
 (F)	- you can not deop/admin/voice/halfop a services client regardless of who you are.
 (F)	- /userhost displays your vhost, not real host..
 (F)	- Timed Glines now possible. /gline ident@host 12 reason (12 is minutes atm, if 0, uses the default from config files)
+(F)	- Dlines are now network wide.
+
 * NeoIRCd Version 0.9.2 - 17th Sept, 2002 - Fish
 (F)	- Fixed a problem with servers setting modes
 (F)	- Fixed a problem with sethost I think (wasn't setting on other servers correctly)

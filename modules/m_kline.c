@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c,v 1.9 2002/09/19 05:41:10 fishwaldo Exp $
+ *  $Id: m_kline.c,v 1.10 2002/09/22 13:19:52 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,9 +62,9 @@ struct Message kline_msgtab[] = {
 
 struct Message dline_msgtab[] = {
   {"DLINE", 0, 0, 2, 0, MFLG_SLOW, 0,
-  {m_unregistered, m_not_oper, m_error, mo_dline}},
+  {m_unregistered, m_not_oper, mo_dline, mo_dline}},
   {"UNDLINE", 0, 0, 2, 0, MFLG_SLOW, 0,
-   {m_unregistered, m_not_oper, m_error, mo_undline}}, 
+   {m_unregistered, m_not_oper, mo_undline, mo_undline}}, 
 };
 
 #ifndef STATIC_MODULES
@@ -86,7 +86,7 @@ _moddeinit(void)
   mod_del_cmd(&dline_msgtab[0]);
   mod_del_cmd(&dline_msgtab[1]);
 }
-const char *_version = "$Revision: 1.9 $";
+const char *_version = "$Revision: 1.10 $";
 #endif
 
 /* Local function prototypes */
@@ -372,8 +372,6 @@ apply_kline(struct Client *source_p, struct ConfItem *aconf,
 	    const char *current_date, time_t cur_time)
 {
   add_conf_by_address(aconf->host, CONF_KILL, aconf->user, aconf);
-  WriteKlineOrDline(KLINE_TYPE, source_p, aconf->user, aconf->host,
-		    reason, oper_reason, current_date, cur_time);
   /* Now, activate kline against current online clients */
   check_klines();
 }
@@ -586,13 +584,6 @@ mo_dline(struct Client *client_p, struct Client *source_p,
   const char* current_date;
   time_t cur_time;
 
-  if (!IsOperK(source_p))
-    {
-      sendto_one(source_p,":%s NOTICE %s :You need kline = yes;",
-		 me.name, parv[0]);
-      return;
-    }
-
   dlhost = parv[1];
   strlcpy(cidr_form_host, dlhost, HOSTLEN + 1);
   cidr_form_host[HOSTLEN] = '\0';
@@ -600,7 +591,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
   if ((t=parse_netmask(dlhost, NULL, &bits)) == HM_HOST)
   {
 #ifdef IPV6
-   sendto_one(source_p, ":%s NOTICE %s :Sorry, please supply an address.",
+   if !IsServices(source_p) sendto_one(source_p, ":%s NOTICE %s :Sorry, please supply an address.",
               me.name, parv[0]);
    return;
 #else
@@ -612,7 +603,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
       t = HM_IPV4;
       if (IsServer(target_p))
         {
-          sendto_one(source_p,
+          if (!IsServices(source_p)) sendto_one(source_p,
                      ":%s NOTICE %s :Can't DLINE a server silly",
                      me.name, parv[0]);
           return;
@@ -620,7 +611,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
               
       if (!MyConnect(target_p))
         {
-          sendto_one(source_p,
+          if (!IsServices(source_p)) sendto_one(source_p,
                      ":%s NOTICE :%s :Can't DLINE nick on another server",
                      me.name, parv[0]);
           return;
@@ -628,7 +619,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 
       if (IsExemptKline(target_p))
         {
-          sendto_one(source_p,
+          if (!IsServices(source_p)) sendto_one(source_p,
                      ":%s NOTICE %s :%s is E-lined",me.name,parv[0],
                      target_p->name);
           return;
@@ -689,7 +680,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
     {
       if (bits < 8)
 	{
-	  sendto_one(source_p,
+	  if (!IsServices(source_p)) sendto_one(source_p,
 	":%s NOTICE %s :For safety, bitmasks less than 8 require conf access.",
 		     me.name, parv[0]);
 	  return;
@@ -697,7 +688,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
     }
   else
     {
-      if (bits < 24)
+      if ((bits < 24) && !IsServices(source_p))
 	{
 	  sendto_one(source_p,
 	     ":%s NOTICE %s :Dline bitmasks less than 24 are for admins only.",
@@ -720,14 +711,15 @@ mo_dline(struct Client *client_p, struct Client *source_p,
       if((aconf = find_dline_conf(&daddr, t)) != NULL)
 	{
 	  creason = aconf->passwd ? aconf->passwd : "<No Reason>";
-	  if (IsConfExemptKline(aconf))
-	    sendto_one(source_p,
-		       ":%s NOTICE %s :[%s] is (E)d-lined by [%s] - %s",
-		       me.name, parv[0], dlhost, aconf->host, creason);
-	  else
-	    sendto_one(source_p,
+	  if (IsConfExemptKline(aconf)) {
+		    if (!IsServices(source_p)) sendto_one(source_p,
+			       ":%s NOTICE %s :[%s] is (E)d-lined by [%s] - %s",
+			       me.name, parv[0], dlhost, aconf->host, creason);
+	  } else {
+	    if (!IsServices(source_p)) sendto_one(source_p,
 		       ":%s NOTICE %s :[%s] already D-lined by [%s] - %s",
 		       me.name, parv[0], dlhost, aconf->host, creason);
+	  }
 	  return;
 	}
     }
@@ -752,12 +744,12 @@ mo_dline(struct Client *client_p, struct Client *source_p,
   DupString(aconf->passwd, dlbuffer);
 
   add_conf_by_address(aconf->host, CONF_DLINE, NULL, aconf);
-  /*
-   * Write dline to configuration file
-   */
-  WriteKlineOrDline(DLINE_TYPE, source_p, NULL, dlhost, reason,
-		    oper_reason, current_date, cur_time);
   check_klines();
+  if (!IsServices(source_p)) sendto_one(source_p, ":%s NOTICE %s :[%s] has been dlined", me.name, source_p->name, parv[1]);
+  sendto_realops_flags(FLAGS_ALL, L_ALL, "*** %s has Dlined %s for %s", source_p->name, parv[1], reason);
+  
+  sendto_server(client_p, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s DLINE %s :%s", source_p->name, parv[1], parv[2] ? parv[2] : "");
+  
 } /* m_dline() */
 
 /*
@@ -1014,7 +1006,6 @@ already_placed_kline(struct Client *source_p, char *luser, char *lhost)
  return 0;
 }
 
-static int flush_write(struct Client *, FBFILE* , char *, char *);
 static int remove_tkline_match(char *,char *);
 
 
@@ -1031,13 +1022,7 @@ static int remove_tkline_match(char *,char *);
 static void mo_unkline (struct Client *client_p,struct Client *source_p,
                        int parc,char *parv[])
 {
-  FBFILE *in, *out;
-  int pairme=0,error_on_write = NO;
-  char buf[BUFSIZE], buff[BUFSIZE], temppath[BUFSIZE], *user, *host, *p;
-  const char  *filename;                /* filename to use for unkline */
-  mode_t oldumask;
-
-  ircsprintf(temppath, "%s.tmp", ConfigFileEntry.klinefile);
+  char *user, *host;
   
   if (!IsOperUnkline(source_p))
     {
@@ -1085,138 +1070,13 @@ static void mo_unkline (struct Client *client_p,struct Client *source_p,
 	   host);
       return;
     }
-
-  filename = get_conf_name(KLINE_TYPE);
-  if ((in = fbopen(filename, "r")) == 0)
-    {
-      sendto_one(source_p, ":%s NOTICE %s :Cannot open %s", me.name, parv[0],
-		 filename);
-      return;
-    }
-
-  oldumask = umask(0);
-  if ((out = fbopen(temppath, "w")) == 0)
-    {
-      sendto_one(source_p, ":%s NOTICE %s :Cannot open %s", me.name, parv[0],
-		 temppath);
-      fbclose(in);
-      umask(oldumask);
-      return;
-    }
-  umask(oldumask);
-
-  while (fbgets(buf, sizeof(buf), in)) 
-    {
-      char *found_host, *found_user;
-
-      strlcpy(buff, buf, BUFSIZE);
-
-      if ((p = strchr(buff,'\n')) != NULL)
-	*p = '\0';
-
-      if ((*buff == '\0') || (*buff == '#'))
-	{
-	  if(!error_on_write)
-	    flush_write(source_p, out, buf, temppath);
-	  continue;
-	}
-      
-      if ((found_user = getfield(buff)) == NULL)
-	{
-	  if(!error_on_write)
-	    flush_write(source_p, out, buf, temppath);
-	  continue;
-	}
-
-      if ((found_host = getfield(NULL)) == NULL)
-	{
-	  if(!error_on_write)
-	    flush_write(source_p, out, buf, temppath);
-	  continue;
-	}
-
-      if ((irccmp(host,found_host) == 0) && (irccmp(user,found_user) == 0))
-	{
-	  pairme++;
-	}
-      else
-	{
-	  if(!error_on_write)
-	    flush_write(source_p, out, buf, temppath);
-	}
-    }
-  fbclose(in);
-  fbclose(out);
-
-/* The result of the rename should be checked too... oh well */
-/* If there was an error on a write above, then its been reported
- * and I am not going to trash the original kline /conf file
- */
-  if(!error_on_write)
-    {
-      (void)rename(temppath, filename);
-      rehash(0);
-    }
   else
-    {
-      sendto_one(source_p,
-		 ":%s NOTICE %s :Couldn't write temp kline file, aborted",
-		 me.name,source_p->name);
-      return;
-    }
-
-  if(!pairme)
     {
       sendto_one(source_p, ":%s NOTICE %s :No K-Line for %s@%s",
                  me.name, source_p->name,user,host);
       return;
     }
-
-  sendto_one(source_p, ":%s NOTICE %s :K-Line for [%s@%s] is removed", 
-             me.name, source_p->name, user,host);
-  sendto_realops_flags(FLAGS_ALL, L_ALL,
-		       "%s has removed the K-Line for: [%s@%s]",
-		       get_oper_name(source_p), user, host);
-
-  ilog(L_NOTICE, "%s removed K-Line for [%s@%s]",
-       source_p->name, user, host);
-  return; 
-}
-
-/*
- * flush_write()
- *
- * inputs       - pointer to client structure of oper requesting unkline
- *              - out is the file descriptor
- *              - buf is the buffer to write
- *              - ntowrite is the expected number of character to be written
- *              - temppath is the temporary file name to be written
- * output       - YES for error on write
- *              - NO for success
- * side effects - if successful, the buf is written to output file
- *                if a write failure happesn, and the file pointed to
- *                by temppath, if its non NULL, is removed.
- *
- * The idea here is, to be as robust as possible when writing to the 
- * kline file.
- *
- * -Dianora
- */
-
-static int flush_write(struct Client *source_p, FBFILE* out, char *buf,
-		       char *temppath)
-{
-  int error_on_write = (fbputs(buf, out) < 0) ? YES : NO;
-
-  if (error_on_write)
-    {
-      sendto_one(source_p,":%s NOTICE %s :Unable to write to %s",
-        me.name, source_p->name, temppath );
-      fbclose(out);
-      if(temppath != (char *)NULL)
-        (void)unlink(temppath);
-    }
-  return(error_on_write);
+  return;
 }
 
 /* static int remove_tkline_match(char *host, char *user)
@@ -1268,23 +1128,13 @@ static void
 mo_undline (struct Client *client_p, struct Client *source_p,
             int parc,char *parv[])
 {
-  FBFILE* in;
-  FBFILE* out;
-  char  buf[BUFSIZE], buff[BUFSIZE], temppath[BUFSIZE], *p;
-  const char  *filename,*cidr, *found_cidr;
-  int pairme = NO, error_on_write = NO;
-  mode_t oldumask;
-
-  ircsprintf(temppath, "%s.tmp", ConfigFileEntry.dlinefile);
-
-  if (!IsOperUnkline(source_p))
-    {
-      sendto_one(source_p,":%s NOTICE %s :You need unkline = yes;",me.name,
-		 parv[0]);
-      return;
-    }
+  struct ConfItem *aconf;
+  char *cidr;
+  int t;
+  struct irc_inaddr daddr;
 
   cidr = parv[1];
+  t = 0;
 
 #if 0
   if ((type=parse_netmask(cidr,&ip_host,&ip_mask)) == HM_HOST)
@@ -1294,91 +1144,32 @@ mo_undline (struct Client *client_p, struct Client *source_p,
       return;
     }
 #endif
+  sendto_server(client_p, NULL, NULL, NOCAPS, NOCAPS, NOFLAGS, ":%s UNDLINE %s", source_p->name, cidr);
 
-  filename = get_conf_name(DLINE_TYPE);
+/* TODO : remove dline */
 
-  if ((in = fbopen(filename, "r")) == 0)
-    {
-      sendto_one(source_p, ":%s NOTICE %s :Cannot open %s",
-		 me.name,parv[0],filename);
-      return;
-    }
+  sendto_one(source_p, ":%s NOTICE %s :%d %s", me.name, source_p->name, t, cidr);
 
-  oldumask = umask(0);                  /* ircd is normally too paranoid */
-  if ( (out = fbopen(temppath, "w")) == 0)
-    {
-      sendto_one(source_p, ":%s NOTICE %s :Cannot open %s",
-		 me.name,parv[0],temppath);
-      fbclose(in);
-      umask(oldumask);                  /* Restore the old umask */
-      return;
-    }
-  umask(oldumask);                    /* Restore the old umask */
+  t = parse_netmask(cidr, &daddr, NULL);
 
-  while(fbgets(buf, sizeof(buf), in))
-    {
-      strlcpy(buff, buf, BUFSIZE);
-
-      if ((p = strchr(buff,'\n')) != NULL)
-	*p = '\0';
-
-      if ((*buff == '\0') || (*buff == '#'))
-	{
-	  if(!error_on_write)
-	    flush_write(source_p, out, buf, temppath);
-	  continue;
-	}
-
-      if ((found_cidr = getfield(buff)) == NULL)
-	{
-	  if(!error_on_write)
-	    flush_write(source_p, out, buf, temppath);
-	  continue;
-	}
-      
-      if (irccmp(found_cidr,cidr) == 0)
-	{
-	  pairme++;
-	}
-      else
-	{
-	  if(!error_on_write)
-	    flush_write(source_p, out, buf, temppath);
-	  continue;
-	}
-
-    }
-
-  fbclose(in);
-  fbclose(out);
-
-  if (!error_on_write)
-    {
-
-      (void)rename(temppath, filename);
-      rehash(0);
-    }
+#ifdef IPV6
+  if (t == HM_IPV6)
+    t = AF_INET6;
   else
-    {
-      sendto_one(source_p,
-		 ":%s NOTICE %s :Couldn't write D-line file, aborted",
-		 me.name, parv[0]);
-      return;
-    }
+#endif
+  t = AF_INET;
 
-  if (!pairme)
-    {
-      sendto_one(source_p, ":%s NOTICE %s :No D-Line for %s", me.name,
-		 parv[0],cidr);
-      return;
-    }
-
-  sendto_one(source_p, ":%s NOTICE %s :D-Line for [%s] is removed",
-	     me.name, parv[0], cidr);
-  sendto_realops_flags(FLAGS_ALL, L_ALL, "%s has removed the D-Line for: [%s]",
-		       get_oper_name(source_p), cidr);
-  ilog(L_NOTICE, "%s removed D-Line for [%s]", get_oper_name(source_p),
-       cidr);
+  if((aconf = find_dline_conf(&daddr, t)) != NULL) {
+	  delete_one_address_conf(aconf->host, aconf);
+	  sendto_one(source_p, ":%s NOTICE %s :D-Line for [%s] is removed",
+		     me.name, parv[0], cidr);
+	  sendto_realops_flags(FLAGS_ALL, L_ALL, "%s has removed the D-Line for: [%s]",
+			       get_oper_name(source_p), cidr);
+	  ilog(L_NOTICE, "%s removed D-Line for [%s]", get_oper_name(source_p),
+       		cidr);
+  } else {
+  	sendto_one(source_p, ":%s NOTICE %s :D-Line %s can not be found", me.name, source_p->name, cidr);
+  }
 }
 
 

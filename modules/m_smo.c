@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_smo.c,v 1.2 2002/09/16 07:56:55 fishwaldo Exp $
+ *   $Id: m_smo.c,v 1.3 2002/09/23 04:39:32 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -81,7 +81,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 /*
@@ -101,11 +101,6 @@ static void ms_smo(struct Client *client_p, struct Client *source_p,
 	/* this is just a double check for servers that *DONT* set the right flags */
 	flags &= ~FLAGS_REMOTE;
 
-	/* if its not from a server, or a Services Client drop the message */
-	if (!IsServer(source_p))
-		return;
-	if (IsClient(source_p) && (!IsServices(source_p)))
-		return;
 	
 	sendto_realops_flags(flags, atoi(parv[2]), "From %s: %s", source_p->name, parv[3]);
 

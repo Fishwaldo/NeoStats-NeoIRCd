@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.16 2002/09/20 09:05:18 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.17 2002/09/23 04:39:32 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -954,14 +954,14 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
    * put them back using new sendto() funcs
    */
 
-  if (IsServer(source_p))
+  if (IsServer(source_p) && !IsUlined(source_p))
     {
        sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN, "*** Mode for User %s from %s",
                             parv[1], source_p->name);
        return 0;
     }
 
-  if ((source_p != target_p || target_p->from != source_p->from) && !IsServices(source_p))
+  if ((source_p != target_p || target_p->from != source_p->from) && !IsUlined(source_p))
     {
        sendto_one(source_p, form_str(ERR_USERSDONTMATCH), me.name, parv[0]);
        return 0;
@@ -1043,14 +1043,12 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
 			 */
 			SetHidden(target_p);
 			if (!MyClient(target_p)) {
-				ilog(L_WARN, "set exit");
 				break;
 			}
 			make_virthost(target_p->host, target_p->vhost, 0);
 		} else {
 			ClearHidden(target_p);
 			if (!MyClient(target_p)) {
-				ilog(L_WARN, "exit");
 				break;
 			}
 			strncpy(target_p->vhost, target_p->host, HOSTLEN);
@@ -1113,7 +1111,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
       		me.name, parv[0]);
       target_p->umodes &= ~FLAGS_SERVICES;
     }
-  if ((!IsServer(client_p) || !IsUlined(client_p)) && ((target_p->umodes & FLAGS_REGNICK) || setflags & FLAGS_REGNICK))
+  if ((!IsServer(source_p) || !IsUlined(source_p)) && ((target_p->umodes & FLAGS_REGNICK) || setflags & FLAGS_REGNICK))
     {
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +r",
       		me.name, parv[0]);
@@ -1207,7 +1205,7 @@ send_umode_out(struct Client *client_p,
   char buf[BUFSIZE];
   dlink_node *ptr;
 
-  send_umode(NULL, source_p, old, SEND_UMODES, buf);
+  send_umode(source_p, source_p, old, ALL_UMODES, buf);
 
   for(ptr = serv_list.head; ptr; ptr = ptr->next)
     {

@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_svscmds.c,v 1.5 2002/09/17 11:03:21 fishwaldo Exp $
+ *   $Id: m_svscmds.c,v 1.6 2002/09/23 04:39:32 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -63,7 +63,8 @@ static void ms_svsjoin(struct Client *client_p, struct Client *source_p,
                          int parc, char *parv[]);
 static void ms_svspart(struct Client *client_p, struct Client *source_p,
 		         int parc, char *parv[]);
-
+static void ms_svsmode(struct Client *client_p, struct Client *source_p,
+			 int parc, char *parv[]);
 
 
 
@@ -96,6 +97,10 @@ struct Message svspart_msgtab = {
   {m_ignore, m_ignore, ms_svspart, m_ignore}
 };
 
+struct Message svsmode_msgtab = {
+  "SVSMODE", 0, 0, 3, 0, MFLG_SLOW, 0,
+  {m_ignore, m_ignore, ms_svsmode, m_ignore}
+};
 
 /* Thats the msgtab finished */
 
@@ -110,6 +115,7 @@ _modinit(void)
   mod_add_cmd(&svsid_msgtab);
   mod_add_cmd(&svsjoin_msgtab);
   mod_add_cmd(&svspart_msgtab);
+  mod_add_cmd(&svsmode_msgtab);
 }
 
 /* here we tell it what to do when the module is unloaded */
@@ -122,11 +128,12 @@ _moddeinit(void)
   mod_del_cmd(&svsid_msgtab);
   mod_del_cmd(&svsjoin_msgtab);
   mod_del_cmd(&svspart_msgtab);
+  mod_del_cmd(&svsmode_msgtab);
 }
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.5 $";
+const char *_version = "$Revision: 1.6 $";
 #endif
 
 /*
@@ -525,3 +532,12 @@ static void ms_svspart(struct Client *client_p, struct Client *source_p,
   remove_user_from_channel(chptr, target_p);
 }
 
+static void ms_svsmode(struct Client *client_p, struct Client *source_p,
+                      int parc, char *parv[])
+{
+
+  if (!IsUlined(source_p))
+  	return;
+  user_mode(client_p, source_p, parc, parv);
+
+}

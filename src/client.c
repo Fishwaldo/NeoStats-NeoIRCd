@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: client.c,v 1.3 2002/08/14 03:14:27 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -1157,7 +1157,16 @@ void dead_link(struct Client *client_p)
   else
     notice = "Write error: connection closed";
 
-    	
+  /* Mark it dead before sending out any notices, just in case this ever goes
+   * global */    	
+  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(to, HIDE_IP), 
+      notice));
+  assert(dlinkFind(&abort_list, client_p) == NULL);
+  m = make_dlink_node();
+  dlinkAdd(client_p, m, &abort_list);
+
+  SetDead(client_p); /* You are dead my friend */
+
   if (!IsPerson(client_p) && !IsUnknown(client_p) && !IsClosing(client_p))
   {
     sendto_realops_flags(FLAGS_ALL, L_ADMIN,
@@ -1167,11 +1176,6 @@ void dead_link(struct Client *client_p)
 		         "Closing link to %s: %s",
                          get_client_name(client_p, MASK_IP), notice);
   }
-//  Debug((DEBUG_ERROR, "Closing link to %s: %s", get_client_name(to, HIDE_IP), notice));
-  assert(dlinkFind(&abort_list, client_p) == NULL);
-  m = make_dlink_node();
-  dlinkAdd(client_p, m, &abort_list);
-  SetDead(client_p); /* You are dead my friend */
 }
 
 void exit_aborted_clients(void)

@@ -8,6 +8,8 @@ Symbols are:
 (HP)	- Merged in Hybrid rc4 Patches (including Rc3 and Rc3 fixes)
 (F)	- Fixed up Persistant Channels.
 (F)	- Fixed up configure problem when it can't find msgfmt
+(F)	- Fixed up services problem 
+(F)	- Fixed up aliases
 
 * NeoIRCd Version 0.9.2 - 17th Sept, 2002 - Fish
 (F)	- Fixed a problem with servers setting modes

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c,v 1.13 2002/10/15 07:58:13 fishwaldo Exp $
+ *  $Id: m_sjoin.c,v 1.14 2002/10/15 08:39:40 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ _moddeinit(void)
   mod_del_cmd(&sjoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.13 $";
+const char *_version = "$Revision: 1.14 $";
 #endif
 /*
  * ms_sjoin
@@ -371,16 +371,33 @@ static void ms_sjoin(struct Client *client_p,
       num_prefix = 0;
 	switch (*s) {
 		case '!':
-			fl |= MODE_ADMIN;
+			{
+				fl |= MODE_ADMIN;
+				break;
+			}
 		case '@':
-			fl |= MODE_CHANOP;
+			{
+				fl |= MODE_CHANOP;
+				break;
+			}
 		case '+':
-			fl |= MODE_VOICE;
+			{
+				fl |= MODE_VOICE;
+				break;
+			}
 		case '%':
-			fl |= MODE_HALFOP;
+			{
+				fl |= MODE_HALFOP;
+				break;
+			}
 	}
+	if (fl > 0) {
+printf("hrm %c\n", *s);
 	*hops++ = *s;
 	s++;
+	}
+printf("nick %s\n", s);
+
 #if 0		
 	 if (*s == '!')
 	    {
@@ -431,13 +448,14 @@ static void ms_sjoin(struct Client *client_p,
        * just added and skip to the next nick
        */
       /* also do this if its fake direction or a server */
+printf("%s - %d\n",hops, fl);
       if (!(target_p = find_client(s)) ||
          (target_p->from != client_p) || !IsPerson(target_p))
       {
         sendto_one(source_p, form_str(ERR_NOSUCHNICK), me.name,
 	           source_p->name, s);
 
-        hops -= num_prefix;
+        hops -= 1;
 	*hops = '\0';
 
         goto nextnick;
@@ -445,7 +463,8 @@ static void ms_sjoin(struct Client *client_p,
 
       if (!keep_new_modes && !IsOper(target_p))
 	{
-	  if ((fl & MODE_CHANOP) || (fl & MODE_HALFOP) || (fl & MODE_ADMIN) || fl & MODE_VOICE)
+printf("not keeping new modes\n");
+	  if ((fl & MODE_CHANOP) || (fl & MODE_HALFOP) || (fl & MODE_ADMIN) || (fl & MODE_VOICE))
 	    {
 	      fl = MODE_DEOPPED;
 	      hops -= 1;
@@ -457,7 +476,8 @@ static void ms_sjoin(struct Client *client_p,
 	    }
 	}
 
-
+printf("%s - %d\n",hops, fl);
+printf("%d\n", MODE_ADMIN);
       /* copy the nick to the two buffers */
       hops += ircsprintf(hops, "%s ", s);
       assert((hops - sjbuf_hops) < sizeof(sjbuf_hops));
@@ -579,6 +599,8 @@ nextnick:
 
   if (!people)
     return;
+
+printf("sjoin %s %s\n", buf, sjbuf_hops);
 
   /* relay the SJOIN to other servers */
   for(m = serv_list.head; m; m = m->next)

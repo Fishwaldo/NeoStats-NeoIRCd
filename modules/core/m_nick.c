@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.10 2002/09/20 09:05:18 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.11 2002/09/20 09:10:39 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.10 $";
+const char *_version = "$Revision: 1.11 $";
 #endif
 
 /*
@@ -728,7 +728,7 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
 	   Count.oper++;
 
 	 /* we only allow Ulined Servers to set +s */
-	 if ((flag & FLAGS_SERVICES) && (!IsUlined(parv[7]))) {
+	 if ((flag & FLAGS_SERVICES) && (!IsUlined(find_server(parv[7])))) {
 		sendto_one(source_p, ":%s NOTICE %s :*** Only Ulined Services can set +S", me.name, source_p->name);
 		sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Warning, Non-Ulined Server %s tried to set %s as +S", source_p->from->name, source_p->name);
 		/* we don't allow them to get +S, so do a continue */

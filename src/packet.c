@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: packet.c,v 1.5 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: packet.c,v 1.6 2002/11/04 08:14:00 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -377,8 +377,24 @@ read_packet(int fd, void *data)
    * I personally think it makes the code too hairy to make sane.
    *     -- adrian
    */
-  length = recv(fd_r, readBuf, READBUF_SIZE, 0);
+   
+#ifdef USE_SSL
+  if (IsSSL(client_p))
+  	length = safe_SSL_read(client_p, readBuf, READBUF_SIZE);
+  	if (!IsSSLOK(client_p) && length > 0) {
+		SetSSLOK(client_p);
+  		start_auth(client_p);
+  	} else if (length == 0) {
+		comm_setselect(fd_r, FDLIST_SERVICE, COMM_SELECT_READ, read_packet, client_p, 0);
+  		return;
+  	}	
+  	
+  else
+#endif
+	length = recv(fd_r, readBuf, READBUF_SIZE, 0);
 
+printf("leng %d\n", length);
+/* THIS WAS <= 0, should it stay? */
   if (length <= 0)
   {
     if((length == -1) && ignoreErrno(errno))
@@ -427,6 +443,7 @@ read_packet(int fd, void *data)
   }
 
   lclient_p->actually_read += lbuf_len;
+  
   
   /* Attempt to parse what we have */
   parse_client_queued(client_p);

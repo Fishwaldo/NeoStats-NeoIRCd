@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- * $Id: stdinc.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ * $Id: stdinc.h,v 1.4 2002/11/04 08:14:00 fishwaldo Exp $
  *
  */
  
@@ -98,4 +98,8 @@ extern int errno;
 
 #ifdef VMS
 #include <sys/ioctl.h>
+#endif
+
+#ifdef USE_SSL
+#include <openssl/ssl.h>
 #endif

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_auth.c,v 1.7 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: s_auth.c,v 1.8 2002/11/04 08:14:00 fishwaldo Exp $
  */
 
 /*
@@ -89,6 +89,9 @@ typedef enum {
 
 #define sendheader(c, r) \
    send((c)->localClient->fd, HeaderMessages[(r)].message, HeaderMessages[(r)].length, 0)
+
+#define sendsslheader(c, r) \
+   safe_SSL_write(c, HeaderMessages[(r)].message, HeaderMessages[(r)].length)
 
 /*
  */
@@ -196,8 +199,18 @@ auth_dns_callback(void* vptr, adns_answer* reply)
       if(strlen(*reply->rrs.str) <= HOSTLEN)
         {
           strlcpy(auth->client->host, *reply->rrs.str, sizeof(auth->client->host));
-          sendheader(auth->client, REPORT_FIN_DNS);
+#ifdef USE_SSL
+	  if (IsSSL(auth->client))
+	  	sendsslheader(auth->client, REPORT_FIN_DNS);
+	  else
+#endif	  
+	        sendheader(auth->client, REPORT_FIN_DNS);
         } else
+#ifdef USE_SSL
+	  if (IsSSL(auth->client))
+	  	sendsslheader(auth->client, REPORT_HOST_TOOLONG);
+	  else
+#endif	  
           sendheader(auth->client, REPORT_HOST_TOOLONG);
     }
   else
@@ -213,6 +226,11 @@ auth_dns_callback(void* vptr, adns_answer* reply)
         return;
       }
 #endif
+#ifdef USE_SSL
+	  if (IsSSL(auth->client))
+	  	sendsslheader(auth->client, REPORT_FAIL_DNS);
+	  else
+#endif	  
       sendheader(auth->client, REPORT_FAIL_DNS);
     }
 
@@ -246,6 +264,11 @@ static void auth_error(struct AuthRequest* auth)
   auth->fd = -1;
 
   ClearAuth(auth);
+#ifdef USE_SSL
+	  if (IsSSL(auth->client))
+	  	sendsslheader(auth->client, REPORT_FAIL_ID);
+	  else
+#endif	  
   sendheader(auth->client, REPORT_FAIL_ID);
 
   if (!IsDNSPending(auth))
@@ -293,6 +316,11 @@ static int start_auth_query(struct AuthRequest* auth)
       return 0;
     }
 
+#ifdef USE_SSL
+	  if (IsSSL(auth->client))
+	  	sendsslheader(auth->client, REPORT_DO_ID);
+	  else
+#endif	  
   sendheader(auth->client, REPORT_DO_ID);
   if (!set_non_blocking(fd))
     {
@@ -404,6 +432,11 @@ void start_auth(struct Client* client)
   client->localClient->dns_query->ptr = auth;
   client->localClient->dns_query->callback = auth_dns_callback;
 
+#ifdef USE_SSL
+	  if (IsSSL(auth->client))
+	  	sendsslheader(auth->client, REPORT_DO_DNS);
+	  else
+#endif	  
   sendheader(client, REPORT_DO_DNS);
 
   /* No DNS cache now, remember? -- adrian */
@@ -435,12 +468,23 @@ timeout_auth_queries_event(void *notused)
 	  if (auth->fd >= 0)
 	    fd_close(auth->fd);
 
-	  if (IsDoingAuth(auth))
+	  if (IsDoingAuth(auth)) {
+#ifdef USE_SSL
+		  if (IsSSL(auth->client))
+		  	sendsslheader(auth->client, REPORT_FAIL_ID);
+		  else
+#endif	  
 	    sendheader(auth->client, REPORT_FAIL_ID);
+	  }
 	  if (IsDNSPending(auth))
 	    {
 	      delete_adns_queries(auth->client->localClient->dns_query);
 	      auth->client->localClient->dns_query->query = NULL;
+#ifdef USE_SSL
+	      if (IsSSL(auth->client))
+	      	sendsslheader(auth->client, REPORT_FAIL_DNS);
+	      else
+#endif	  
 	      sendheader(auth->client, REPORT_FAIL_DNS);
 	    }
 	  ilog(L_INFO, "DNS/AUTH timeout %s",
@@ -577,6 +621,11 @@ read_auth_reply(int fd, void *data)
     }
   else
     {
+#ifdef USE_SSL
+      if (IsSSL(auth->client))
+      	sendsslheader(auth->client, REPORT_FIN_ID);
+      else
+#endif	  
       sendheader(auth->client, REPORT_FIN_ID);
       ++ServerStats->is_asuc;
       SetGotId(auth->client);

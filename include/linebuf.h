@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: linebuf.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: linebuf.h,v 1.4 2002/11/04 08:14:00 fishwaldo Exp $
  */
 
 #ifndef __LINEBUF_H__
@@ -77,7 +77,11 @@ extern int linebuf_parse(buf_head_t *, char *, int, int);
 extern int linebuf_get(buf_head_t *, char *, int, int, int);
 extern void linebuf_putmsg(buf_head_t *, const char *, va_list *,
                            const char *, ...);
+#ifdef USE_SSL
+extern int linebuf_flush(int, buf_head_t *, SSL *);
+#else
 extern int linebuf_flush(int, buf_head_t *);
+#endif
 extern void linebuf_attach(buf_head_t *, buf_head_t *);
 extern void count_linebuf_memory(int *, u_long *);
 #endif

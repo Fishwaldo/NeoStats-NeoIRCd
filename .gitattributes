@@ -306,6 +306,7 @@ include/serno.h -text
 include/setup.h.in -text
 include/setup.h_vms -text
 include/sprintf_irc.h -text
+include/ssl.h -text
 include/stdinc.h -text
 include/supported.h -text
 include/tools.h -text
@@ -481,6 +482,7 @@ src/scache.c -text
 src/send.c -text
 src/snprintf.c -text
 src/sprintf_irc.c -text
+src/ssl.c -text
 src/tools.c -text
 src/version.c.SH -text
 src/version.com -text

@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: adns.c,v 1.4 2002/10/31 13:01:57 fishwaldo Exp $
+ *  $Id: adns.c,v 1.5 2002/11/04 08:14:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -29,6 +29,7 @@
 #include "fileio.h"
 #include "res.h"
 #include "send.h"
+#include "stdinc.h"
 #include "s_conf.h"
 #include "s_bsd.h"
 #include "s_log.h"

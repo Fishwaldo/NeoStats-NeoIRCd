@@ -196,3 +196,7 @@
 
 /* Define if you have the backtrace call */
 #undef HAVE_BACKTRACE
+
+/* Define if you are using SSL */
+#undef USE_SSL
+

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.12 2002/10/31 13:18:11 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.13 2002/11/04 08:14:00 fishwaldo Exp $
  */
 
 %{
@@ -77,6 +77,7 @@ int   class_max_number_var;
 int   class_sendq_var;
 
 static char  *listener_address;
+static int listener_ssl;
 
 char *resv_reason;
 
@@ -126,6 +127,7 @@ int   class_redirport_var;
 %token  DOTS_IN_IDENT
 %token  EGDPOOL_PATH
 %token  EMAIL
+%token  ENABLESSL
 %token  ENCRYPTED
 %token  EXCEED_LIMIT
 %token  EXEMPT
@@ -952,17 +954,19 @@ class_sendq:    SENDQ '=' sizespec ';'
 listen_entry:   LISTEN
   {
     listener_address = NULL;
+    listener_ssl = -1;
   }
   '{' listen_items '}' ';'
   {
     MyFree(listener_address);
     listener_address = NULL;
+    listener_ssl = -1;
   };
 
 listen_items:   listen_items listen_item |
                 listen_item;
 
-listen_item:    listen_port | listen_address | listen_host | error;
+listen_item:    listen_port | listen_address | listen_host | listen_ssl | error;
 
 listen_port: PORT '=' port_items ';' ;
 
@@ -970,13 +974,13 @@ port_items: port_items ',' port_item | port_item;
 
 port_item: NUMBER
 {
-  add_listener($1, listener_address);
+  add_listener($1, listener_ssl, listener_address);
 } | NUMBER TWODOTS NUMBER
 {
   int i;
   for (i = $1; i <= $3; i++)
 	{
-	  add_listener(i, listener_address);
+	  add_listener(i, listener_ssl, listener_address);
 	}
 };
 
@@ -984,6 +988,7 @@ listen_address: IP '=' QSTRING ';'
   {
     MyFree(listener_address);
     DupString(listener_address, yylval.string);
+
   };
 
 listen_host:	HOST '=' QSTRING ';'
@@ -991,6 +996,11 @@ listen_host:	HOST '=' QSTRING ';'
     MyFree(listener_address);
     DupString(listener_address, yylval.string);
   };
+listen_ssl:    ENABLESSL '=' TYES ';'
+  {
+    listener_ssl = 1;
+  };
+
 
 /***************************************************************************
  *  section auth

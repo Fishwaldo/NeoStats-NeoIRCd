@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: listener.c,v 1.4 2002/09/13 16:30:04 fishwaldo Exp $
+ *  $Id: listener.c,v 1.5 2002/11/04 08:14:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -60,6 +60,7 @@ make_listener(int port, struct irc_inaddr *addr)
   
   listener->name        = me.name;
   listener->fd          = -1;
+  listener->isssl	= -1;
   copy_s_addr(IN_ADDR(listener->addr),PIN_ADDR(addr));
 
   listener->port        = port;
@@ -109,8 +110,8 @@ get_listener_name(const struct Listener* listener)
   assert(NULL != listener);
   if(listener == NULL)
     return NULL;
-  ircsprintf(buf, "%s[%s/%u]",
-             me.name, listener->name, listener->port);
+  ircsprintf(buf, "%s[%s/%u]%s",
+             me.name, listener->name, listener->port, listener->isssl ? "SSL" : "Normal");
   return buf;
 }
 
@@ -134,7 +135,8 @@ show_ports(struct Client* source_p)
                listener->port,
                IsOperAdmin(source_p) ? listener->name : me.name,
                listener->ref_count,
-               (listener->active)?"active":"disabled");
+               (listener->active)?"active":"disabled",
+               (listener->isssl > 0)?"SSL":"NORMAL");
   }
 }
 
@@ -271,7 +273,7 @@ find_listener(int port, struct irc_inaddr *addr)
  * the format "255.255.255.255"
  */
 void 
-add_listener(int port, const char* vhost_ip)
+add_listener(int port, int isssl, const char* vhost_ip)
 {
   struct Listener* listener;
   struct irc_inaddr   vaddr;
@@ -307,6 +309,11 @@ add_listener(int port, const char* vhost_ip)
   }
 
   listener->fd = -1;
+  if (isssl > 0)
+	  listener->isssl = 1;
+  else 
+  	  listener->isssl = -1;
+	  
 
   if (inetport(listener))
     listener->active = 1;
@@ -421,7 +428,11 @@ accept_connection(int pfd, void *data)
 			       get_listener_name(listener));
 	  last_oper_notice = CurrentTime;
 	}
-      send(fd, "ERROR :All connections in use\r\n", 32, 0);
+#ifdef USE_SSL
+      if(listener->isssl < 0)
+#endif
+	      send(fd, "ERROR :All connections in use\r\n", 32, 0);
+	     
       fd_close(fd);
       /* Re-register a new IO request for the next accept .. */
       comm_setselect(listener->fd, FDLIST_SERVICE, COMM_SELECT_READ,
@@ -437,10 +448,16 @@ accept_connection(int pfd, void *data)
    switch (pe)
    {
     case BANNED_CLIENT:
-     send(fd, DLINE_WARNING, sizeof(DLINE_WARNING)-1, 0);
+#ifdef USE_SSL
+     if (listener->isssl < 0)
+#endif
+	     send(fd, DLINE_WARNING, sizeof(DLINE_WARNING)-1, 0);
      break;
     case TOO_FAST:
-     send(fd, TOOFAST_WARNING, sizeof(TOOFAST_WARNING)-1, 0);
+#ifdef USE_SSL
+     if (listener->isssl < 0)
+#endif
+	     send(fd, TOOFAST_WARNING, sizeof(TOOFAST_WARNING)-1, 0);
      break;
    }
    fd_close(fd);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: listener.h,v 1.3 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: listener.h,v 1.4 2002/11/04 08:14:00 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_listener_h
@@ -35,6 +35,7 @@ struct Listener {
   int              fd;                 /* file descriptor */
   int              port;               /* listener IP port */
   int              ref_count;          /* number of connection references */
+  int		   isssl;	       /* is it a ssl port? */
   int              active;             /* current state of listener */
   int              index;              /* index into poll array */
   time_t           last_accept;        /* last time listener accepted */
@@ -47,7 +48,9 @@ struct Listener {
   char             vhost[HOSTLEN + 1]; /* virtual name of listener */
 };
 
-extern void        add_listener(int port, const char* vaddr_ip);
+#define IsPSSL(x)	((x)->isssl & 1)
+
+extern void        add_listener(int port, int isssl, const char* vaddr_ip);
 extern void        close_listener(struct Listener* listener);
 extern void        close_listeners(void);
 extern const char* get_listener_name(const struct Listener* listener);

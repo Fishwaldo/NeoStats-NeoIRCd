@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.6 2002/10/23 03:53:21 fishwaldo Exp $
+dnl $Id: configure.in,v 1.7 2002/11/04 08:14:00 fishwaldo Exp $
 dnl Process this file with autoconf to produce a configure script.
 dnl AC_INIT(include/class.h) <- what is this ? -TimeMr14C
 
@@ -391,27 +391,8 @@ int main(void) {
 
     if test "X$cf_openssl_version_ok" = "Xyes"; then
         AC_MSG_RESULT(ok)
-        dnl Do all the HAVE_LIBCRYPTO magic -- and check for ciphers
-        save_CPPFLAGS="$CPPFLAGS"
-        CPPFLAGS="$CPPFLAGS $SSL_LIBS"
-        AC_CHECK_LIB(crypto, RSA_free)
-        if test "X$ac_cv_lib_crypto_RSA_free" = "Xyes"; then
-            cf_openssl_ciphers=''
-            AC_CHECK_FUNCS(EVP_bf_cfb,
-                cf_openssl_ciphers="${cf_openssl_ciphers}BF/256 BF/128 ")
-            AC_CHECK_FUNCS(EVP_cast5_cfb,
-                cf_openssl_ciphers="${cf_openssl_ciphers}CAST/128 ")
-            AC_CHECK_FUNCS(EVP_idea_cfb,
-                cf_openssl_ciphers="${cf_openssl_ciphers}IDEA/128 ")
-            AC_CHECK_FUNCS(EVP_rc5_32_12_16_cfb,
-                cf_openssl_ciphers="${cf_openssl_ciphers}RC5.16/128 RC5.12/128 RC5.8/128 ")
-            AC_CHECK_FUNCS(EVP_des_ede3_cfb,
-                cf_openssl_ciphers="${cf_openssl_ciphers}3DES/168 ")
-            AC_CHECK_FUNCS(EVP_des_cfb,
-                cf_openssl_ciphers="${cf_openssl_ciphers}DES/56 ")
-        fi
-        CPPFLAGS="$save_CPPFLAGS"
-        SSL_LIBS="$SSL_LIBS -lcrypto"
+        AC_DEFINE(USE_SSL)
+        SSL_LIBS="$SSL_LIBS -lcrypto -lssl"
     else
         AC_MSG_RESULT(no - OpenSSL support disabled)
     fi
@@ -575,12 +556,12 @@ esac
 
 dnl Enable RT sigio - linux only
 AC_ARG_ENABLE(rtsigio,
-[  --enable-rtsigio             Enable SIGIO with RT Signals(Linux only).
+[  --enable-rtsigio             Enable SIGIO with RT Signals(Linux only) (UNSTABLE!).
   --disable-rtsigio            Disable SIGIO with RT Signals(Linux only). ],
 [
   case "$enableval" in
   yes)
-    echo "Forcing Linux RT Sigio to be enabled"
+    echo "Forcing Linux RT Sigio to be enabled (UNSTABLE)"
     ac_cv_func_rtsigio="yes"
     ;;
   no)
@@ -625,6 +606,7 @@ if test "$SELECT_TYPE" != "kqueue" ; then
 	elif test "$ac_cv_func_rtsigio" = "yes" ; then
 		SELECT_TYPE="sigio"
 		AC_DEFINE(USE_SIGIO)
+		AC_MSG_WARN(***rtsigio might be unstable on your machine***)
 	elif test "$ac_cv_func_poll" = "yes" ; then
                 SELECT_TYPE="poll"
                 AC_DEFINE(USE_POLL)
@@ -997,12 +979,5 @@ AC_OUTPUT(                      \
  help/Makefile                  \
 )
 
-if test "X${cf_openssl_ciphers}" != "X"; then
-  echo ""
-  echo "Available cryptlinks ciphers:"
-  echo ""
-  echo "${cf_openssl_ciphers}"
-  echo ""
-fi
 
 AC_MSG_RESULT("Server is configured with NICKLEN=$ac_cv_nicklen and MAX_CLIENTS=$ac_cv_maxclients")

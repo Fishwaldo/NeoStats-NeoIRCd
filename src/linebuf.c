@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: linebuf.c,v 1.5 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: linebuf.c,v 1.6 2002/11/04 08:14:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -629,8 +629,13 @@ linebuf_putmsg(buf_head_t *bufhead, const char *format, va_list *va_args,
  *        and tag it so that we don't re-schedule another write until
  *        we have a CRLF.
  */
+#ifdef USE_SSL
+int
+linebuf_flush(int fd, buf_head_t *bufhead, SSL *ssl)
+#else 
 int
 linebuf_flush(int fd, buf_head_t *bufhead)
+#endif
 {
   buf_line_t *bufline;
   int retval;
@@ -660,9 +665,14 @@ linebuf_flush(int fd, buf_head_t *bufhead)
     }
 
   /* Now, try writing data */
-  retval = send(fd, bufline->buf + bufhead->writeofs, bufline->len
+#ifdef USE_SSL
+  if (ssl != NULL)
+  	retval = safe_SSL_write(ssl, bufline->buf + bufhead->writeofs, bufline->len - bufhead->writeofs);
+  else 
+#endif
+	retval = send(fd, bufline->buf + bufhead->writeofs, bufline->len
 		 - bufhead->writeofs, 0);
-   
+printf("send retval %d\n", retval);   
   /* Deal with return code */
   if (retval < 0)
     return retval;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.c,v 1.9 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: send.c,v 1.10 2002/11/04 08:14:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -296,7 +296,12 @@ send_queued_write(int fd, void *data)
   
   if (linebuf_len(&to->localClient->buf_sendq))
   {
+#ifdef USE_SSL
+
+    while((retlen = linebuf_flush(to->localClient->fd, &to->localClient->buf_sendq, to->localClient->ssl)) > 0)
+#else
     while((retlen = linebuf_flush(to->localClient->fd, &to->localClient->buf_sendq)) > 0)
+#endif    
     {
       /* We have some data written .. update counters */
 #ifndef NDEBUG

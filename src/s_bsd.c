@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_bsd.c,v 1.8 2002/10/31 13:01:58 fishwaldo Exp $
+ *  $Id: s_bsd.c,v 1.9 2002/11/04 08:14:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -47,8 +47,10 @@
 #include "s_stats.h"
 #include "send.h"
 #include "s_debug.h"
+#ifdef USE_SSL
+#include "ssl.h"
+#endif
 #include "memory.h"
-
 
 #ifndef IN_LOOPBACKNET
 #define IN_LOOPBACKNET        0x7f
@@ -350,6 +352,7 @@ void add_connection(struct Listener* listener, int fd)
 
   socklen_t len = sizeof(struct irc_sockaddr);
   struct irc_sockaddr   irn;
+  int ssl_ret;
   assert(NULL != listener);
 
 #ifdef USE_IAUTH
@@ -418,10 +421,59 @@ void add_connection(struct Listener* listener, int fd)
   new_client->localClient->listener  = listener;
   ++listener->ref_count;
 
+#ifdef USE_SSL
+  if (listener->isssl > 0)
+  {
+  	extern SSL_CTX *ircdssl_ctx;
+  	
+  	new_client->localClient->ssl = NULL;
+  	
+  	/* init the ssl stuff */
+  	if ((new_client->localClient->ssl = SSL_new(ircdssl_ctx)) == NULL)
+  	{
+  		sendto_realops_flags(FLAGS_DEBUG, L_ALL, "SSL creation of new client failed (Client %s)", new_client->localClient->sockhost);
+		ServerStats->is_ref++;
+      		fd_close(fd);
+      		free_client(new_client);
+	        return;
+  		--listener->ref_count;
+  	}	
+	SetSSL(new_client);
+	SSL_set_fd(new_client->localClient->ssl, fd);
+  }
+#endif
+
   if (!set_non_blocking(new_client->localClient->fd))
     report_error(L_ALL, NONB_ERROR_MSG, get_client_name(new_client, SHOW_IP), errno);
   if (!disable_sock_options(new_client->localClient->fd))
     report_error(L_ALL, OPT_ERROR_MSG, get_client_name(new_client, SHOW_IP), errno);
+
+#ifdef USE_SSL  
+  /* now accept the ssl connection */
+  if (IsSSL(new_client))
+  {
+  	ssl_ret = safe_SSL_accept(new_client, fd);
+  	
+  	if (ssl_ret < 0 ) 
+  	{
+  		SSL_set_shutdown(new_client->localClient->ssl, SSL_RECEIVED_SHUTDOWN);
+  		SSL_smart_shutdown(new_client);
+  		SSL_free(new_client->localClient->ssl);
+		ServerStats->is_ref++;
+      		fd_close(fd);
+      		free_client(new_client);
+	        return;
+  		--listener->ref_count;
+		return;
+	}  
+	/* ssl still wants to talk */
+	if (ssl_ret == 0)
+		read_packet(new_client->localClient->fd, new_client);
+		return;		
+		
+	ilog(L_DEBUG, "SSL accept was successfull");
+  }
+#endif
   start_auth(new_client);
 }
 

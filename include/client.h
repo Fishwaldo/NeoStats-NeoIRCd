@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h,v 1.10 2002/10/31 13:01:54 fishwaldo Exp $
+ *  $Id: client.h,v 1.11 2002/11/04 08:14:00 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_client_h
@@ -30,12 +30,19 @@
 #if !defined(CONFIG_H_LEVEL_7)
 #error Incorrect config.h for this revision of ircd.
 #endif
+#include "common.h"
+#include "stdinc.h"
+#include "ircd_defs.h"
+
 
 #include "ircd_defs.h"
 #include "ircd_handler.h"
 #include "linebuf.h"
 #include "channel.h"
 #include "res.h"
+
+
+
 #ifdef IPV6
 #define HOSTIPLEN	53 /* sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255.ipv6") */
 #else
@@ -222,6 +229,10 @@ struct LocalUser
   time_t            first_received_message_time;
   int               received_number_of_privmsgs;
   int               flood_noticed;
+#ifdef USE_SSL
+  SSL		    *ssl;	/* clients SSL info, if ssl client */
+  struct X509		    *ssl_cert;   /* clients SSL cert info, if ssl client */
+#endif
 
   /* Send and receive linebuf queues .. */
   buf_head_t        buf_sendq;
@@ -276,6 +287,7 @@ struct LocalUser
   char              in_key[CIPHERKEYLEN];
   char              out_key[CIPHERKEYLEN];
 #endif
+
 
   int               fd;         /* >= 0, for local clients */
 #ifndef HAVE_SOCKETPAIR
@@ -396,6 +408,7 @@ struct LocalUser
 #define FLAGS_SERVLINK     0x10000 /* servlink has servlink process */
 #define FLAGS_MARK	   0x20000 /* marked client */
 #define FLAGS_CANFLOOD	   0x40000 /* client has the ability to flood */
+#define FLAGS_SSL	   0x80000 /* client is connected via SSL */
 /* umodes, settable flags */
 
 #define FLAGS_SERVNOTICE   0x0001 /* server notices such as kill */
@@ -455,6 +468,7 @@ struct LocalUser
 #define FLAGS2_CBURST		0x10000  /* connection burst being sent */
 #define FLAGS2_PING_COOKIE	0x20000		/* PING Cookie */
 #define FLAGS2_IDLE_LINED       0x40000
+#define FLAGS2_SSLOK		0x80000	 /* ssl connection is established */
 #define FLAGS2_FLOODDONE        0x200000      /* Flood grace period has
                                                * been ended. */
 
@@ -501,6 +515,10 @@ struct LocalUser
 #define SetCanFlood(x)		((x)->flags |= FLAGS_CANFLOOD)
 #define ClearCanFlood(x)	((x)->flags &= FLAGS_CANFLOOD)
 #define IsCanFlood(x)		((x)->flags & FLAGS_CANFLOOD)
+#define SetSSL(x)		((x)->flags |= FLAGS_SSL)
+#define IsSSL(x)		((x)->flags & FLAGS_SSL)
+#define SetSSLOK(x)		((x)->flags2 |= FLAGS2_SSLOK)
+#define IsSSLOK(x)		((x)->flags2 & FLAGS2_SSLOK)
 
 
 /* oper flags */

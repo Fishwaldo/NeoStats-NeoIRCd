@@ -5,7 +5,7 @@
 #, fuzzy
 msgid	""
 msgstr	"Project-Id-Version: ircd-hybrid-7\n"
-	"POT-Creation-Date: 2001-07-01 21:52-0700\n"
+	"POT-Creation-Date: 2002-09-17 15:38+0800\n"
 	"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 	"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 	"Language-Team: LANGUAGE <LL@li.org>\n"
@@ -41,6 +41,16 @@ msgstr	""
 #: ../src/messages.tab:33
 #, c-format
 msgid	":%s 010 %s %s %d :Please use this Server/Port instead"
+msgstr	""
+
+#: ../src/messages.tab:38
+#, c-format
+msgid	":%s 015 %s :%s"
+msgstr	""
+
+#: ../src/messages.tab:40
+#, c-format
+msgid	":%s 017 %s :End of /MAP"
 msgstr	""
 
 #: ../src/messages.tab:43
@@ -115,13 +125,14 @@ msgstr	""
 
 #: ../src/messages.tab:239
 #, c-format
-msgid	":%s 216 %s %c %s * %s %s"
+msgid	":%s 216 %s %c %s * %s :%s"
 msgstr	""
 
 #: ../src/messages.tab:240
-#, c-format
-msgid	":%s 217 %s %c %s %s"
-msgstr	""
+#, fuzzy, c-format
+msgid	":%s 217 %s %c %s :%s"
+msgstr	":%s 382 %s %s :it slices, dices, and even reloads config files! "
+	"Rehashing config file, mang."
 
 #: ../src/messages.tab:241
 #, c-format
@@ -144,9 +155,10 @@ msgid	":%s 221 %s %s"
 msgstr	""
 
 #: ../src/messages.tab:248
-#, c-format
-msgid	":%s 225 %s %c %s %s"
-msgstr	""
+#, fuzzy, c-format
+msgid	":%s 225 %s %c %s :%s"
+msgstr	":%s 382 %s %s :it slices, dices, and even reloads config files! "
+	"Rehashing config file, mang."
 
 #: ../src/messages.tab:249
 #, c-format
@@ -263,7 +275,7 @@ msgstr	""
 
 #: ../src/messages.tab:303
 #, c-format
-msgid	":%s 276 %s %s :has %d possible virtual channels available"
+msgid	":%s 276 %s %s %d :virtual channels are available for this channel"
 msgstr	""
 
 #: ../src/messages.tab:304
@@ -276,15 +288,15 @@ msgstr	""
 msgid	":%s 278 %s :Type /%s %s <key> to specify the channel you want"
 msgstr	""
 
-#: ../src/messages.tab:306
+#: ../src/messages.tab:308
 #, c-format
-msgid   ":%s 281 %s %s :"
-msgstr  ""
+msgid	":%s 281 %s %s :"
+msgstr	""
 
-#: ../src/messages.tab:307
+#: ../src/messages.tab:309
 #, c-format
-msgid   ":%s 282 %s :End of /ACCEPT list."
-msgstr  ""
+msgid	":%s 282 %s :End of /ACCEPT list."
+msgstr	""
 
 #: ../src/messages.tab:328
 #, c-format
@@ -310,6 +322,11 @@ msgstr	":%s 305 %s :OK, you're not /away anymore. Did you have fun?"
 #, c-format
 msgid	":%s 306 %s :You have been marked as being away"
 msgstr	":%s 306 %s :OK, you're /away now. Hurry back!"
+
+#: ../src/messages.tab:334
+#, c-format
+msgid	":%s 307 %s %s :has identified for this nick"
+msgstr	""
 
 #: ../src/messages.tab:335
 #, c-format
@@ -355,6 +372,12 @@ msgstr	""
 #, c-format
 msgid	":%s 319 %s %s :%s"
 msgstr	""
+
+#: ../src/messages.tab:347
+#, fuzzy, c-format
+msgid	":%s 320 %s %s :%s"
+msgstr	":%s 382 %s %s :it slices, dices, and even reloads config files! "
+	"Rehashing config file, mang."
 
 #: ../src/messages.tab:348
 #, c-format
@@ -443,7 +466,7 @@ msgstr	""
 
 #: ../src/messages.tab:390
 #, c-format
-msgid	":%s 363 %s %d: Connections Closed"
+msgid	":%s 363 %s %d :Connections Closed"
 msgstr	""
 
 #: ../src/messages.tab:391
@@ -562,338 +585,365 @@ msgstr	""
 msgid	":%s 406 %s %s :There was no such nickname"
 msgstr	""
 
-#: ../src/messages.tab:435
+#: ../src/messages.tab:434
 #, c-format
-msgid	":%s 407 %s %s :Too many recipients. Only %d processed"
+msgid	":%s 407 %s %s :Too many recipients."
 msgstr	""
 
-#: ../src/messages.tab:437
+#: ../src/messages.tab:436
 #, c-format
 msgid	":%s 409 %s :No origin specified"
 msgstr	""
 
-#: ../src/messages.tab:439
+#: ../src/messages.tab:438
 #, c-format
 msgid	":%s 411 %s :No recipient given (%s)"
 msgstr	""
 
-#: ../src/messages.tab:440
+#: ../src/messages.tab:439
 #, c-format
 msgid	":%s 412 %s :No text to send"
 msgstr	""
 
-#: ../src/messages.tab:441
+#: ../src/messages.tab:440
 #, c-format
 msgid	":%s 413 %s %s :No toplevel domain specified"
 msgstr	""
 
-#: ../src/messages.tab:442
+#: ../src/messages.tab:441
 #, c-format
 msgid	":%s 414 %s %s :Wildcard in toplevel Domain"
 msgstr	""
 
-#: ../src/messages.tab:449
+#: ../src/messages.tab:448
 #, c-format
 msgid	":%s 421 %s %s :Unknown command"
 msgstr	""
 
-#: ../src/messages.tab:450
+#: ../src/messages.tab:449
 #, c-format
 msgid	":%s 422 %s :MOTD File is missing"
 msgstr	""
 
-#: ../src/messages.tab:452
+#: ../src/messages.tab:451
 #, c-format
 msgid	":%s 423 %s %s :No administrative info available"
 msgstr	""
 
-#: ../src/messages.tab:453
+#: ../src/messages.tab:452
 #, c-format
 msgid	":%s 424 %s :File error doing %s on %s"
 msgstr	""
 
-#: ../src/messages.tab:460
+#: ../src/messages.tab:459
 #, c-format
 msgid	":%s 431 %s :No nickname given"
 msgstr	""
 
-#: ../src/messages.tab:461
+#: ../src/messages.tab:460
 #, c-format
 msgid	":%s 432 %s %s :Erroneous Nickname"
 msgstr	""
 
-#: ../src/messages.tab:462
+#: ../src/messages.tab:461
 #, c-format
 msgid	":%s 433 %s %s :Nickname is already in use."
 msgstr	""
 
-#: ../src/messages.tab:465
+#: ../src/messages.tab:464
 #, c-format
 msgid	":%s 436 %s %s :Nickname collision KILL"
 msgstr	""
 
-#: ../src/messages.tab:466
+#: ../src/messages.tab:465
 #, c-format
 msgid	":%s 437 %s %s :Nick/channel is temporarily unavailable"
 msgstr	""
 
-#: ../src/messages.tab:467
+#: ../src/messages.tab:466
 #, c-format
 msgid	":%s 438 %s %s %s :Nick change too fast. Please wait %d seconds."
 msgstr	""
 
-#: ../src/messages.tab:470
+#: ../src/messages.tab:469
 #, c-format
 msgid	":%s 441 %s %s %s :They aren't on that channel"
 msgstr	""
 
-#: ../src/messages.tab:471
+#: ../src/messages.tab:470
 #, c-format
 msgid	":%s 442 %s %s :You're not on that channel"
 msgstr	""
 
-#: ../src/messages.tab:472
+#: ../src/messages.tab:471
 #, c-format
 msgid	":%s 443 %s %s %s :is already on channel"
 msgstr	""
 
-#: ../src/messages.tab:473
+#: ../src/messages.tab:472
 #, c-format
 msgid	":%s 444 %s %s :User not logged in"
 msgstr	""
 
-#: ../src/messages.tab:474
+#: ../src/messages.tab:473
 #, c-format
 msgid	":%s 445 %s :SUMMON has been removed"
 msgstr	""
 
-#: ../src/messages.tab:475
+#: ../src/messages.tab:474
 #, c-format
 msgid	":%s 446 %s :USERS has been removed"
 msgstr	""
 
-#: ../src/messages.tab:480
+#: ../src/messages.tab:479
 #, c-format
 msgid	":%s 451 %s :You have not registered"
 msgstr	""
 
-#: ../src/messages.tab:481
+#: ../src/messages.tab:484
 #, c-format
-msgid   ":%s 456 %s :Accept list is full"
-msgstr  ""
+msgid	":%s 456 %s :Accept list is full"
+msgstr	""
 
-#: ../src/messages.tab:482
+#: ../src/messages.tab:485
 #, c-format
-msgid   ":%s 457 %s %s :is already on your accept list"
-msgstr  ""
+msgid	":%s 457 %s %s :is already on your accept list"
+msgstr	""
 
-#: ../src/messages.tab:483
+#: ../src/messages.tab:486
 #, c-format
-msgid   ":%s 458 %s %s :is not on your accept list"
-msgstr  ""
+msgid	":%s 458 %s %s :is not on your accept list"
+msgstr	""
 
-#: ../src/messages.tab:490
+#: ../src/messages.tab:489
 #, c-format
 msgid	":%s 461 %s %s :Not enough parameters"
 msgstr	""
 
-#: ../src/messages.tab:491
+#: ../src/messages.tab:490
 #, c-format
 msgid	":%s 462 %s :You may not reregister"
 msgstr	""
 
-#: ../src/messages.tab:492
+#: ../src/messages.tab:491
 #, c-format
 msgid	":%s 463 %s :Your host isn't among the privileged"
 msgstr	""
 
-#: ../src/messages.tab:493
+#: ../src/messages.tab:492
 #, c-format
 msgid	":%s 464 %s :Password Incorrect"
 msgstr	":%s 464 %s :BZZT!! Wrong password, homez. Are you sure you know what "
 	"you're doing??"
 
-#: ../src/messages.tab:494
+#: ../src/messages.tab:493
 #, c-format
 msgid	":%s 465 %s :You are banned from this server- %s"
 msgstr	""
 
-#: ../src/messages.tab:496
+#: ../src/messages.tab:495
 #, c-format
 msgid	":%s 467 %s %s :Channel key already set"
 msgstr	""
 
-#: ../src/messages.tab:500
+#: ../src/messages.tab:499
 #, c-format
 msgid	":%s 471 %s %s :Cannot join channel (+l)"
 msgstr	""
 
-#: ../src/messages.tab:501
+#: ../src/messages.tab:500
 #, c-format
 msgid	":%s 472 %s %c :is unknown mode char to me"
 msgstr	""
 
-#: ../src/messages.tab:502
+#: ../src/messages.tab:501
 #, c-format
 msgid	":%s 473 %s %s :Cannot join channel (+i)"
 msgstr	""
 
-#: ../src/messages.tab:503
+#: ../src/messages.tab:502
 #, c-format
 msgid	":%s 474 %s %s :Cannot join channel (+b)"
 msgstr	""
 
-#: ../src/messages.tab:504
+#: ../src/messages.tab:503
 #, c-format
 msgid	":%s 475 %s %s :Cannot join channel (+k)"
 msgstr	""
 
-#: ../src/messages.tab:505
+#: ../src/messages.tab:504
 #, c-format
 msgid	":%s 476 %s %s :Bad Channel Mask"
 msgstr	""
 
-#: ../src/messages.tab:506
+#: ../src/messages.tab:505
 #, c-format
 msgid	":%s 477 %s %s :Channel does not support modes"
 msgstr	""
 
-#: ../src/messages.tab:507
+#: ../src/messages.tab:506
 #, c-format
 msgid	":%s 478 %s %s %s :Channel ban list is full"
 msgstr	""
 
-#: ../src/messages.tab:508
+#: ../src/messages.tab:507
 #, c-format
 msgid	":%s 479 %s %s :Illegal channel name"
 msgstr	""
 
-#: ../src/messages.tab:511
+#: ../src/messages.tab:510
 #, fuzzy, c-format
 msgid	":%s 481 %s :Permission Denied - You're not an IRC operator"
 msgstr	":%s 481 %s :I don't THINK so, homez... you ain't got what it takes. "
 	"(IRC operator)"
 
-#: ../src/messages.tab:512
+#: ../src/messages.tab:511
 #, c-format
 msgid	":%s 482 %s %s :You're not channel operator"
 msgstr	":%s 482 %s %s :You can't do that thing, when you don't have that "
 	"swing (You're not channel operator)"
 
-#: ../src/messages.tab:513
+#: ../src/messages.tab:512
 #, c-format
 msgid	":%s 483 %s :You can't kill a server!"
 msgstr	":%s 483 %s :Don't be an idiot - you can't kill a SERVER, fool."
 
-#: ../src/messages.tab:514
+#: ../src/messages.tab:513
 #, c-format
 msgid	":%s 484 %s :You are restricted"
 msgstr	""
 
-#: ../src/messages.tab:516
+#: ../src/messages.tab:515
 #, c-format
 msgid	":%s 485 %s :Can't change nick when banned or on a moderated channel "
 	"(%s)"
 msgstr	""
 
-#: ../src/messages.tab:522
+#: ../src/messages.tab:521
 #, c-format
 msgid	":%s 491 %s :Only few of mere mortals may try to enter the twilight "
 	"zone"
 msgstr	":%s 491 %s :Sorry, you just don't have what it takes to be an IRC "
 	"Operator here."
 
-#: ../src/messages.tab:532
+#: ../src/messages.tab:529
+#, fuzzy, c-format
+msgid	":%s 482 %s %s :You're not a Channel Admin"
+msgstr	":%s 482 %s %s :You can't do that thing, when you don't have that "
+	"swing (You're not channel operator)"
+
+#: ../src/messages.tab:531
 #, c-format
 msgid	":%s 501 %s :Unknown MODE flag"
 msgstr	""
 
-#: ../src/messages.tab:533
+#: ../src/messages.tab:532
 #, c-format
 msgid	":%s 502 %s :Can't change mode for other users"
 msgstr	""
 
-#: ../src/messages.tab:534
+#: ../src/messages.tab:533
 #, c-format
 msgid	":%s 503 %s :Message could not be delivered to %s"
 msgstr	""
 
-#: ../src/messages.tab:535
+#: ../src/messages.tab:534
 #, c-format
 msgid	":%s 504 %s %s :User is not on this server"
 msgstr	""
 
+#: ../src/messages.tab:536
+#, c-format
+msgid	":%s 506 %s :Virtual Channels are disabled"
+msgstr	""
+
 #: ../src/messages.tab:537
 #, c-format
-msgid   ":%s 506 %s :Virtual Channels are disabled"
-msgstr  ""
+msgid	":%s 507 %s %s :You are already on a subchan"
+msgstr	""
 
-#: ../src/messages.tab:538
+#: ../src/messages.tab:543
 #, c-format
-msgid   ":%s 507 %s %s :You are already on a subchan"
-msgstr  ""
+msgid	"%s 513 %s :To connect type /QUOTE PONG %lu"
+msgstr	""
 
-#: ../src/messages.tab:555
+#: ../src/messages.tab:554
 #, c-format
-msgid  ":%s 524 %s %s :Help not found"
-msgstr  ""
+msgid	":%s 524 %s %s :Help not found"
+msgstr	""
 
-#: ../src/messages.tab:702
-#, c-format
-msgid   ":%s 702 %s %s 0x%x %s"
-msgstr  ""
+#: ../src/messages.tab:643
+#, fuzzy, c-format
+msgid	":%s 613 %s %s :is a Services Client"
+msgstr	":%s 308 %s %s :is a Goon Gumpa (Server Admin)"
 
-#: ../src/messages.tab:703
+#: ../src/messages.tab:645
 #, c-format
-msgid   ":%s 703 %s :End of /MODLIST."
-msgstr  ""
+msgid	":%s 615 %s %s :is using Modes [%s]"
+msgstr	""
+
+#: ../src/messages.tab:700
+#, fuzzy, c-format
+msgid	":%s 670 %s %s :Real Hostname %s"
+msgstr	":%s 382 %s %s :it slices, dices, and even reloads config files! "
+	"Rehashing config file, mang."
+
+#: ../src/messages.tab:732
+#, c-format
+msgid	":%s 702 %s %s 0x%x %s"
+msgstr	""
+
+#: ../src/messages.tab:733
+#, c-format
+msgid	":%s 703 %s :End of /MODLIST."
+msgstr	""
+
+#: ../src/messages.tab:734
+#, c-format
+msgid	":%s 704 %s %s :%s"
+msgstr	""
 
 #: ../src/messages.tab:735
 #, c-format
-msgid   ":%s 704 %s %s :%s"
-msgstr  ""
+msgid	":%s 705 %s %s :%s"
+msgstr	""
 
 #: ../src/messages.tab:736
 #, c-format
-msgid   ":%s 705 %s %s :%s"
-msgstr  ""
+msgid	":%s 706 %s %s :End of /HELP."
+msgstr	""
 
-#: ../src/messages.tab:737
+#: ../src/messages.tab:740
 #, c-format
-msgid   ":%s 706 %s %s :End of /HELP."
-msgstr  ""
+msgid	":%s 710 %s %s %s!%s@%s :has asked for an invite."
+msgstr	""
 
 #: ../src/messages.tab:741
 #, c-format
-msgid   ":%s 710 %s %s %s!%s@%s :has asked for an invite."
-msgstr  ""
+msgid	":%s 711 %s %s :Your KNOCK has been delivered."
+msgstr	""
 
 #: ../src/messages.tab:742
 #, c-format
-msgid   ":%s 711 %s %s :Your KNOCK has been delivered."
-msgstr ""
+msgid	":%s 712 %s %s :Too many KNOCKs (%s)."
+msgstr	""
 
 #: ../src/messages.tab:743
 #, c-format
-msgid   ":%s 712 %s %s :Too many KNOCKs (%s)."
-msgstr  ""
+msgid	":%s 713 %s %s :Channel is open."
+msgstr	""
 
 #: ../src/messages.tab:744
 #, c-format
-msgid   ":%s 713 %s %s :Channel is open."
-msgstr  ""
+msgid	":%s 714 %s %s :You are already on that channel."
+msgstr	""
 
 #: ../src/messages.tab:745
 #, c-format
-msgid   ":%s 714 %s %s :You are already on that channel."
-msgstr  ""
+msgid	":%s 715 %s :KNOCKs are disabled."
+msgstr	""
 
-#: ../src/messages.tab:746
-#, c-format
-msgid   ":%s 715 %s :KNOCKs are disabled."
-msgstr  ""
-
-#: ../src/messages.tab:536
+#: ../src/messages.tab:1029
 #, c-format
 msgid	":%s 999 %s :Last Error Message"
 msgstr	""

@@ -847,6 +847,8 @@ Optional Features:
   --disable-ipv6               Disable IPV6 support.
   --enable-assert              Enable assert().
   --disable-assert             Disable assert().
+  --enable-debug               Enable Debug().
+  --disable-debug              Disable Debug().
   --enable-small-net           Enable small network support.
   --disable-small-net          Disable small network support.
   --enable-shared-modules      Enable shared modules.
@@ -2081,8 +2083,8 @@ fi
 
 if test "x$GCC" = "xyes"; then
 #  Use this for development..
-#  IRC_CFLAGS="-O2 -g -ggdb -Wunused -Wall -Wshadow -Wmissing-declarations"
-   IRC_CFLAGS="-O2 -g -ggdb"
+   IRC_CFLAGS="-O2 -g -ggdb -Wunused -Wall -Wshadow -Wmissing-declarations"
+#   IRC_CFLAGS="-O2 -g -ggdb"
 else
   if test "x$TenDRA" = "xyes"; then
             IRC_CFLAGS=""
@@ -6705,6 +6707,27 @@ if test "${enable_assert+set}" = set; then
 fi;
 
 IRC_CFLAGS="$IRC_CFLAGS $ac_cv_assert"
+
+ac_cv_debug=""
+
+# Check whether --enable-debug or --disable-debug was given.
+if test "${enable_debug+set}" = set; then
+  enableval="$enable_debug"
+
+  case "$enableval" in
+  yes)
+    echo "Enabling Debug() code."
+    ac_cv_debug="-DDEBUG"
+    ;;
+  no)
+    echo "Disabling Debug() code."
+    ac_cv_debug=""
+    ;;
+  esac
+
+fi;
+
+IRC_CFLAGS="$IRC_CFLAGS $ac_cv_debug"
 
 
 

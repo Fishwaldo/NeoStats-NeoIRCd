@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.14 2002/09/17 06:50:46 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.15 2002/09/17 07:42:16 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1423,12 +1423,10 @@ oper_up( struct Client *source_p, struct ConfItem *aconf )
 	if ((chptr = hash_find_channel(ConfigFileEntry.operautojoin)) != NULL) {
 		if (IsMember(source_p, chptr))
 			return(1);
-printf("already there %d\n", chptr->users);
 		if (chptr->users == 0)
 			flags = CHFL_ADMIN;
 
 	} else {
-printf("newchan\n");
 		flags = CHFL_ADMIN;
 		if (!ServerInfo.hub) {
 			/* lazy links */

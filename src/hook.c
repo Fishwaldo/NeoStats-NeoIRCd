@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: hook.c,v 1.3 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: hook.c,v 1.4 2002/09/14 03:58:49 fishwaldo Exp $
  */
 
 /* hooks are used by modules to hook into events called by other parts of
@@ -34,6 +34,10 @@
 #include "memory.h"
 
 dlink_list hooks;
+
+static hook *
+find_hook(char *name);
+
 
 void
 init_hooks(void)
@@ -63,7 +67,10 @@ hook_add_event(char *name)
 {
 	dlink_node *node;
 	hook *newhook;
-	
+
+	/* if the hook already exists, then don't add it again. */
+	if (find_hook(name)) return 0;
+
 	node = make_dlink_node();
 	newhook = new_hook(name);
 	
@@ -134,9 +141,13 @@ hook_add_hook(char *event, hookfn *fn)
 	dlink_node *node;
 	
 	h = find_hook(event);
-	if (!h) 
+	if (!h) {
+		hook_add_event(event);
+		h = find_hook(event);
+	}
+	if (!h) {
 		return -1;
-
+	}
 	node = make_dlink_node();
 	
 	dlinkAdd(fn, node, &h->hooks);
@@ -153,11 +164,9 @@ hook_call_event(char *event, void *data)
 	h = find_hook(event);
 	if (!h)
 		return -1;
-
 	for (node = h->hooks.head; node; node = node->next)
 	{
 		fn = (hookfn)(uintptr_t)node->data;
-		
 		if (fn(data) != 0)
 			return 0;
 	}

@@ -50,3 +50,4 @@ Symbols are:
 (F)	- Glines are now sent to servers when they connect
 (F)	- Ungline is now global
 (F)	- Added SWHOIS to whois. Opers and servers can set swhois
+(F)	- Fixed a hook api issue with hooks not getting added correctly (Patch sent to hybird team)

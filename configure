@@ -5447,7 +5447,7 @@ echo "${ECHO_T}ok" >&6
 #define USE_SSL 1
 _ACEOF
 
-        SSL_LIBS="$SSL_LIBS -lcrypto -lssl"
+        SSL_LIBS="$SSL_LIBS -lssl -lcrypto"
     else
         echo "$as_me:$LINENO: result: no - OpenSSL support disabled" >&5
 echo "${ECHO_T}no - OpenSSL support disabled" >&6

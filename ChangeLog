@@ -18,6 +18,7 @@ Symbols are:
 (F)	- Changed UserMode handling stuff again, as it wasn't very good last change.
 (F)	- Can not kill services clients, or any client on a U lined server anymore
 (F)	- Stats p showed opers real hosts... Fixed
+(F)	- Fixed up compile problem reported by IEF
  
 * NeoIRCd Version 0.9.5 - 12th Oct, 2002 - Fish
 (S)     - Fixed up event.c for a possible serious bug reported by Dianora from hybrid team

@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_alias.c,v 1.3 2002/09/20 14:03:24 fishwaldo Exp $
+ *   $Id: m_alias.c,v 1.4 2002/09/24 13:34:46 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -130,7 +130,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 
 /*
@@ -175,7 +175,7 @@ static void m_identify(struct Client *client_p, struct Client *source_p,
 		target_p = find_person(CHANSERV);
 		if ((target_p != NULL) && (IsServices(target_p))) {
 			/* send the message */
-			sendto_one(target_p, ":%s PRIVMSG %s@%s :identify %s", source_p->name, target_p->name, target_p->from->name, parv[1]);
+			sendto_one(target_p, ":%s PRIVMSG %s :identify %s", source_p->name, target_p->name, parv[1]);
 			return;
 		} else {
 			sendto_one(source_p, ":%s 440 %s %s :Services are currently down. Please try again later.", me.name, source_p->name, CHANSERV);
@@ -186,7 +186,7 @@ static void m_identify(struct Client *client_p, struct Client *source_p,
 		target_p = find_person(NICKSERV);
 		if ((target_p != NULL) && (IsServices(target_p))) {
 			/* send the message */
-			sendto_one(target_p, ":%s PRIVMSG %s@%s :identify %s", source_p->name, target_p->name, target_p->servptr->name, parv[1]);
+			sendto_one(target_p, ":%s PRIVMSG %s :identify %s", source_p->name, target_p->name, parv[1]);
 			return;
 		} else {
 			sendto_one(source_p, ":%s 440 %s %s :Services are currently down. Please try again later.", me.name, source_p->name, NICKSERV);
@@ -244,7 +244,7 @@ static void send_alias (char *who, struct Client *client_p, struct Client *sourc
 
 	if ((target_p != NULL) && (IsServices(target_p))) {
 		/* send the message */
-		sendto_one(target_p, ":%s PRIVMSG %s@%s :%s", source_p->name, target_p->name, target_p->servptr->name, parv[1]);	
+		sendto_one(target_p, ":%s PRIVMSG %s :%s", source_p->name, target_p->name,  parv[1]);	
 	} else {
 		sendto_one(source_p, ":%s 440 %s %s :Services are currently down. Please try again later.", me.name, source_p->name, who);
 		return;

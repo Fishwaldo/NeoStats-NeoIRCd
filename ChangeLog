@@ -10,6 +10,7 @@ Symbols are:
 (F)	- Don't burst SETHOST when we remove -x
 (F)	- Fixed message about +r when u change a usermode
 (F)	- Really allow services to send through +g this time
+(F)	- /aliases can not send to Nick@host/server... 
 
 * NeoIRCd Version 0.9.3 - 19th Sept, 2002 - Fish
 (HP)	- Merged in Hybrid rc4 Patches (including Rc3 and Rc3 fixes)

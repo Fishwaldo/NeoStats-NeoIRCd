@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.22 2002/09/24 13:49:45 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.23 2002/09/25 07:43:28 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1100,7 +1100,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
                  me.name, parv[0]);
       target_p->umodes &= ~FLAGS_ADMIN;
     }
-  if (!IsUlined(target_p->from) && (target_p->umodes & FLAGS_SERVICES))
+  if (!IsUlined(target_p->from) && (setflags & FLAGS_SERVICES))
     { 
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +S", 
       		me.name, parv[0]);
@@ -1124,7 +1124,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
    * compare new flags with old flags and send string which
    * will cause servers to update correctly.
    */
-  send_umode_out(client_p, target_p, setflags);
+  send_umode_out(source_p, client_p, target_p, setflags);
 
   return 0;
 }
@@ -1192,32 +1192,32 @@ send_umode(struct Client *client_p, struct Client *source_p, int old,
  * side effects - Only send ubuf out to servers that know about this client
  */
 void
-send_umode_out(struct Client *client_p,
-		    struct Client *source_p,
+send_umode_out(struct Client *source_p, struct Client *client_p,
+		    struct Client *target_p,
 		    int old)
 {
-  struct Client *target_p;
+  struct Client *starget_p;
   char buf[BUFSIZE];
   dlink_node *ptr;
 
-  send_umode(source_p, source_p, old, ALL_UMODES, buf);
+  send_umode(target_p, target_p, old, ALL_UMODES, buf);
 
   for(ptr = serv_list.head; ptr; ptr = ptr->next)
     {
-      target_p = ptr->data;
+      starget_p = ptr->data;
 
-      if((target_p != client_p) && (target_p != source_p) && (*buf))
+      if((starget_p != client_p) && (starget_p != client_p) && (*buf))
         {
-          if((!(ServerInfo.hub && IsCapable(target_p, CAP_LL)))
-             || (target_p->localClient->serverMask &
-                 source_p->lazyLinkClientExists))
-            sendto_one(target_p, ":%s MODE %s :%s",
-                       client_p->name, source_p->name, buf);
+          if((!(ServerInfo.hub && IsCapable(starget_p, CAP_LL)))
+             || (starget_p->localClient->serverMask &
+                 target_p->lazyLinkClientExists))
+            sendto_one(starget_p, ":%s MODE %s :%s",
+                       source_p->name, target_p->name, buf);
         }
     }
 
-  if (client_p && MyClient(client_p))
-    send_umode(client_p, source_p, old, ALL_UMODES, buf);
+  if (client_p && MyClient(target_p))
+    send_umode(client_p, target_p, old, ALL_UMODES, buf);
 }
 
 /* 
@@ -1403,7 +1403,7 @@ oper_up( struct Client *source_p, struct ConfItem *aconf )
   sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL,
 		       "%s (%s@%s) is now an %s", source_p->name,
 		       source_p->username, source_p->host, (IsOperAdmin(source_p) ? "Administrator" : "Operator"));
-  send_umode_out(source_p, source_p, old);
+  send_umode_out(source_p, source_p, source_p, old);
   sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
   sendto_one(source_p, ":%s NOTICE %s :*** Oper privs are %s", me.name,
              source_p->name, operprivs);

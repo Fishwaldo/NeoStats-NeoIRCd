@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_svscmds.c,v 1.7 2002/09/23 10:47:30 fishwaldo Exp $
+ *   $Id: m_svscmds.c,v 1.8 2002/09/25 07:43:28 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -34,6 +34,7 @@
 #include "s_conf.h"
 #include "s_log.h"
 #include "s_serv.h"
+#include "s_user.h"
 #include "send.h"
 #include "msg.h"
 #include "parse.h"
@@ -133,7 +134,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.7 $";
+const char *_version = "$Revision: 1.8 $";
 #endif
 
 /*
@@ -311,17 +312,11 @@ static void ms_svsjoin(struct Client *client_p, struct Client *source_p,
   char sjmode;
   char *newch;
 
-  /* if its from a client, and its not services, ignore it */
-  if(!IsServices(source_p) && IsClient(source_p))
-  {
-    sendto_one(source_p, ":%s NOTICE %s :Restricted to Services", me.name, parv[0]);
-    return;
-  }
   /* if its from a server, and its not ulined, ignore it */
   if (!IsUlined(source_p) && IsServer(source_p))
     return;
 
-  if((hunt_server(client_p, source_p, ":%s FORCEJOIN %s %s", 1, parc, parv)) != HUNTED_ISME)
+  if((hunt_server(client_p, source_p, ":%s SVSJOIN %s %s", 1, parc, parv)) != HUNTED_ISME)
     return;
 
   /* if target_p is not existant, print message
@@ -481,17 +476,11 @@ static void ms_svspart(struct Client *client_p, struct Client *source_p,
   struct Client *target_p;
   struct Channel *chptr;
 
-  /* if its from a client, and its not services, ignore it */
-  if(!IsServices(source_p) && IsClient(source_p))
-  {
-    sendto_one(source_p, ":%s NOTICE %s :Restricted to Services", me.name, parv[0]);
-    return;
-  }
   /* if its from a server, and its not ulined, ignore it */
   if (!IsUlined(source_p) && IsServer(source_p))
     return;
 
-  if((hunt_server(client_p, source_p, ":%s FORCEPART %s %s", 1, parc, parv)) != HUNTED_ISME)
+  if((hunt_server(client_p, source_p, ":%s SVSPART %s %s", 1, parc, parv)) != HUNTED_ISME)
     return;
 
   /* if target_p == NULL then let the oper know */

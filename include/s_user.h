@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.h,v 1.4 2002/09/13 06:50:06 fishwaldo Exp $
+ *  $Id: s_user.h,v 1.5 2002/09/25 07:43:27 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_user_h
@@ -34,7 +34,7 @@ extern time_t LastUsedWallops;
 extern int   user_mode(struct Client* , struct Client* , int, char** );
 extern void  send_umode (struct Client* , struct Client* ,
                          int, int, char* );
-extern void  send_umode_out(struct Client* , struct Client* , int);
+extern void  send_umode_out(struct Client*, struct Client* , struct Client* , int);
 extern int   show_lusers(struct Client* source_p);
 extern int   register_local_user(struct Client* ,struct Client* ,
 				 char* ,char* );

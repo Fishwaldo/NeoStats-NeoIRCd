@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_message.c,v 1.11 2002/10/23 03:53:22 fishwaldo Exp $
+ *  $Id: m_message.c,v 1.12 2002/10/25 11:13:08 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -122,7 +122,7 @@ _moddeinit(void)
   mod_del_cmd(&notice_msgtab);
 }
 
-const char *_version = "$Revision: 1.11 $";
+const char *_version = "$Revision: 1.12 $";
 #endif
 
 /*
@@ -399,7 +399,7 @@ build_target_list(int p_or_n, char *command, struct Client *client_p,
       continue;
     }
 
-    if(IsOper(source_p) && ((*nick == '$') || strchr(nick, '@')))
+    if((IsOper(source_p) || IsServices(source_p)) && ((*nick == '$') || strchr(nick, '@')))
     {
       handle_opers(p_or_n, command, client_p, source_p, nick, text);
     }

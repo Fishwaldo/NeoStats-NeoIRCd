@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_gline.c,v 1.7 2002/09/13 16:30:03 fishwaldo Exp $
+ *  $Id: m_gline.c,v 1.8 2002/09/22 03:36:42 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -57,11 +57,12 @@ static void set_local_gline(
                             const char *oper_server,
                             const char *user,
                             const char *host,
+                            unsigned long bantime,
                             const char *reason);
 
 static void log_gline(const char *, const char *,const char *,
                       const char* oper_server,
-                      const char *,const char *,const char *);
+                      const char *,const char *,unsigned long bantime, const char *);
 
 
 static int check_wild_gline(char *, char *);
@@ -74,7 +75,7 @@ static void ms_ungline(struct Client *, struct Client *,int ,char **);
 
 
 struct Message gline_msgtab[] = {
-    {"GLINE", 0, 0, 3, 0, MFLG_SLOW, 0,
+    {"GLINE", 0, 0, 4, 0, MFLG_SLOW, 0,
       {m_unregistered, m_not_oper, ms_gline, mo_gline}},
     {"UNGLINE", 0, 0, 2, 0, MFLG_SLOW, 0,
       {m_unregistered, m_not_oper, ms_ungline, mo_ungline}}
@@ -97,7 +98,7 @@ _moddeinit(void)
   mod_del_cmd(&gline_msgtab[1]);
 }
 
-const char *_version = "$Revision: 1.7 $";
+const char *_version = "$Revision: 1.8 $";
 #endif
 /*
  * mo_gline()
@@ -123,6 +124,7 @@ mo_gline(struct Client *client_p, struct Client *source_p,
   const char *reason = NULL;          /* reason for "victims" demise */
   char tempuser[USERLEN + 2];
   char temphost[HOSTLEN + 1];
+  unsigned long bantime;
 
   if (ConfigFileEntry.glines)
     {
@@ -184,28 +186,32 @@ mo_gline(struct Client *client_p, struct Client *source_p,
 	  return;
 	}
 			
-      reason = parv[2];
+      reason = parv[3];
+      bantime = strtoul(parv[2], NULL, 10);
+      bantime = bantime * 60;
+      if (bantime == 0)
+      	bantime = ConfigFileEntry.gline_time;
 
       /* inform users about the gline before we call check_majority_gline()
        * so already voted comes below gline request --fl
        */
       sendto_realops_flags(FLAGS_ALL, L_ALL,
-			"%s!%s@%s on %s is requesting gline for [%s@%s] [%s]",
+			"%s!%s@%s on %s is requesting gline for [%s@%s] [%s] to last for %lu",
 			source_p->name, source_p->username, source_p->host,
-			me.name, user, host, reason);
+			me.name, user, host, reason, bantime);
 
-      set_local_gline(source_p->name, source_p->username, source_p->host, me.name, user, host, reason);
-      log_gline(source_p->name, source_p->username, source_p->host, me.name, user, host, reason);
+      set_local_gline(source_p->name, source_p->username, source_p->host, me.name, user, host, bantime + CurrentTime, reason);
+      log_gline(source_p->name, source_p->username, source_p->host, me.name, user, host, bantime + CurrentTime, reason);
 
       /* 4 param version for hyb-7 servers */
       sendto_server(NULL, source_p, NULL, CAP_UID, NOCAPS,
                     LL_ICLIENT,
-                    ":%s GLINE %s %s :%s",
-                    ID(source_p), user, host, reason);
+                    ":%s GLINE %s %s %lu :%s",
+                    ID(source_p), user, host, bantime + CurrentTime, reason);
       sendto_server(NULL, source_p, NULL, NOCAPS, CAP_UID,
                     LL_ICLIENT,
-                    ":%s GLINE %s %s :%s",
-                    source_p->name, user, host, reason);
+                    ":%s GLINE %s %s %lu :%s",
+                    source_p->name, user, host, bantime + CurrentTime, reason);
 
     }
   else
@@ -244,7 +250,8 @@ static void ms_gline(struct Client *client_p,
   char *host = NULL;             /* user and host of GLINE "victim" */
   const char *reason = NULL;           /* reason for "victims" demise */
   struct Client *acptr;
-
+  unsigned long bantime;
+  
   /* Gline has just been set by a user */
   if(parc == 4 && IsPerson(source_p))
     {
@@ -254,18 +261,23 @@ static void ms_gline(struct Client *client_p,
       oper_server = source_p->user->server;
       user = parv[1];
       host = parv[2];
-      reason = parv[3];
+      bantime = strtoul(parv[3], NULL, 10);
+      reason = parv[4];
     }
   /* gline coming in from a recently connected server */
   else if (IsServer(source_p)) {
       oper_server = parv[0];
       user = parv[1];
       host = parv[2];
-      reason = parv[3];
+      bantime = strtoul(parv[3], NULL, 10);
+      reason = parv[4];
   }
   else 
     return;
 
+  if (bantime == 0)
+  	bantime = ConfigFileEntry.gline_time;
+  
   /* Its plausible that the server and/or client dont actually exist,
    * and its faked, as the oper isnt sending the gline..
    * check they're real --fl_ */
@@ -287,8 +299,8 @@ static void ms_gline(struct Client *client_p,
     
   /* send in hyb-7 to compatable servers */
   sendto_server(client_p, acptr, NULL, NOCAPS, NOCAPS, LL_ICLIENT,
-                ":%s GLINE %s %s :%s",
-                parv[0], user, host, reason);
+                ":%s GLINE %s %s %lu :%s",
+                parv[0], user, host, bantime, reason);
   if (ConfigFileEntry.glines)
     {
      /* I dont like the idea of checking for x non-wildcard chars in a
@@ -307,12 +319,12 @@ static void ms_gline(struct Client *client_p,
         }
       if(!IsServer(source_p))
         sendto_realops_flags(FLAGS_ALL, L_ALL,
-  			   "%s!%s@%s on %s is requesting gline for [%s@%s] [%s]",
+  			   "%s!%s@%s on %s is requesting gline for [%s@%s] [%s] To expire at %lu",
   			   oper_nick, oper_user, oper_host, oper_server,
-  			   user, host, reason);
+  			   user, host, reason, bantime);
 
-      set_local_gline(oper_nick, oper_user, oper_host, oper_server, user, host, reason);	
-      if (!IsServer(source_p)) log_gline(oper_nick, oper_user, oper_host, oper_server, user, host, reason);
+      set_local_gline(oper_nick, oper_user, oper_host, oper_server, user, host, bantime, reason);	
+      if (!IsServer(source_p)) log_gline(oper_nick, oper_user, oper_host, oper_server, user, host, bantime, reason);
 
     }
 }
@@ -412,6 +424,7 @@ set_local_gline(const char *oper_nick,
                             const char *oper_server,
                             const char *user,
                             const char *host,
+                            unsigned long bantime,
                             const char *reason)
 {
   char buffer[IRCD_BUFSIZE];
@@ -429,13 +442,9 @@ set_local_gline(const char *oper_nick,
   DupString(aconf->passwd, buffer);
   DupString(aconf->name, (char *)user);
   DupString(aconf->host, (char *)host);
-  aconf->hold = CurrentTime + ConfigFileEntry.gline_time;
+  aconf->hold = bantime;
   add_gline(aconf);
       
-  if (oper_host) sendto_realops_flags(FLAGS_ALL, L_ALL,
-		       "%s!%s@%s on %s has triggered gline for [%s@%s] [%s]",
-		       oper_nick, oper_user, oper_host, oper_server,
-		       user, host, reason);
   check_klines();
 }
 
@@ -447,7 +456,7 @@ set_local_gline(const char *oper_nick,
 static void
 log_gline(const char *oper_nick, const char *oper_user, const char *oper_host,
 	  const char *oper_server, const char *user, const char *host,
-	  const char *reason)
+	  unsigned long bantime, const char *reason)
 {
   char         buffer[2*BUFSIZE];
   char         filenamebuf[PATH_MAX + 1];
@@ -485,11 +494,12 @@ log_gline(const char *oper_nick, const char *oper_user, const char *oper_host,
       return;
     }
 
-  ircsprintf(buffer, "#%s!%s@%s on %s [%s]\n",
+  ircsprintf(buffer, "#%s!%s@%s on %s for %lu [%s]\n",
                    oper_nick,
                    oper_user,
                    oper_host,
                    oper_server,
+                   bantime, 
                    (reason)?reason:"No reason");
 
   if (fbputs(buffer,out) == -1)

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_gline.c,v 1.6 2002/09/19 05:41:11 fishwaldo Exp $
+ *  $Id: s_gline.c,v 1.7 2002/09/22 03:36:42 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -202,7 +202,7 @@ send_glines(struct Client *client_p)
       kill_ptr = gline_node->data;
       next_node = gline_node->next;
 
-      sendto_one(client_p, ":%s GLINE %s %s :%s", me.name, kill_ptr->name, kill_ptr->host, kill_ptr->passwd);
+      sendto_one(client_p, ":%s GLINE %s %s %lu :%s", me.name, kill_ptr->name, kill_ptr->host, kill_ptr->hold, kill_ptr->passwd);
     }
 
 }

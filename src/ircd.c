@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c,v 1.4 2002/08/16 14:22:06 fishwaldo Exp $
+ *  $Id: ircd.c,v 1.5 2002/09/05 10:48:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -475,7 +475,7 @@ static void check_pidfile(const char *filename)
 	    {
 	      /* log(L_ERROR, "Server is already running"); */
 	      printf("ircd: daemon is already running\n");
-//	      exit(-1);
+	      exit(-1);
 	    }
 	}
       fbclose(fb);
@@ -599,6 +599,9 @@ int main(int argc, char *argv[])
   }
 
 #ifdef __CYGWIN__
+  server_state.foreground = 1;
+#endif
+#ifdef DEBUG
   server_state.foreground = 1;
 #endif
 

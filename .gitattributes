@@ -376,6 +376,7 @@ modules/m_set.c -text
 modules/m_sethost.c -text
 modules/m_stats.c -text
 modules/m_svinfo.c -text
+modules/m_svscmds.c -text
 modules/m_testline.c -text
 modules/m_time.c -text
 modules/m_topic.c -text

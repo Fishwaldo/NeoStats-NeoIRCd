@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.6 2002/09/02 04:11:00 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.7 2002/09/05 10:48:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -852,7 +852,7 @@ void sendnick_TS(struct Client *client_p, struct Client *target_p)
 				 target_p->username, target_p->host,
 				 target_p->user->server, target_p->info);
 
-  if (IsHidden(target_p) && IsCapable(client_p, CAP_MODEX)) sendto_one(client_p, ":%s SETHOST %s :%s", target_p->name, target_p->name, target_p->vhost);					
+  if (IsHidden(target_p)) sendto_one(client_p, ":%s SETHOST %s :%s", me.name, target_p->name, target_p->vhost);					
 
 }
 

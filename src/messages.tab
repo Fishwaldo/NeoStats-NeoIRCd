@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab,v 1.3 2002/09/02 04:11:00 fishwaldo Exp $
+ *   $Id: messages.tab,v 1.4 2002/09/05 10:48:36 fishwaldo Exp $
  */
 
 static  char *  replies[] = {
@@ -331,7 +331,7 @@ static  char *  replies[] = {
 /* 304 RPL_TEXT, */      NULL,
 /* 305 RPL_UNAWAY, */   ":%s 305 %s :You are no longer marked as being away",
 /* 306 RPL_NOWAWAY, */  ":%s 306 %s :You have been marked as being away",
-/* 307 */       NULL,
+/* 307 RPL_WHOISREGNICK */      ":%s 307 %s %s :has identified for this nick",
 /* 308 RPL_WHOISADMIN,  */      ":%s 308 %s %s :is a Server Administrator",
 /* 309 */       NULL,
 /* 310 */       NULL,

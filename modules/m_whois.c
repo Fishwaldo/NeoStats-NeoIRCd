@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whois.c,v 1.4 2002/09/02 07:41:15 fishwaldo Exp $
+ *  $Id: m_whois.c,v 1.5 2002/09/05 10:48:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -76,7 +76,7 @@ _moddeinit(void)
   mod_del_cmd(&whois_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 /*
 ** m_whois
@@ -457,7 +457,7 @@ static void whois_person(struct Client *source_p,struct Client *target_p, int gl
   if (IsServices(target_p))
   	sendto_one(source_p, form_str(RPL_WHOISSERVICES),
   		   me.name, source_p->name, target_p->name);
-  if (IsOper(source_p))
+  if (IsOper(source_p) || (source_p == target_p))
     {
       send_umode(NULL, target_p, 0, ALL_UMODES, ubuf);
       if (!*ubuf)
@@ -471,7 +471,10 @@ static void whois_person(struct Client *source_p,struct Client *target_p, int gl
       sendto_one(source_p, form_str(RPL_WHOISREALHOST),
       		   me.name, source_p->name, target_p->name, target_p->host);
     }  	
-
+  if (target_p->umodes & FLAGS_REGNICK) {
+  	sendto_one(source_p, form_str(RPL_WHOISREGNICK),
+  		   me.name, source_p->name, target_p->name);
+  }
   if ( (glob == 1) || (MyConnect(target_p) && (IsOper(source_p) ||
        !ConfigServerHide.hide_servers)) || (target_p == source_p) )
     {

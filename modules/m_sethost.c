@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_sethost.c,v 1.1 2002/08/13 14:52:06 fishwaldo Exp $
+ *   $Id: m_sethost.c,v 1.2 2002/09/05 10:48:36 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -49,8 +49,6 @@
  */
 static void ms_sethost(struct Client *client_p, struct Client *source_p,
                     int parc, char *parv[]);
-static void set_sethost_capab();
-static void unset_sethost_capab();
 
 /* Show the commands this module can handle in a msgtab
  * and give the msgtab a name, here its test_msgtab
@@ -69,7 +67,6 @@ _modinit(void)
 {
   /* This will add the commands in test_msgtab (which is above) */
   mod_add_cmd(&sethost_msgtab);
-  set_sethost_capab();
 }
 
 /* here we tell it what to do when the module is unloaded */
@@ -78,12 +75,11 @@ _moddeinit(void)
 {
   /* This will remove the commands in test_msgtab (which is above) */
   mod_del_cmd(&sethost_msgtab);
-  unset_sethost_capab();
 }
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.1 $";
+const char *_version = "$Revision: 1.2 $";
 #endif
 
 /*
@@ -103,12 +99,14 @@ static void ms_sethost(struct Client *client_p, struct Client *source_p,
 	/* first find the target that we want to change */
 	if (target_p != NULL) {
 		ilog(L_WARN, "Found Target %s", target_p->name);
-		if (target_p == source_p) {
+		
+		if (IsServer(source_p)) {
 			
 			/* client is changing his own hostname */
 			ilog(L_WARN, "Target is source");
 			
 			/* check its not a client on my server, because this is a error then */
+			/* use svshost instead. */
 			if (MyClient(target_p)) {
 				ilog(L_WARN, "Target is my client?");
 				return;
@@ -119,15 +117,15 @@ static void ms_sethost(struct Client *client_p, struct Client *source_p,
 			strncpy(target_p->vhost, parv[2], HOSTLEN);
 		
 			/* send it to the rest of the net */
-			sendto_server(NULL, source_p, NULL, CAP_MODEX, 0, LL_ICLIENT, ":%s SETHOST %s :%s", source_p->name, source_p->name, source_p->vhost);
+			sendto_server(source_p, source_p, NULL, 0, 0, LL_ICLIENT, ":%s SETHOST %s :%s", me.name, source_p->name, source_p->vhost);
 	
 			return;
 		
-		} else {
+		} else if (IsClient(source_p)) {
 			/* can't change someone else's host. (services use svshost) */
 			sendto_one(source_p, form_str(ERR_NOPRIVILEGES), me.name, parv[0]);
 			return;
-		}
+		} else 
 		ilog(L_WARN, "shouldn't be here");
 	} else {
 		ilog(L_WARN, "Couldn't find target %s", parv[1]);
@@ -137,32 +135,5 @@ static void ms_sethost(struct Client *client_p, struct Client *source_p,
 }    
 	  
 
-static void set_sethost_capab()
-{
-  default_server_capabs |= CAP_MODEX;
-}
-
-static void unset_sethost_capab()
-{
-  default_server_capabs &= ~CAP_MODEX;
-}
 
 
-#if 0
-			/* its someone else changing the targets host
-			 * check the source_p is either a Ulined Box, or Services 
-			 */
-			ilog(L_WARN, "Changing someone else %s %s", source_p->name, target_p->name);
-			if (IsServer(source_p) && (!IsUlined(source_p))) {
-				ilog(L_WARN, "non ulined server tried to sethost");
-				return;
-			}
-			if (IsPerson(source_p) && (!IsServices(source_p))) {
-				ilog(L_WARN, "non Services trying to sethost");
-				return;
-			}
-			ilog(L_WARN, "Setting host of %s from %s", target_p->name, source_p->name);
-			strncpy(target_p->vhost, parv[2], HOSTLEN);
-			return;
-		}
-#endif

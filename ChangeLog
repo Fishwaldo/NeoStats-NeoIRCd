@@ -28,3 +28,4 @@ Symbols are:
 (F)	- Removed all ifdef HALFOP ANONOP VCHAN defines, as these will be standard in NeoIRCd
 (F)	- Removed all OANDVcode as its not going to be used at all
 (F)	- Removed all Vchan Code and finished rc2 patch from hybrid merge
+(F)	- Added svshost and svsnick commands in module m_svscmds.c for begining of service support

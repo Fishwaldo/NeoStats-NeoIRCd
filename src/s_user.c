@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.7 2002/09/03 04:57:46 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.8 2002/09/05 10:48:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -505,7 +505,7 @@ register_local_user(struct Client *client_p, struct Client *source_p,
   }
   user_welcome(source_p);
   introduce_client(client_p, source_p, user, nick);
-  if (IsHidden(source_p)) sendto_server(NULL, source_p, NULL, CAP_MODEX, 0, LL_ICLIENT, ":%s SETHOST %s :%s", source_p->name, source_p->name, source_p->vhost);					
+  if (IsHidden(source_p)) sendto_server(NULL, source_p, NULL, 0, 0, LL_ICLIENT, ":%s SETHOST %s :%s", me.name, source_p->name, source_p->vhost);					
 
   return (0);
 }

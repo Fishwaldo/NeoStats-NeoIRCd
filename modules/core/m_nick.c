@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.12 2002/09/24 11:50:16 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.13 2002/09/24 12:01:19 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.12 $";
+const char *_version = "$Revision: 1.13 $";
 #endif
 
 /*
@@ -748,7 +748,7 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
       }
 
       return do_remote_user(nick, client_p, source_p, parv[5], parv[6],
-                            parv[8], parv[10], NULL, atol(parv[9]));
+                            parv[9], parv[11], NULL, atol(parv[10]));
     }
   }
   else if(source_p->name[0])

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_invite.c,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
+ *  $Id: m_invite.c,v 1.4 2002/08/20 15:06:29 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ _moddeinit(void)
   mod_del_cmd(&invite_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 
 /*
@@ -187,7 +187,7 @@ m_invite(struct Client *client_p,
     }
   }
   else
-    if (!(vchan->mode.mode * MODE_OPERSONLY))
+    if (!(vchan->mode.mode & MODE_OPERSONLY))
     /* Don't save invite even if from an op otherwise... */
     chop = 0;
 
@@ -220,6 +220,12 @@ m_invite(struct Client *client_p,
                source_p->username, source_p->vhost, target_p->name,
                chptr->chname);
   }
+  
+  /* we send a notice to all channel ops/halfops/admins */
+  sendto_channel_local(ONLY_CHANOPS_HALFOPS, vchan,
+                       ":%s NOTICE %s :%s is inviting %s to %s.",
+		       me.name, chptr->chname, source_p->name,
+		       target_p->name, chptr->chname);
 
   /* if the channel is +pi, broadcast everywhere thats CAP_PARA, send to
    * target if target isnt CAP_PARA capable, else just send to target
@@ -236,10 +242,6 @@ m_invite(struct Client *client_p,
       sendto_one(target_p->from, ":%s INVITE %s :%s", parv[0],
                  target_p->name, vchan->chname);
 
-    sendto_channel_local(ONLY_CHANOPS_HALFOPS, vchan,
-                         ":%s NOTICE %s :%s is inviting %s to %s.",
-			 me.name, chptr->chname, source_p->name,
-			 target_p->name, chptr->chname);
   }
   else if(!MyConnect(target_p) && (target_p->from != client_p))
   {

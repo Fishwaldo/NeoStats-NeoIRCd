@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_cjoin.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: m_cjoin.c,v 1.4 2002/08/20 15:06:29 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -69,7 +69,7 @@ _moddeinit(void)
 #endif
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif /* STATIC_MODULES */
 
 #ifdef VCHANS
@@ -179,7 +179,7 @@ static void m_cjoin(struct Client *client_p,
   /*
   **  Complete user entry to the new channel
   */
-  add_user_to_channel(chptr, source_p, CHFL_CHANOP);
+  add_user_to_channel(chptr, source_p, CHFL_ADMIN);
 
   sendto_channel_local(ALL_MEMBERS, chptr,
 			":%s!%s@%s JOIN :%s",

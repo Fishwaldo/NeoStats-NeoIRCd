@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.4 2002/08/16 12:05:37 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.5 2002/08/16 14:22:06 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -114,8 +114,7 @@ static void chm_hideops(struct Client *, struct Client *, struct Channel *,
                         int, int *, char **, int *, int, int, char, void *,
                         const char *chname);
 
-static void send_cap_mode_changes(struct Client *, struct Client *,
-                                  struct Channel *, int, int);
+static void send_cap_mode_changes(struct Client *, struct Client *, struct Channel *chptr);
 
 static void send_mode_changes(struct Client *, struct Client *,
                               struct Channel *, char *chname);
@@ -136,19 +135,9 @@ static int mask_pos;
 static struct ChModeChange mode_changes[BUFSIZE];
 static int mode_count;
 
-static struct ChModeBounce mode_bounces[BUFSIZE];
-static int bounce_count;
-
 static int hideops_changed;
 
 static int mode_limit;
-
-static int channel_capabs[] = { CAP_HOPS, CAP_AOPS, CAP_EX, CAP_IE, CAP_UID };
-
-#define NCHCAPS         (sizeof(channel_capabs)/sizeof(int))
-#define NCHCAP_COMBOS   (1 << NCHCAPS)
-
-static struct ChCapCombo chcap_combos[NCHCAP_COMBOS];
 
 extern BlockHeap *ban_heap;
 
@@ -666,103 +655,6 @@ fix_key_old(char *arg)
 #define SM_ERR_RPL_I            0x00000100
 #define SM_ERR_RPL_D            0x00000200
 
-/* Now lets do some stuff to keep track of what combinations of
- * servers exist...
- * Note that the number of combinations doubles each time you add
- * something to this list. Each one is only quick if no servers use that
- * combination, but if the numbers get too high here MODE will get too
- * slow. I suggest if you get more than 7 here, you consider getting rid
- * of some and merging or something. If it wasn't for irc+cs we would
- * probably not even need to bother about most of these, but unfortunately
- * we do. -A1kmm
- */
-
-/* void init_chcap_usage_counts(void)
- *
- * Inputs	- none
- * Output	- none
- * Side-effects	- Initialises the usage counts to zero. Fills in the
- *                chcap_yes and chcap_no combination tables.
- */
-void
-init_chcap_usage_counts(void)
-{
-  unsigned long m, c, y, n;
-
-  memset(chcap_combos, 0, sizeof(chcap_combos));
-
-  /* For every possible combination */
-  for (m = 0; m < NCHCAP_COMBOS; m++)
-  {
-    /* Check each capab */
-    for (c = y = n = 0; c < NCHCAPS; c++)
-    {
-      if ((m & (1 << c)) == 0)
-        n |= channel_capabs[c];
-      else
-        y |= channel_capabs[c];
-    }
-    chcap_combos[m].cap_yes = y;
-    chcap_combos[m].cap_no  = n;
-  }
-}
-
-/* void set_chcap_usage_counts(struct Client *serv_p)
- * Input: serv_p; The client whose capabs to register.
- * Output: none
- * Side-effects: Increments the usage counts for the correct capab
- *               combination.
- */
-void
-set_chcap_usage_counts(struct Client *serv_p)
-{
-  int n;
-
-  for (n = 0; n < NCHCAP_COMBOS; n++)
-  {
-    if (((serv_p->localClient->caps & chcap_combos[n].cap_yes) ==
-         chcap_combos[n].cap_yes) &&
-        ((serv_p->localClient->caps & chcap_combos[n].cap_no) == 0))
-    {
-      chcap_combos[n].count++;
-      return;
-    }
-  }
-
-  /* This should be impossible -A1kmm. */
-  assert(0);
-}
-
-/* void set_chcap_usage_counts(struct Client *serv_p)
- *
- * Inputs	- serv_p; The client whose capabs to register.
- * Output	- none
- * Side-effects	- Decrements the usage counts for the correct capab
- *                combination.
- */
-
-void
-unset_chcap_usage_counts(struct Client *serv_p)
-{
-  int n;
-
-  for (n = 0; n < NCHCAP_COMBOS; n++)
-  {
-    if ((serv_p->localClient->caps & chcap_combos[n].cap_yes) ==
-        chcap_combos[n].cap_yes &&
-        (serv_p->localClient->caps & chcap_combos[n].cap_no) == 0)
-    {
-      /* Hopefully capabs can't change dynamically or anything... */
-      assert(chcap_combos[n].count > 0);
-      chcap_combos[n].count--;
-      return;
-    }
-  }
-
-  /* This should be impossible -A1kmm. */
-  assert(0);
-}
-
 /* Mode functions handle mode changes for a particular mode... */
 static void
 chm_nosuch(struct Client *client_p, struct Client *source_p,
@@ -810,8 +702,6 @@ chm_simple(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count].mems = ALL_MEMBERS;
     mode_changes[mode_count++].arg = NULL;
@@ -824,8 +714,6 @@ chm_simple(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ALL_MEMBERS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = NULL;
@@ -855,8 +743,6 @@ chm_hideops(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = CAP_AOPS;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count].mems = ALL_MEMBERS;
     mode_changes[mode_count++].arg = NULL;
@@ -867,8 +753,6 @@ chm_hideops(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].caps = CAP_AOPS;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count].mems = ALL_MEMBERS;
     mode_changes[mode_count++].arg = NULL;
@@ -947,8 +831,6 @@ chm_ban(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ALL_MEMBERS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = mask;
@@ -968,8 +850,6 @@ chm_ban(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ALL_MEMBERS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = mask;
@@ -1030,8 +910,6 @@ chm_except(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = CAP_EX;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = mask;
@@ -1051,8 +929,6 @@ chm_except(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].caps = CAP_EX;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = mask;
@@ -1112,8 +988,6 @@ chm_invex(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = CAP_IE;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = mask;
@@ -1133,8 +1007,6 @@ chm_invex(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].caps = CAP_IE;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = mask;
@@ -1147,8 +1019,7 @@ chm_admin(struct Client *client_p, struct Client *source_p,
            char **parv, int *errors, int alev, int dir, char c, void *d,
            const char *chname)
 {
-  int i, wasnt_voiced = 0, t_voice, t_op, t_hop, t_admin;
-  int wasnt_oped = 0, wasnt_hoped = 0;
+  int i, t_voice, t_op, t_hop, t_admin;
   char *opnick;
   struct Client *targ_p;
 
@@ -1185,9 +1056,7 @@ chm_admin(struct Client *client_p, struct Client *source_p,
     *errors |= SM_ERR_NOTONCHANNEL;
     return;
   }
-
-  if (((dir == MODE_ADD) && (t_hop || t_op)) ||
-      ((dir == MODE_DEL) && !t_hop))
+  if (((dir == MODE_ADD) && t_admin) || ((dir == MODE_DEL) && !t_admin))
     return;
 
   for (i = 0; i < mode_count; i++)
@@ -1198,52 +1067,39 @@ chm_admin(struct Client *client_p, struct Client *source_p,
        )
         && mode_changes[i].client == targ_p)
     {
-      if (mode_changes[i].letter == 'a')
-      {
-        mode_changes[i].letter = 0;
-        return;
-      }
-      else if (mode_changes[i].letter == 'h')
-        wasnt_hoped = 1;
+      if (mode_changes[i].letter == 'h')
+  	mode_changes[i].letter = 0;
       else if (mode_changes[i].letter == 'v')
-        wasnt_voiced = 1;
+  	mode_changes[i].letter = 0;
       else if (mode_changes[i].letter == 'o')
-        wasnt_oped = 1;
-        
-      mode_changes[i].letter = 0;
+  	mode_changes[i].letter = 0;
     }
 
   if (dir == MODE_ADD)
   {
 
-    if (!wasnt_voiced && t_voice)
+    if (t_voice)
     {
       mode_changes[mode_count].letter = 'v';
       mode_changes[mode_count].dir = MODE_DEL;
-      mode_changes[mode_count].caps = 0;
-      mode_changes[mode_count].nocaps = 0;
       mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
       mode_changes[mode_count].id = targ_p->user->id;
       mode_changes[mode_count].arg = targ_p->name;
       mode_changes[mode_count++].client = targ_p;
     }
-    if (!wasnt_hoped && t_hop)
+    if (t_hop)
     {
       mode_changes[mode_count].letter = 'h';
       mode_changes[mode_count].dir = MODE_DEL;
-      mode_changes[mode_count].caps = CAP_HOPS;
-      mode_changes[mode_count].nocaps = 0;
       mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
       mode_changes[mode_count].id = targ_p->user->id;
       mode_changes[mode_count].arg = targ_p->name;
       mode_changes[mode_count++].client = targ_p;
     }
-    if (!wasnt_oped && t_op)
+    if (t_op)
     {
       mode_changes[mode_count].letter = 'o';
       mode_changes[mode_count].dir = MODE_DEL;
-      mode_changes[mode_count].caps = 0;
-      mode_changes[mode_count].nocaps = 0;
       mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
       mode_changes[mode_count].id = targ_p->user->id;
       mode_changes[mode_count].arg = targ_p->name;
@@ -1252,8 +1108,6 @@ chm_admin(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = targ_p->user->id;
     mode_changes[mode_count].arg = targ_p->name;
@@ -1263,8 +1117,6 @@ chm_admin(struct Client *client_p, struct Client *source_p,
   {
       mode_changes[mode_count].letter = c;
       mode_changes[mode_count].dir = MODE_DEL;
-      mode_changes[mode_count].caps = 0;
-      mode_changes[mode_count].nocaps = 0;
       mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
       mode_changes[mode_count].id = targ_p->user->id;
       mode_changes[mode_count].arg = targ_p->name;
@@ -1379,8 +1231,6 @@ chm_op(struct Client *client_p, struct Client *source_p,
     {
       mode_changes[mode_count].letter = 'v';
       mode_changes[mode_count].dir = MODE_DEL;
-      mode_changes[mode_count].caps = 0;
-      mode_changes[mode_count].nocaps = 0;
       mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
       mode_changes[mode_count].id = targ_p->user->id;
       mode_changes[mode_count].arg = targ_p->name;
@@ -1390,8 +1240,6 @@ chm_op(struct Client *client_p, struct Client *source_p,
     {
       mode_changes[mode_count].letter = 'h';
       mode_changes[mode_count].dir = MODE_DEL;
-      mode_changes[mode_count].caps = CAP_HOPS;
-      mode_changes[mode_count].nocaps = 0;
       mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
       mode_changes[mode_count].id = targ_p->user->id;
       mode_changes[mode_count].arg = targ_p->name;
@@ -1400,8 +1248,6 @@ chm_op(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = targ_p->user->id;
     mode_changes[mode_count].arg = targ_p->name;
@@ -1427,31 +1273,17 @@ chm_op(struct Client *client_p, struct Client *source_p,
       {
         mode_changes[mode_count].letter = 'h';
         mode_changes[mode_count].dir = MODE_DEL;
-        mode_changes[mode_count].caps = CAP_HOPS;
-        mode_changes[mode_count].nocaps = 0;
         mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
         mode_changes[mode_count].id = targ_p->user->id;
         mode_changes[mode_count].arg = targ_p->name;
 	mode_changes[mode_count++].client = targ_p;
 
-#ifdef BOUNCE_BAD_HOPS
-        mode_changes[mode_count].letter = 'o';
-        mode_changes[mode_count].dir = MODE_DEL;
-        mode_changes[mode_count].caps = 0;
-        mode_changes[mode_count].nocaps = CAP_HOPS;
-        mode_changes[mode_count].mems = ONLY_SERVERS;
-        mode_changes[mode_count].id = targ_p->user->id;
-        mode_changes[mode_count].arg = targ_p->name;
-	mode_changes[mode_count++].client = targ_p;
-#endif
       }
     }
     else
     {
       mode_changes[mode_count].letter = c;
       mode_changes[mode_count].dir = MODE_DEL;
-      mode_changes[mode_count].caps = 0;
-      mode_changes[mode_count].nocaps = 0;
       mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
       mode_changes[mode_count].id = targ_p->user->id;
       mode_changes[mode_count].arg = targ_p->name;
@@ -1518,29 +1350,10 @@ chm_halfop(struct Client *client_p, struct Client *source_p,
     return;
   }
 
-  if (((dir == MODE_ADD) && (t_hop || t_op)) ||
+  if (((dir == MODE_ADD) && (t_hop || t_op || t_admin)) ||
       ((dir == MODE_DEL) && !t_hop))
     return;
 
-#ifdef BOUNCE_BAD_HOPS
-  if (!MyClient(targ_p) && !IsCapable(targ_p->from, CAP_HOPS))
-  {
-    if (IsServer(client_p))
-    {
-      mode_bounces[bounce_count].letter = 'h';
-      mode_bounces[bounce_count].dir = MODE_DEL;
-      mode_bounces[bounce_count].id = targ_p->user->id;
-      mode_bounces[bounce_count++].arg = targ_p->name;
-    }
-
-    if (IsClient(source_p))
-      sendto_one(source_p,
-                 ":%s NOTICE %s :Unable to halfop %s"
-                 " - server does not support halfops.",
-                 me.name, source_p->name, targ_p->name);
-    return;
-  }
-#endif
 
   /* Cancel out all other mode changes... */
   for (i = 0; i < mode_count; i++)
@@ -1564,8 +1377,6 @@ chm_halfop(struct Client *client_p, struct Client *source_p,
     {
       mode_changes[mode_count].letter = 'v';
       mode_changes[mode_count].dir = MODE_DEL;
-      mode_changes[mode_count].caps = 0;
-      mode_changes[mode_count].nocaps = 0;
       mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
       mode_changes[mode_count].id = targ_p->user->id;
       mode_changes[mode_count].arg = targ_p->name;
@@ -1574,45 +1385,21 @@ chm_halfop(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = CAP_HOPS;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = targ_p->user->id;
     mode_changes[mode_count].arg = targ_p->name;
     mode_changes[mode_count++].client = targ_p;
 
-  #ifdef BOUNCE_BAD_HOPS
-    mode_changes[mode_count].letter = 'o';
-    mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = CAP_HOPS;
-    mode_changes[mode_count].mems = ONLY_SERVERS;
-    mode_changes[mode_count].id = targ_p->user->id;
-    mode_changes[mode_count].arg = targ_p->name;
-    mode_changes[mode_count++].client = targ_p;
-  #endif
   }
   else 
   { /* MODE_DEL */
     mode_changes[mode_count].letter = 'h';
     mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].caps = CAP_HOPS;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = targ_p->user->id;
     mode_changes[mode_count].arg = targ_p->name;
     mode_changes[mode_count++].client = targ_p;
 
-#ifdef BOUNCE_BAD_HOPS
-    mode_changes[mode_count].letter = 'o';
-    mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = CAP_HOPS;
-    mode_changes[mode_count].mems = ONLY_SERVERS;
-    mode_changes[mode_count].id = targ_p->user->id;
-    mode_changes[mode_count].arg = targ_p->name;
-    mode_changes[mode_count++].client = targ_p;
-#endif
   }
 }
 
@@ -1670,8 +1457,6 @@ chm_voice(struct Client *client_p, struct Client *source_p,
   {
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = targ_p->user->id;
     mode_changes[mode_count].arg = targ_p->name;
@@ -1691,8 +1476,6 @@ chm_voice(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = 'v';
     mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ONLY_CHANOPS_HALFOPS;
     mode_changes[mode_count].id = targ_p->user->id;
     mode_changes[mode_count].arg = targ_p->name;
@@ -1739,8 +1522,6 @@ chm_limit(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ALL_MEMBERS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = lstr;
@@ -1756,8 +1537,6 @@ chm_limit(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ALL_MEMBERS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = NULL;
@@ -1806,8 +1585,6 @@ chm_key(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_ADD;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ALL_MEMBERS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = chptr->mode.key;
@@ -1821,8 +1598,6 @@ chm_key(struct Client *client_p, struct Client *source_p,
 
     mode_changes[mode_count].letter = c;
     mode_changes[mode_count].dir = MODE_DEL;
-    mode_changes[mode_count].caps = 0;
-    mode_changes[mode_count].nocaps = 0;
     mode_changes[mode_count].mems = ALL_MEMBERS;
     mode_changes[mode_count].id = NULL;
     mode_changes[mode_count++].arg = "*";
@@ -1948,38 +1723,47 @@ get_channel_access(struct Client *source_p, struct Channel *chptr)
  * of the number of servers which each combination as an optimisation, so
  * the capabs combinations which are not needed are not worked out. -A1kmm
  */
+
+
+/* THIS needs to be re-coded, but tonight I'm to tired to think straigh */
+
+
+
 static void
-send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
-                      struct Channel *chptr, int cap, int nocap)
+send_cap_mode_changes(struct Client *client_p, struct Client *source_p, struct Channel *chptr)
 {
   int i, mbl, pbl, nc, mc;
   char *arg;
   int dir;
+  int cap, nocap;
+  
 
+  cap = 0;
+  nocap = 0;
   mc = 0;
   nc = 0;
   pbl = 0;
   parabuf[0] = 0;
   dir = MODE_QUERY;
 
-  if ((cap & CAP_UID) && source_p->user &&
-      (source_p->user->id[0] == '.'))
-    mbl = ircsprintf(modebuf, ":%s MODE %s ", source_p->user->id,
-                     chptr->chname);
-  else
-    mbl = ircsprintf(modebuf, ":%s MODE %s ", source_p->name,
-                     chptr->chname);
 
-  /* loop the list of - modes we have */
+
+  if ((cap & CAP_UID) && source_p->user &&
+     (source_p->user->id[0] == '.'))
+   mbl = ircsprintf(modebuf, ":%s MODE %s ", source_p->user->id,
+                    chptr->chname);
+ else
+   mbl = ircsprintf(modebuf, ":%s MODE %s ", source_p->name,
+                    chptr->chname);
   for (i = 0; i < mode_count; i++)
   {
+
     /* if they dont support the cap we need, or they do support a cap they
      * cant have, then dont add it to the modebuf.. that way they wont see
      * the mode
      */
-    if ((mode_changes[i].letter == 0) ||
-        ((cap & mode_changes[i].caps) != mode_changes[i].caps)
-        || ((nocap & mode_changes[i].nocaps) != mode_changes[i].nocaps))
+
+    if (mode_changes[i].letter == 0) 
       continue;
 
     arg = "";
@@ -1995,6 +1779,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
      * them as if they were the longest of the nick or uid at all times,
      * which even then won't work as we don't always know the uid -A1kmm.
      */
+
     if ((arg != NULL) && ((mc == MAXMODEPARAMS) ||
                         ((strlen(arg) + mbl + pbl + 2) > BUFSIZE)))
     {
@@ -2041,6 +1826,8 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
   if (nc != 0)
     sendto_server(client_p, source_p, chptr, cap, nocap,
                   LL_ICLIENT, "%s %s", modebuf, parabuf);
+                  
+
 }
 
 /* void send_mode_changes(struct Client *client_p,
@@ -2060,15 +1847,14 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
   int pbl, mbl, nc, mc;
   int i, st;
   int dir = MODE_QUERY;
+  
+
 
   /* bail out if we have nothing to do... */
-  if (!(mode_count
-        || bounce_count
-     ))
+  if (mode_count <= 0)
     return;
-
   /* Send all mode changes to the chanops/halfops, and even peons if
-   * we are not +a...
+   * we are not +A...
    */
   st = (chptr->mode.mode & MODE_HIDEOPS) ? ONLY_CHANOPS_HALFOPS : ALL_MEMBERS;
 
@@ -2089,6 +1875,7 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
         mode_changes[i].mems == NON_CHANOPS ||
         mode_changes[i].mems == ONLY_SERVERS)
       continue;
+
 
     if (mode_changes[i].arg != NULL &&
         ((mc == MAXMODEPARAMS)  || 
@@ -2211,66 +1998,8 @@ send_mode_changes(struct Client *client_p, struct Client *source_p,
       sendto_channel_local(st, chptr, "%s %s", modebuf, parabuf);
   }
 
-  /* Bounce modes to client_p */
-  nc = 0;
-  if (bounce_count)
-  {
-    mbl = ircsprintf(modebuf, ":%s MODE %s ", me.name, chname);
-
-    pbl = 0;
-    parabuf[0] = '\0';
-    mc = 0;
-    dir = MODE_QUERY;
-  }
-
-  for (i = 0; i < bounce_count; i++)
-  {
-    if (mode_bounces[i].letter == 0)
-      continue;
-
-    if (mode_bounces[i].arg != NULL &&
-        ((mc == MAXMODEPARAMS)  || 
-        ((strlen(mode_bounces[i].arg) + mbl + pbl + 2) > BUFSIZE)))
-    {
-      if (nc != 0)
-        sendto_one(client_p, "%s %s", modebuf, parabuf);
-
-      nc = 0;
-      mc = 0;
-
-      mbl = ircsprintf(modebuf, ":%s MODE %s ", me.name, chname);
-
-      pbl = 0;
-      parabuf[0] = '\0';
-    }
-
-    if (dir != mode_bounces[i].dir)
-    {
-      modebuf[mbl++] = (mode_bounces[i].dir == MODE_ADD) ? '+' : '-';
-      dir = mode_bounces[i].dir;
-    }
-    modebuf[mbl++] = mode_bounces[i].letter;
-    modebuf[mbl] = '\0';
-    nc++;
-
-    if (mode_bounces[i].arg != NULL)
-    {
-      mc++;
-      pbl = strlen(strcat(parabuf, mode_bounces[i].arg));
-      parabuf[pbl++] = ' ';
-      parabuf[pbl] = '\0';
-    }
-  }
-
-  if (nc != 0)
-    sendto_one(client_p, "%s %s", modebuf, parabuf);
-
   /* Now send to servers... */
-  for (i = 0; i < NCHCAP_COMBOS; i++)
-    if (chcap_combos[i].count != 0)
-      send_cap_mode_changes(client_p, source_p, chptr,
-                            chcap_combos[i].cap_yes,
-                            chcap_combos[i].cap_no);
+  send_cap_mode_changes(client_p, source_p, chptr);
 }
 
 /* void set_channel_mode(struct Client *client_p, struct Client *source_p,
@@ -2294,14 +2023,14 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
   char *ml = parv[0], c;
   int table_position;
 
+
+
   mask_pos = 0;
   mode_count = 0;
-  bounce_count = 0;
   hideops_changed = (chptr->mode.mode & MODE_HIDEOPS);
   mode_limit = 0;
 
   alevel = get_channel_access(source_p, chptr);
-
   for (; (c = *ml) != 0; ml++)
     switch (c)
     {
@@ -2403,6 +2132,8 @@ send_oplist(const char *chname, struct Client *client_p, dlink_list * list,
   char opbuf[MODEBUFLEN];
   char *t;
 
+
+
   *mcbuf = *opbuf = '\0';
   t = opbuf;
 
@@ -2449,6 +2180,7 @@ sync_channel_oplists(struct Channel *chptr, int dir)
 {
   dlink_node *ptr;
 
+
   for (ptr=chptr->locpeons.head; ptr!=NULL && ptr->data!=NULL; ptr=ptr->next)
     sync_oplists(chptr, ptr->data, MODE_ADD, RootChan(chptr)->chname);
   for (ptr=chptr->locvoiced.head; ptr!=NULL && ptr->data!=NULL; ptr = ptr->next)
@@ -2463,6 +2195,7 @@ static void mode_get_status(struct Channel *chptr, struct Client *target_p,
   int *t_op, int *t_hop, int *t_voice, int *t_admin,  int need_check)
 {
   int i;
+
 
   if (need_check)
   {
@@ -2500,6 +2233,7 @@ static void update_channel_info(struct Channel *chptr)
   dlink_node *ptr;
   dlink_node *ptr_next;
 
+
   /* hideops_changed is set to chptr->mode.mode & MODE_HIDEOPS at
    * the beginning..
    */
@@ -2536,6 +2270,12 @@ static void update_channel_info(struct Channel *chptr)
         if(!t_hop && !t_op && !t_admin)
           sync_oplists(chptr, ptr->data, MODE_DEL, RootChan(chptr)->chname);
       }
+      for(ptr = chptr->locchanadmins.head; ptr != NULL; ptr = ptr->next)
+      {
+        mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 1);
+        if(!t_hop && !t_op && !t_admin)
+          sync_oplists(chptr, ptr->data, MODE_DEL, RootChan(chptr)->chname);
+      }
     }
     else
     {
@@ -2556,7 +2296,7 @@ static void update_channel_info(struct Channel *chptr)
     {
       if(mode_changes[i].dir == MODE_DEL)
       {
-        if((mode_changes[i].letter == 'o' || mode_changes[i].letter == 'h') &&
+        if((mode_changes[i].letter == 'o' || mode_changes[i].letter == 'h' || mode_changes[i].letter == 'a') &&
            MyConnect(mode_changes[i].client))
         {
           if((ptr = dlinkFind(&opped, mode_changes[i].client)) == NULL)
@@ -2573,7 +2313,7 @@ static void update_channel_info(struct Channel *chptr)
       }
       else
       {
-        if((mode_changes[i].letter == 'o' || mode_changes[i].letter == 'h') &&
+        if((mode_changes[i].letter == 'o' || mode_changes[i].letter == 'h' || mode_changes[i].letter == 'a') &&
            MyConnect(mode_changes[i].client))
         {
           if((ptr = dlinkFind(&deopped, mode_changes[i].client)) == NULL)
@@ -2634,6 +2374,19 @@ static void update_channel_info(struct Channel *chptr)
       else
       {
         change_channel_membership(chptr, &chptr->halfops, &chptr->lochalfops,
+                                  mode_changes[i].client);
+      }
+    }
+    else if (mode_changes[i].letter == 'a')
+    {
+      if(mode_changes[i].dir == MODE_DEL)
+      {
+        change_channel_membership(chptr, &chptr->peons, &chptr->locpeons, 
+                                  mode_changes[i].client);
+      }
+      else 
+      {
+        change_channel_membership(chptr, &chptr->chanadmins, &chptr->locchanadmins,
                                   mode_changes[i].client);
       }
     }

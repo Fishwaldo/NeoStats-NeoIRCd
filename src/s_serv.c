@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.4 2002/08/16 12:05:37 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.5 2002/08/16 14:22:06 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1067,8 +1067,6 @@ int server_estab(struct Client *client_p)
 
   SetServer(client_p);
 
- /* Update the capability combination usage counts. -A1kmm */
-  set_chcap_usage_counts(client_p);
 
   /* Some day, all these lists will be consolidated *sigh* */
   add_client_to_llist(&(me.serv->servers), client_p);

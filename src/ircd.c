@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
+ *  $Id: ircd.c,v 1.4 2002/08/16 14:22:06 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -574,8 +574,6 @@ int main(int argc, char *argv[])
   memset((void *)&ServerInfo, 0, sizeof(ServerInfo));
   memset((void *)&AdminInfo, 0, sizeof(AdminInfo));
 
-  /* Initialise the channel capability usage counts... */
-  init_chcap_usage_counts();
 
   ConfigFileEntry.dpath = DPATH;
   ConfigFileEntry.configfile = CPATH;   /* Server configuration file */

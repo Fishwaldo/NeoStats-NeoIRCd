@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.h,v 1.4 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: channel_mode.h,v 1.5 2002/08/16 14:22:06 fishwaldo Exp $
  */
 
 
@@ -54,9 +54,6 @@ extern void sync_channel_oplists(struct Channel *, int);
 extern void set_channel_mode_flags( char flags_ptr[4][2],
 				    struct Channel *chptr,
 				    struct Client *source_p);
-extern void init_chcap_usage_counts(void);
-extern void set_chcap_usage_counts(struct Client *serv_p);
-extern void unset_chcap_usage_counts(struct Client *serv_p);
 
 /*
 ** Channel Related macros follow

@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: linebuf.c,v 1.7 2002/11/04 08:50:46 fishwaldo Exp $
+ *  $Id: linebuf.c,v 1.8 2003/03/04 13:03:55 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -673,7 +673,6 @@ linebuf_flush(int fd, buf_head_t *bufhead)
 #endif
 	retval = send(fd, bufline->buf + bufhead->writeofs, bufline->len
 		 - bufhead->writeofs, 0);
-printf("send retval %d\n", retval);   
   /* Deal with return code */
   if (retval < 0)
     return retval;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c,v 1.8 2002/09/16 07:36:01 fishwaldo Exp $
+ *  $Id: m_sjoin.c,v 1.9 2002/09/16 09:35:43 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ _moddeinit(void)
   mod_del_cmd(&sjoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.8 $";
+const char *_version = "$Revision: 1.9 $";
 #endif
 /*
  * ms_sjoin
@@ -174,6 +174,9 @@ static void ms_sjoin(struct Client *client_p,
       case 'O':
       	mode.mode |= MODE_OPERSONLY;
       	break;
+      case 'r':
+        mode.mode |= MODE_REGCHAN;
+        break;
       case 'k':
         strlcpy(mode.key, parv[4 + args], KEYLEN);
         args++;
@@ -610,6 +613,8 @@ struct mode_letter flags[] = {
   { MODE_INVITEONLY, 'i' },
   { MODE_PRIVATE,    'p' },
   { MODE_HIDEOPS,    'A' },
+  { MODE_OPERSONLY,  'O' },
+  { MODE_REGCHAN,    'r' },
   { 0, 0 }
 };
 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c,v 1.15 2002/10/16 03:31:33 fishwaldo Exp $
+ *  $Id: m_sjoin.c,v 1.16 2002/10/16 03:52:48 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ _moddeinit(void)
   mod_del_cmd(&sjoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.15 $";
+const char *_version = "$Revision: 1.16 $";
 #endif
 /*
  * ms_sjoin
@@ -119,7 +119,6 @@ static void ms_sjoin(struct Client *client_p,
   static         char buf[2*BUFSIZE]; /* buffer for modes and prefix */
   char           *p; /* pointer used making sjbuf */
   int hide_or_not;
-  int i;
   dlink_node *m;
   static         char sjbuf_hops[BUFSIZE]; /* buffer with halfops as % */
   register char  *hops;
@@ -412,7 +411,7 @@ static void ms_sjoin(struct Client *client_p,
         goto nextnick;
       }
 
-      if (!keep_new_modes && !IsOper(target_p))
+      if (!keep_new_modes && !IsServices(target_p))
 	{
 	  if ((fl & MODE_CHANOP) || (fl & MODE_HALFOP) || (fl & MODE_ADMIN) || (fl & MODE_VOICE))
 	    {
@@ -463,19 +462,15 @@ static void ms_sjoin(struct Client *client_p,
 		}
 	    }
 	}
-      
       if (!IsMember(target_p, chptr))
         {
           add_user_to_channel(chptr, target_p, fl);
 	  /* XXX vchan stuff */
-
-	    {
 	      sendto_channel_local(ALL_MEMBERS,chptr, ":%s!%s@%s JOIN :%s",
 				   target_p->name,
 				   target_p->username,
 				   target_p->vhost,
 				   parv[2]);
-	    }
 	}
 
       if (fl & MODE_CHANOP)
@@ -701,13 +696,13 @@ static void remove_our_modes( int hide_or_not,
   remove_a_mode(hide_or_not, chptr, top_chptr, source_p, &chptr->chanadmins, 'a');
 
   move_user(&chptr->chanops, &chptr->peons);
-  move_user(&chptr->locchanops, &chptr->peons);
+  move_user(&chptr->locchanops, &chptr->locpeons);
   move_user(&chptr->voiced, &chptr->peons);
-  move_user(&chptr->locvoiced, &chptr->peons);
+  move_user(&chptr->locvoiced, &chptr->locpeons);
   move_user(&chptr->chanadmins, &chptr->peons);
-  move_user(&chptr->locchanadmins, &chptr->peons);
+  move_user(&chptr->locchanadmins, &chptr->locpeons);
   move_user(&chptr->halfops, &chptr->peons);
-  move_user(&chptr->lochalfops, &chptr->peons);
+  move_user(&chptr->lochalfops, &chptr->locpeons);
 }
 
 
@@ -731,7 +726,7 @@ static void move_user(dlink_list *list, dlink_list *tolist)
 	target_p = ptr->data;
 	ptr_next = ptr->next;
 	/* services never loose the TS battle */
-	if (IsOper(target_p))
+	if (IsServices(target_p))
 		continue;
 	
 	dlinkDelete(ptr, list);
@@ -774,7 +769,7 @@ static void remove_a_mode( int hide_or_not,
       target_p = ptr->data;
 	
       /* Services clients never loose their mode in a TS battle! */
-      if (IsOper(target_p))
+      if (IsServices(target_p))
         continue;
 
       lpara[count++] = target_p->name;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c,v 1.10 2002/09/22 13:19:52 fishwaldo Exp $
+ *  $Id: m_kline.c,v 1.11 2002/10/16 03:52:47 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -86,7 +86,7 @@ _moddeinit(void)
   mod_del_cmd(&dline_msgtab[0]);
   mod_del_cmd(&dline_msgtab[1]);
 }
-const char *_version = "$Revision: 1.10 $";
+const char *_version = "$Revision: 1.11 $";
 #endif
 
 /* Local function prototypes */
@@ -591,9 +591,10 @@ mo_dline(struct Client *client_p, struct Client *source_p,
   if ((t=parse_netmask(dlhost, NULL, &bits)) == HM_HOST)
   {
 #ifdef IPV6
-   if !IsServices(source_p) sendto_one(source_p, ":%s NOTICE %s :Sorry, please supply an address.",
-              me.name, parv[0]);
-   return;
+   if (!IsServices(source_p)) {
+   	sendto_one(source_p, ":%s NOTICE %s :Sorry, please supply an address.", me.name, parv[0]);
+   	return;
+   }
 #else
       if (!(target_p = find_chasing(source_p, parv[1], NULL)))
         return;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel_mode.c,v 1.5 2002/08/16 14:22:06 fishwaldo Exp $
+ *  $Id: channel_mode.c,v 1.6 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -28,7 +28,6 @@
 #include "tools.h"
 #include "channel.h"
 #include "channel_mode.h"
-#include "vchannel.h"
 #include "client.h"
 #include "common.h"
 #include "hash.h"
@@ -1193,8 +1192,8 @@ chm_op(struct Client *client_p, struct Client *source_p,
 
   mode_get_status(chptr, targ_p, &t_op, &t_hop, &t_voice, &t_admin, 1);
 
-  if (((dir == MODE_ADD) && t_op) ||
-      ((dir == MODE_DEL) && !t_op
+  if (((dir == MODE_ADD) && (t_op || t_admin)) ||
+      ((dir == MODE_DEL) && (!t_op || t_admin)
        && !t_hop
     ))
     return;
@@ -2182,9 +2181,9 @@ sync_channel_oplists(struct Channel *chptr, int dir)
 
 
   for (ptr=chptr->locpeons.head; ptr!=NULL && ptr->data!=NULL; ptr=ptr->next)
-    sync_oplists(chptr, ptr->data, MODE_ADD, RootChan(chptr)->chname);
+    sync_oplists(chptr, ptr->data, MODE_ADD, chptr->chname);
   for (ptr=chptr->locvoiced.head; ptr!=NULL && ptr->data!=NULL; ptr = ptr->next)
-    sync_oplists(chptr, ptr->data, MODE_ADD, RootChan(chptr)->chname);
+    sync_oplists(chptr, ptr->data, MODE_ADD, chptr->chname);
 }
 
 
@@ -2246,7 +2245,7 @@ static void update_channel_info(struct Channel *chptr)
       {
         mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 0);
         if (!t_hop && !t_op && !t_admin)
-          sync_oplists(chptr, ptr->data, MODE_DEL, RootChan(chptr)->chname);
+          sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       }
 
       for (ptr = chptr->locvoiced.head; ptr != NULL && ptr->data != NULL;
@@ -2254,27 +2253,27 @@ static void update_channel_info(struct Channel *chptr)
       {
         mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 0);
         if (!t_hop && !t_op && !t_admin)
-          sync_oplists(chptr, ptr->data, MODE_DEL, RootChan(chptr)->chname);
+          sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       }
 
       for(ptr = chptr->lochalfops.head; ptr != NULL; ptr = ptr->next)
       {
         mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 1);
         if(!t_hop && !t_op && !t_admin)
-          sync_oplists(chptr, ptr->data, MODE_DEL, RootChan(chptr)->chname);
+          sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       }
 
       for(ptr = chptr->locchanops.head; ptr != NULL; ptr = ptr->next)
       {
         mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 1);
         if(!t_hop && !t_op && !t_admin)
-          sync_oplists(chptr, ptr->data, MODE_DEL, RootChan(chptr)->chname);
+          sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       }
       for(ptr = chptr->locchanadmins.head; ptr != NULL; ptr = ptr->next)
       {
         mode_get_status(chptr, ptr->data, &t_op, &t_hop, &t_voice, &t_admin, 1);
         if(!t_hop && !t_op && !t_admin)
-          sync_oplists(chptr, ptr->data, MODE_DEL, RootChan(chptr)->chname);
+          sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       }
     }
     else
@@ -2334,14 +2333,14 @@ static void update_channel_info(struct Channel *chptr)
     for (ptr=deopped.head; ptr != NULL && ptr->data != NULL; ptr=ptr_next)
     {
       ptr_next = ptr->next;
-      sync_oplists(chptr, ptr->data, MODE_DEL, RootChan(chptr)->chname);
+      sync_oplists(chptr, ptr->data, MODE_DEL, chptr->chname);
       free_dlink_node(ptr);
     }
 
     for(ptr = opped.head; ptr != NULL; ptr = ptr_next)
     {
       ptr_next = ptr->next;
-      sync_oplists(chptr, ptr->data, MODE_ADD, RootChan(chptr)->chname);
+      sync_oplists(chptr, ptr->data, MODE_ADD, chptr->chname);
       free_dlink_node(ptr);
     }
   }

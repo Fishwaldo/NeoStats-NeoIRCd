@@ -19,14 +19,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_lljoin.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_lljoin.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
 #include "tools.h"
 #include "channel.h"
 #include "channel_mode.h"
-#include "vchannel.h"
 #include "client.h"
 #include "hash.h"
 #include "common.h"
@@ -64,7 +63,7 @@ _moddeinit(void)
   mod_del_cmd(&lljoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 /*
  * m_lljoin
@@ -98,11 +97,6 @@ static void ms_lljoin(struct Client *client_p,
   int  i;
   struct Client *target_p;
   struct Channel *chptr, *vchan_chptr, *root_vchan;
-#ifdef VCHANS
-  int cjoin = 0;
-  int  vc_ts;
-  char *pvc = NULL;
-#endif
 
   if(uplink && !IsCapable(uplink,CAP_LL))
     {
@@ -120,19 +114,6 @@ static void ms_lljoin(struct Client *client_p,
   if(nick == NULL)
     return;
 
-#ifdef VCHANS
-  if (nick[0] == '!')
-  {
-    cjoin = 1;
-    nick++;
-  }
- 
-  if(parc > 4)
-  {
-    key = parv[4];
-    vkey = parv[3];
-  }
-#endif
   else if(parc >3)
   {
     key = vkey = parv[3];
@@ -150,47 +131,12 @@ static void ms_lljoin(struct Client *client_p,
 
   chptr = hash_find_channel(chname);
 
-#ifdef VCHANS
-  if (cjoin)
   {
-    if(!chptr) /* Uhm, bad! */
-    {
-      sendto_realops_flags(FLAGS_ALL, L_ALL,
-        "LLJOIN %s %s called by %s, but root chan doesn't exist!",
-        chname, nick, client_p->name);
-      return;
-    }
-    flags = CHFL_CHANOP;
-
-    if(! (vchan_chptr = cjoin_channel(chptr, target_p, chname)))
-      return;
-
-    root_vchan = chptr;
-    chptr = vchan_chptr;
-  }
-  else
-#endif
-  {
-#ifdef VCHANS
-    if (chptr)
-    {
-      vchan_chptr = select_vchan(chptr, target_p, vkey, chname);
-    }
-    else
-#endif
     {
       chptr = vchan_chptr = get_or_create_channel(target_p, chname, NULL);
       flags = CHFL_CHANOP;
     }
    
-#ifdef VCHANS
-    if (vchan_chptr != chptr)
-    {
-      root_vchan = chptr;
-      chptr = vchan_chptr;
-    }
-    else
-#endif
       root_vchan = chptr;
 
     if(!chptr || !root_vchan)
@@ -244,27 +190,6 @@ static void ms_lljoin(struct Client *client_p,
        * the fact that it is a vchan through SJOIN...
        */
       /* Prevent users creating a fake vchan */
-#ifdef VCHANS
-      if (chname[0] == '#' && chname[1] == '#')
-        {
-          if ((pvc = strrchr(chname+3, '_')))
-          {
-            /*
-             * OK, name matches possible vchan:
-             * ##channel_blah
-             */
-            pvc++; /*  point pvc after last _ */
-            vc_ts = atol(pvc);
-            /*
-             * if blah is the same as the TS, up the TS
-             * by one, to prevent this channel being
-             * seen as a vchan
-             */
-            if (vc_ts == CurrentTime)
-              chptr->channelts++;
-          }
-        }
-#endif
 
       sendto_one(uplink,
 		 ":%s SJOIN %lu %s + :@%s",
@@ -298,11 +223,6 @@ static void ms_lljoin(struct Client *client_p,
 
   add_user_to_channel(chptr, target_p, flags);
 
-#ifdef VCHANS
-  if ( chptr != root_vchan )
-    add_vchan_to_client_cache(target_p,root_vchan,chptr);
-#endif
- 
   sendto_channel_local(ALL_MEMBERS, chptr,
 		       ":%s!%s@%s JOIN :%s",
 		       target_p->name,

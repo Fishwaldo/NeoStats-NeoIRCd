@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c,v 1.5 2002/08/16 14:22:06 fishwaldo Exp $
+ *  $Id: s_serv.c,v 1.6 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -32,7 +32,6 @@
 #include "tools.h"
 #include "s_serv.h"
 #include "channel_mode.h"
-#include "vchannel.h"
 #include "class.h"
 #include "client.h"
 #include "common.h"
@@ -1574,10 +1573,6 @@ burst_all(struct Client *client_p)
   struct Client*    target_p;
   struct Channel*   chptr;
   struct hook_burst_channel hinfo; 
-#ifdef VCHANS
-  struct Channel*   vchan;
-  dlink_node *ptr;
-#endif
 
   /* serial counter borrowed from send.c */
   current_serial++;
@@ -1588,11 +1583,6 @@ burst_all(struct Client *client_p)
        * sent along as subchannels of the top channel
        */
 
-#ifdef VCHANS
-      if(IsVchan(chptr))
-	continue;
-#endif
-	  
       if(chptr->users != 0)
         {
           burst_members(client_p,&chptr->chanops);
@@ -1606,29 +1596,6 @@ burst_all(struct Client *client_p)
           hook_call_event("burst_channel", &hinfo);
         }
 
-#ifdef VCHANS
-      if(IsVchanTop(chptr))
-	{
-	  for ( ptr = chptr->vchan_list.head; ptr;
-		ptr = ptr->next)
-	    {
-	      vchan = ptr->data;
-              if(vchan->users != 0)
-                {
-                  burst_members(client_p,&vchan->chanops);
-                  burst_members(client_p,&vchan->voiced);
-                  burst_members(client_p,&vchan->halfops);
-                  burst_members(client_p,&vchan->peons);
-                  burst_members(client_p,&vchan->chanadmins);
-                  
-                  send_channel_modes(client_p, vchan);
-	          hinfo.chptr = chptr;
-        	  hinfo.client = client_p;
-          	  hook_call_event("burst_channel", &hinfo);
-                }
-	    }
-	}
-#endif
     }
 
   /*
@@ -1686,10 +1653,6 @@ cjoin_all(struct Client *client_p)
 void
 burst_channel(struct Client *client_p, struct Channel *chptr)
 {
-#ifdef VCHANS
-  dlink_node        *ptr;
-  struct Channel*   vchan;
-#endif
 
   burst_ll_members(client_p,&chptr->chanops);
   burst_ll_members(client_p,&chptr->voiced);
@@ -1709,32 +1672,6 @@ burst_channel(struct Client *client_p, struct Channel *chptr)
 		 chptr->topic);
     }
 
-#ifdef VCHANS
-  if(IsVchanTop(chptr))
-    {
-      for ( ptr = chptr->vchan_list.head; ptr; ptr = ptr->next)
-	{
-	  vchan = ptr->data;
-	  burst_ll_members(client_p,&vchan->chanops);
-	  burst_ll_members(client_p,&vchan->voiced);
-	  burst_ll_members(client_p,&vchan->halfops);
-	  burst_ll_members(client_p,&vchan->peons);
-	  burst_ll_members(client_p,&vchan->chanadmins);
-	  send_channel_modes(client_p, vchan);
-	  add_lazylinkchannel(client_p,vchan);
-
-	  if(vchan->topic != NULL && vchan->topic_info != NULL)
-	    {
-	      sendto_one(client_p, ":%s TOPIC %s %s %lu :%s",
-			 me.name,
-			 vchan->chname,
-			 vchan->topic_info,
-			 (unsigned long) vchan->topic_time,
-			 vchan->topic);
-	    }
-	}
-    }
-#endif
 }
 
 /*

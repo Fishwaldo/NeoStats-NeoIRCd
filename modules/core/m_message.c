@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_message.c,v 1.2 2002/08/14 06:01:55 fishwaldo Exp $
+ *  $Id: m_message.c,v 1.3 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -37,7 +37,6 @@
 
 #include "channel.h"
 #include "channel_mode.h"
-#include "vchannel.h"
 #include "irc_string.h"
 #include "hash.h"
 #include "class.h"
@@ -123,7 +122,7 @@ _moddeinit(void)
   mod_del_cmd(&notice_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 /*
@@ -455,12 +454,8 @@ msg_channel(int p_or_n, char *command,
   char *chname = NULL;
   int result;
 
-  chname = RootChan(chptr)->chname;
+  chname = chptr->chname;
 
-#ifdef VCHANS
-  if (HasVchans(chptr))
-    vchan = map_vchan(chptr, source_p);
-#endif
   
   if (!vchan)
     vchan = chptr;
@@ -529,12 +524,8 @@ msg_channel_flags(int p_or_n, char *command, struct Client *client_p,
     c = '@';
   }
 
-  chname = RootChan(chptr)->chname;
+  chname = chptr->chname;
 
-#ifdef VCHANS
-  if (HasVchans(chptr))
-    vchan = map_vchan(chptr, source_p);
-#endif
 
   if (!vchan)
     vchan = chptr;

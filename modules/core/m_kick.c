@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kick.c,v 1.4 2002/08/20 15:06:30 fishwaldo Exp $
+ *  $Id: m_kick.c,v 1.5 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -27,7 +27,6 @@
 #include "handlers.h"
 #include "channel.h"
 #include "channel_mode.h"
-#include "vchannel.h"
 #include "client.h"
 #include "irc_string.h"
 #include "ircd.h"
@@ -60,7 +59,7 @@ _moddeinit(void)
   mod_del_cmd(&kick_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 /*
 ** m_kick
@@ -76,9 +75,6 @@ static void m_kick(struct Client *client_p,
 {
   struct Client *who;
   struct Channel *chptr;
-#ifdef VCHANS
-  struct Channel *vchan;
-#endif
   int   chasing = 0;
   char  *comment;
   char  *name;
@@ -117,16 +113,6 @@ static void m_kick(struct Client *client_p,
       return;
     }
 
-#ifdef VCHANS
-  if (HasVchans(chptr))
-    {
-      vchan = map_vchan(chptr,source_p);
-      if(vchan != 0)
-	{
-	  chptr = vchan;
-	}
-    }
-#endif
 
   if (!IsServer(source_p) && !is_any_op(chptr, source_p) ) 
     { 

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_info.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: m_info.c,v 1.4 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -69,7 +69,7 @@ _moddeinit(void)
   hook_del_event("doing_info");
   mod_del_cmd(&info_msgtab);
 }
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 
 /*
@@ -397,12 +397,6 @@ static struct InfoStruct info_table[] =
     "Banned users may not send text to a channel"
   },
   {
-    "vchans_oper_only",
-    OUTPUT_BOOLEAN_YN,
-    &ConfigChannel.vchans_oper_only,
-    "Restrict use of /CJOIN to opers"
-  },
-  {
     "disable_hidden",
     OUTPUT_BOOLEAN_YN,
     &ConfigServerHide.disable_hidden,
@@ -532,13 +526,8 @@ static void ms_info(struct Client *client_p, struct Client *source_p,
   if (hunt_server(client_p,source_p,":%s INFO :%s",1,parc,parv) == HUNTED_ISME)
   {
     info_spy(source_p);
- 
-    /* I dont see sending Hybrid-team as anything but a waste of bandwidth..
-     * so its disabled for now. --fl_
-     */
-    /* send_info_text(source_p); */
+    send_info_text(source_p); 
 
-    /* I dont see why remote opers need this, but.. */
     if(IsOper(source_p))
       send_conf_options(source_p);
       
@@ -741,6 +730,7 @@ static void send_conf_options(struct Client *source_p)
   ** in order for it to show up properly to opers who issue INFO
   */
 
+#ifndef EFNET
   /* jdc -- Only send compile information to admins. */
   if (IsOperAdmin(source_p))
   {
@@ -751,6 +741,7 @@ static void send_conf_options(struct Client *source_p)
 	source_p->name,
 	platform); 
   }
+#endif
 
   sendto_one(source_p, form_str(RPL_INFO), me.name, source_p->name, "");
 }

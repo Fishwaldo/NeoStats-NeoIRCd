@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.c,v 1.4 2002/08/16 12:05:37 fishwaldo Exp $
+ *  $Id: send.c,v 1.5 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -42,7 +42,6 @@
 #include "list.h"
 #include "s_debug.h"
 #include "s_log.h"
-#include "vchannel.h"
 #include "memory.h"
 #include "hook.h"
 
@@ -513,11 +512,11 @@ sendto_channel_butone(struct Client *one, struct Client *from,
 
   if(IsServer(from))
     linebuf_putmsg(&local_linebuf, pattern, &args, ":%s %s %s ",
-                   from->name, command, RootChan(chptr)->chname);
+                   from->name, command, chptr->chname);
   else
     linebuf_putmsg(&local_linebuf, pattern, &args, ":%s!%s@%s %s %s ",
                    from->name, from->username, from->vhost,
-                   command, RootChan(chptr)->chname);
+                   command, chptr->chname);
 
   linebuf_putmsg(&remote_linebuf, pattern, &args, ":%s %s %s ",
                  from->name, command, chptr->chname);

@@ -27,3 +27,4 @@ Symbols are:
 (HP)	- Big arse rc2 patch for Hybrid. Sigh. Found a cute bug in hybrid that would allow it to accept any password for /oper though!
 (F)	- Removed all ifdef HALFOP ANONOP VCHAN defines, as these will be standard in NeoIRCd
 (F)	- Removed all OANDVcode as its not going to be used at all
+(F)	- Removed all Vchan Code and finished rc2 patch from hybrid merge

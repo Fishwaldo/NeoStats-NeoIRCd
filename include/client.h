@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
+ *  $Id: client.h,v 1.4 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_client_h
@@ -112,14 +112,6 @@ struct ZipStats
   double out_ratio;
 };
 
-/* entry for base_chan pointer and the corresponding vchan
- * client is actually on
- */
-struct Vchan_map
-{
-  struct Channel *base_chan;
-  struct Channel *vchan;
-};
 
 struct Client
 {
@@ -192,11 +184,6 @@ struct Client
    */
   char		   vhost[HOSTLEN +1];
 
-/* cache table of mappings between top level chan and sub vchan client
- * is on.
- */
-
-  dlink_list      vchan_map;
 
   /* caller ID allow list */
   /* This has to be here, since a client on an on_allow_list could

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
+ *  $Id: s_conf.c,v 1.4 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1414,7 +1414,6 @@ set_default_conf(void)
   ConfigFileEntry.oper_only_umodes = FLAGS_DEBUG;
   ConfigFileEntry.throttle_time = 10;
 
-  ConfigChannel.vchans_oper_only = NO;
 
   ConfigChannel.knock_delay = 300;
   ConfigChannel.knock_delay_channel = 60;

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_links.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_links.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ _moddeinit(void)
   mod_del_cmd(&links_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 /*
  * m_links - LINKS message handler
@@ -77,14 +77,13 @@ const char *_version = "$Revision: 1.2 $";
 static void m_links(struct Client *client_p, struct Client *source_p,
                    int parc, char *parv[])
 {
-
   if (!ConfigServerHide.flatten_links)
     {
-     mo_links(client_p, source_p, parc, parv);
-     return;
+      mo_links(client_p, source_p, parc, parv);
+      return;
     }
-  SendMessageFile(source_p, &ConfigFileEntry.linksfile);
 
+  SendMessageFile(source_p, &ConfigFileEntry.linksfile);
     
 /*
  * Print our own info so at least it looks like a normal links
@@ -109,11 +108,15 @@ static void mo_links(struct Client *client_p, struct Client *source_p,
   
   dlink_node *ptr;
 
-  if (parc > 2)
+  if (parc > 2) 
     {
-      if (hunt_server(client_p, source_p, ":%s LINKS %s :%s", 1, parc, parv)
-          != HUNTED_ISME)
+      if(!ConfigServerHide.disable_remote || IsOper(source_p))
+      {
+        if (hunt_server(client_p, source_p, ":%s LINKS %s :%s", 1, parc, parv)
+            != HUNTED_ISME)
         return;
+      }
+
       mask = parv[2];
     }
   else if (parc == 2)
@@ -177,7 +180,7 @@ static void ms_links(struct Client *client_p, struct Client *source_p,
       != HUNTED_ISME)
     return;
 
-  if(IsOper(source_p))
+  if(IsClient(source_p))
     m_links(client_p,source_p,parc,parv);
 }
 

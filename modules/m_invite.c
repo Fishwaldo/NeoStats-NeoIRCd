@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_invite.c,v 1.4 2002/08/20 15:06:29 fishwaldo Exp $
+ *  $Id: m_invite.c,v 1.5 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -29,7 +29,6 @@
 #include "channel.h"
 #include "channel_mode.h"
 #include "list.h"
-#include "vchannel.h"
 #include "client.h"
 #include "hash.h"
 #include "irc_string.h"
@@ -62,7 +61,7 @@ _moddeinit(void)
   mod_del_cmd(&invite_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 
 /*
@@ -78,9 +77,6 @@ m_invite(struct Client *client_p,
   struct Client *target_p;
   struct Channel *chptr, *vchan;
   int chop;                     /* Is channel op */
-#ifdef VCHANS
-  struct Channel *vchan2;
-#endif
 
   if (*parv[2] == '\0')
   {
@@ -140,14 +136,7 @@ m_invite(struct Client *client_p,
 
   /* By this point, chptr is non NULL */
 
-#ifdef VCHANS
-  if (!(HasVchans(chptr) && (vchan = map_vchan(chptr, source_p))))
-    vchan = chptr;
-  if (IsVchan(chptr))
-    chptr = chptr->root_chptr;
-#else
   vchan = chptr;
-#endif
   
   if (MyClient(source_p) && !IsMember(source_p, vchan))
   {
@@ -156,15 +145,6 @@ m_invite(struct Client *client_p,
     return;
   }
 
-#ifdef VCHANS
-  if ((vchan2 = map_vchan(chptr, target_p)))
-  {
-    if (MyClient(source_p) && ((vchan2->mode.mode & MODE_SECRET) == 0))
-      sendto_one(source_p, form_str(ERR_USERONCHANNEL), me.name, parv[0],
-                 parv[1], parv[2]);
-    return;
-  }
-#endif
 
   if (IsMember(target_p, vchan))
   {

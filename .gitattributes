@@ -300,7 +300,6 @@ include/sprintf_irc.h -text
 include/stdinc.h -text
 include/supported.h -text
 include/tools.h -text
-include/vchannel.h -text
 include/whowas.h -text
 /make.com -text
 messages/.cvsignore -text
@@ -341,7 +340,6 @@ modules/m_away.c -text
 modules/m_capab.c -text
 modules/m_cburst.c -text
 modules/m_challenge.c -text
-modules/m_cjoin.c -text
 modules/m_close.c -text
 modules/m_connect.c -text
 modules/m_cryptlink.c -text
@@ -466,7 +464,6 @@ src/send.c -text
 src/snprintf.c -text
 src/sprintf_irc.c -text
 src/tools.c -text
-src/vchannel.c -text
 src/version.c.SH -text
 src/version.com -text
 src/whowas.c -text

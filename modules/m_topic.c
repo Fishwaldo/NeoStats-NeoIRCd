@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_topic.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_topic.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -27,7 +27,6 @@
 #include "handlers.h"
 #include "channel.h"
 #include "channel_mode.h"
-#include "vchannel.h"
 #include "client.h"
 #include "hash.h"
 #include "irc_string.h"
@@ -62,7 +61,7 @@ _moddeinit(void)
   mod_del_cmd(&topic_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 /*
  * m_topic
@@ -77,9 +76,6 @@ static void m_topic(struct Client *client_p,
   struct Channel *chptr = NULL;
   struct Channel *root_chan;
   char  *p = NULL;
-#ifdef VCHANS
-  struct Channel *vchan;
-#endif
     
   if ((p = strchr(parv[1],',')))
     *p = '\0';
@@ -113,16 +109,6 @@ static void m_topic(struct Client *client_p,
 
       root_chan = chptr;
 
-#ifdef VCHANS
-      if (HasVchans(chptr))
-	{
-	  vchan = map_vchan(chptr,source_p);
-	  if(vchan != NULL)
-	    chptr = vchan;
-	}
-      else if (IsVchan(chptr))
-        root_chan = RootChan(chptr);
-#endif
           
       /* setting topic */
       if (parc > 2)

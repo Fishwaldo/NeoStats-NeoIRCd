@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_knock.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: m_knock.c,v 1.4 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -34,7 +34,6 @@
 #include "numeric.h"
 #include "send.h"
 #include "s_conf.h"
-#include "vchannel.h"
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
@@ -81,7 +80,7 @@ _moddeinit(void)
   mod_del_cmd(&knockll_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 
 /* m_knock
@@ -176,9 +175,6 @@ static void parse_knock_local(struct Client *client_p,
 
   struct Channel *chptr;
   char *p, *name, *key;
-#ifdef VCHANS
-  struct Channel *vchan_chptr;
-#endif
 
   name = parv[1];
   key = (parc > 2) ? parv[2] : NULL;
@@ -212,53 +208,6 @@ static void parse_knock_local(struct Client *client_p,
     return;
   }
 
-#ifdef VCHANS
-  if (IsVchanTop(chptr))
-    {
-      /* They specified a vchan basename */
-      if(on_sub_vchan(chptr,source_p))
-        {
-          sendto_one(source_p, form_str(ERR_KNOCKONCHAN),
-                     me.name, source_p->name, name);
-          return;
-        }
-      if (key && key[0] == '!')
-        {
-          /* Make "KNOCK #channel !" work like JOIN */
-          if (!key[1])
-            {
-              show_vchans(source_p, chptr, "knock");
-              return;
-            }
-
-          /* Find a matching vchan */
-          if ((vchan_chptr = find_vchan(chptr, key)))
-            {
-	      chptr = vchan_chptr;
-            }
-          else
-            {
-              sendto_one(source_p, form_str(ERR_NOSUCHCHANNEL),
-              me.name, parv[0], name);
-              return;
-            }
-        }
-      else
-        {
-          /* No key specified */
-          show_vchans(source_p, chptr, "knock");
-          return;
-        }
-    }
-  else if (IsVchan(chptr))
-    {
-      /* Don't allow KNOCK'ing a vchans 'real' name */
-      sendto_one(source_p, form_str(ERR_BADCHANNAME), me.name, parv[0],
-                 name);
-      return;
-    }
-  else
-#endif
     {
       /* Normal channel, just be sure they aren't on it */
       if (IsMember(source_p, chptr))
@@ -280,7 +229,7 @@ static void parse_knock_local(struct Client *client_p,
     }
 
   /* don't allow a knock if the user is banned, or the channel is secret */
-  if ((chptr->mode.mode & MODE_SECRET) ||
+  if ((chptr->mode.mode & MODE_PRIVATE) ||
       (sockhost && is_banned_knock(chptr, source_p, sockhost)) ||
       (!sockhost && is_banned(chptr, source_p)))
     {
@@ -332,9 +281,6 @@ static void parse_knock_remote(struct Client *client_p,
 {
   struct Channel *chptr;
   char *p, *name, *key;
-#ifdef VCHANS
-  struct Channel *vchan_chptr;
-#endif
 
   name = parv[1];
   key = (parc > 2) ? parv[2] : NULL;
@@ -344,21 +290,6 @@ static void parse_knock_remote(struct Client *client_p,
 
   if(!IsChannelName(name) || !(chptr = hash_find_channel(name)))
     return;
-
-#ifdef VCHANS
-  if(IsVchanTop(chptr))
-  {
-    if(on_sub_vchan(chptr,source_p))
-      return;
-
-    if(key && (key[0] == '!') && (vchan_chptr = find_vchan(chptr, key)))
-      chptr = vchan_chptr;
-    else
-      return;
-  }
-  else if(IsVchan(chptr))
-    return;
-#endif
 
   if(IsMember(source_p, chptr))
     return;
@@ -442,7 +373,7 @@ static int is_banned_knock(struct Channel *chptr, struct Client *who,
 
   ircsprintf(src_host,"%s!%s@%s", who->name, who->username, who->host);
   ircsprintf(src_iphost,"%s!%s@%s", who->name, who->username, sockhost);
-  ircsprintf(src_vhost, "%s!%s@vhost", who->name, who->username, who->vhost);
+  ircsprintf(src_vhost, "%s!%s@%s", who->name, who->username, who->vhost);
   return (check_banned_knock(chptr, who, src_host, src_iphost, src_vhost));
 }
 
@@ -473,7 +404,7 @@ static int check_banned_knock(struct Channel *chptr, struct Client *who,
       actualBan = NULL;
   }
 
-  if (actualBan != NULL)
+  if ((actualBan != NULL))
   {
     for (except = chptr->exceptlist.head; except; except = except->next)
     {

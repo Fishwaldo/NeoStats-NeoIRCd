@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_lusers.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_lusers.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -58,7 +58,7 @@ _moddeinit(void)
   mod_del_cmd(&lusers_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 /*
  * m_lusers - LUSERS message handler
@@ -113,6 +113,8 @@ static void ms_lusers(struct Client *client_p, struct Client *source_p,
           return;
         }
     }
-  show_lusers(source_p);
+
+  if(IsClient(source_p))
+    show_lusers(source_p);
 }
 

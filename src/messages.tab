@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab,v 1.2 2002/08/13 14:45:13 fishwaldo Exp $
+ *   $Id: messages.tab,v 1.3 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 static  char *  replies[] = {
@@ -526,7 +526,7 @@ static  char *  replies[] = {
 /* 496 */       NULL,
 /* 497 */       NULL,
 /* 498 */       NULL,
-/* 499 */       NULL,
+/* 499 ERR_CHANAPRIVSNEEDED */  ":%s 482 %s %s :You're not a Channel Admin" ,
 /* 500 */       NULL,
 /* 501 ERR_UMODEUNKNOWNFLAG, */ ":%s 501 %s :Unknown MODE flag",
 /* 502 ERR_USERSDONTMATCH, */   ":%s 502 %s :Can't change mode for other users",

@@ -19,14 +19,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_part.c,v 1.2 2002/08/14 06:01:55 fishwaldo Exp $
+ *  $Id: m_part.c,v 1.3 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
 #include "tools.h"
 #include "handlers.h"
 #include "channel.h"
-#include "vchannel.h"
 #include "client.h"
 #include "common.h"  
 #include "hash.h"
@@ -62,7 +61,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&part_msgtab);
 }
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 static void part_one_client(struct Client *client_p,
@@ -134,23 +133,6 @@ static void part_one_client(struct Client *client_p,
       return;
     }
 
-#ifdef VCHANS
-  if (IsVchan(chptr) || HasVchans(chptr))
-    {
-      if(HasVchans(chptr))
-        {
-          /* Set chptr to actual channel, bchan to the base channel */
-          bchan = chptr;
-          chptr = map_vchan(bchan,source_p);
-        }
-      else
-        {
-          /* chptr = chptr; */
-          bchan = find_bchan(chptr);
-        }
-    }
-  else
-#endif
     bchan = chptr; /* not a vchan */
 
   if (!chptr || !bchan || !IsMember(source_p, chptr))

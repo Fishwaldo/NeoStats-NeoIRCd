@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: m_sjoin.c,v 1.4 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -27,7 +27,6 @@
 #include "handlers.h"
 #include "channel.h"
 #include "channel_mode.h"
-#include "vchannel.h"
 #include "client.h"
 #include "hash.h"
 #include "irc_string.h"
@@ -63,7 +62,7 @@ _moddeinit(void)
   mod_del_cmd(&sjoin_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
  * ms_sjoin
@@ -124,9 +123,6 @@ static void ms_sjoin(struct Client *client_p,
   dlink_node *m;
   static         char sjbuf_hops[BUFSIZE]; /* buffer with halfops as % */
   register char  *hops;
-#ifdef VCHANS
-  int            vc_ts = 0;
-#endif
 
   *buf = '\0';
   *sjbuf_hops = '\0';
@@ -196,63 +192,7 @@ static void ms_sjoin(struct Client *client_p,
   if ((chptr = get_or_create_channel(source_p, parv[2], &isnew)) == NULL)
     return; /* channel name too long? */
 
-  /* XXX vchan cruft */
-  /* vchans are encoded as "##mainchanname_timestamp" */
 
-#ifdef VCHANS
-  if (parv[2][1] == '#')
-    {
-      char *subp;
-
-      /* possible sub vchan being sent along ? */
-      if ((subp = strrchr(parv[2],'_')))
-	{
-          vc_ts = atol(subp+1);
-	  /* 
-           * XXX - Could be a vchan, but we can't be _sure_
-           *
-           * We now test the timestamp matches below,
-           * but that can still be faked.
-           *
-           * If there was some way to pass an extra bit of
-           * information over non-hybrid-7 servers, through SJOIN,
-           * we could tell other servers that it's a vchan.
-           * That's probably not possible, unfortunately :(
-           */
-
-	  *subp = '\0';	/* fugly hack for now ... */
-
-	  /* + 1 skip the extra '#' in the name */
-	  if ((top_chptr = hash_find_channel(parv[2] + 1)) != NULL)
-	    {
-	      /* If the vchan is already in the vchan_list for this
-	       * root, don't re-add it.
-	       */
-              /* Compare timestamps too */
-	      if (dlinkFind(&top_chptr->vchan_list,chptr) == NULL &&
-                 newts == vc_ts)
-		{
-		  m = make_dlink_node();
-		  dlinkAdd(chptr, m, &top_chptr->vchan_list);
-		  chptr->root_chptr=top_chptr;
-		}
-	    }
-          /* check TS before creating a root channel */
-	  else if (newts == vc_ts)
-	    {
-	      top_chptr = get_or_create_channel(source_p, (parv[2] + 1), NULL);
-	      m = make_dlink_node();
-	      dlinkAdd(chptr, m, &top_chptr->vchan_list);
-	      chptr->root_chptr=top_chptr;
-              /* let users access it somehow... */
-              chptr->vchan_id[0] = '!';
-              chptr->vchan_id[1] = '\0';
-	    }
-
-	  *subp = '_';	/* fugly hack, restore '_' */
-	}
-    }
-#endif
 
   oldts = chptr->channelts;
 
@@ -524,7 +464,7 @@ static void ms_sjoin(struct Client *client_p,
 		continue;
 
 	      /* Ignore servers we won't tell anyway */
-	      if (!(RootChan(chptr)->lazyLinkChannelExists &
+	      if (!(chptr->lazyLinkChannelExists &
 		    lclient_p->localClient->serverMask) )
 		continue;
 
@@ -545,18 +485,6 @@ static void ms_sjoin(struct Client *client_p,
           add_user_to_channel(chptr, target_p, fl);
 	  /* XXX vchan stuff */
 
-#ifdef VCHANS
-	  if (top_chptr)
-	    {
-	      add_vchan_to_client_cache(target_p,top_chptr, chptr);
-	      sendto_channel_local(ALL_MEMBERS,chptr, ":%s!%s@%s JOIN :%s",
-				   target_p->name,
-				   target_p->username,
-				   target_p->vhost,
-				   top_chptr->chname);
-	    }
-	  else
-#endif
 	    {
 	      sendto_channel_local(ALL_MEMBERS,chptr, ":%s!%s@%s JOIN :%s",
 				   target_p->name,
@@ -570,32 +498,6 @@ static void ms_sjoin(struct Client *client_p,
         {
           *mbuf++ = 'o';
 	  para[pargs++] = s;
-
-#ifdef REQUIRE_OANDV
-          /* a +ov user.. bleh */
-	  if(fl & MODE_VOICE)
-	  {
-	    /* its possible the +o has filled up MAXMODEPARAMS, if so, start
-	     * a new buffer
-	     */
-	    if(pargs >= MAXMODEPARAMS)
-	      {
-	        *mbuf = '\0';
-		sendto_channel_local(hide_or_not, chptr,
-		                     ":%s MODE %s %s %s %s %s %s",
-				     me.name, RootChan(chptr)->chname,
-				     modebuf,
-				     para[0], para[1], para[2], para[3]);
-                mbuf = modebuf;
-		*mbuf++ = '+';
-		para[0] = para[1] = para[2] = para[3] = "";
-		pargs = 0;
-	      }
-
-	    *mbuf++ = 'v';
-	    para[pargs++] = s;
-	  }
-#endif
         }
       else if (fl & MODE_VOICE)
         {
@@ -614,7 +516,7 @@ static void ms_sjoin(struct Client *client_p,
           sendto_channel_local(hide_or_not, chptr,
                                ":%s MODE %s %s %s %s %s %s",
                                me.name,
-                               RootChan(chptr)->chname,
+                               chptr->chname,
                                modebuf,
                                para[0],para[1],para[2],para[3]);
           mbuf = modebuf;
@@ -650,7 +552,7 @@ nextnick:
       sendto_channel_local(hide_or_not, chptr,
                            ":%s MODE %s %s %s %s %s %s",
                            me.name,
-                           RootChan(chptr)->chname,
+                           chptr->chname,
                            modebuf,
                            para[0], para[1], para[2], para[3]);
     }
@@ -669,7 +571,7 @@ nextnick:
       /* skip lazylinks that don't know about this server */
       if (ServerInfo.hub && IsCapable(target_p,CAP_LL))
       {
-        if (!(RootChan(chptr)->lazyLinkChannelExists &
+        if (!(chptr->lazyLinkChannelExists &
               target_p->localClient->serverMask) )
           continue;
       }
@@ -846,10 +748,6 @@ static void remove_a_mode( int hide_or_not,
 
   chname = chptr->chname;
 
-#ifdef VCHANS
-  if (IsVchan(chptr) && top_chptr)
-    chname = top_chptr->chname;
-#endif
 
   ircsprintf(buf,":%s MODE %s ", me.name, chname);
 

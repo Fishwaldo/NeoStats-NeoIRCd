@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_pong.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_pong.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -60,7 +60,7 @@ _moddeinit(void)
   mod_del_cmd(&pong_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 static void ms_pong(struct Client *client_p,
                    struct Client *source_p,
@@ -108,10 +108,9 @@ static void ms_pong(struct Client *client_p,
   return;
 }
 
-static void mr_pong(struct Client *client_p,
-                    struct Client *source_p,
-                    int parc,
-                    char *parv[])
+static void
+mr_pong(struct Client *client_p, struct Client *source_p,
+                    int parc, char *parv[])
 {
   if (parc == 2 && *parv[1] != '\0')
     {
@@ -123,19 +122,22 @@ static void mr_pong(struct Client *client_p,
 	  if(source_p->localClient->random_ping == incoming_ping)
 	  {
 		char buf[USERLEN+1];
-		strlcpy(buf, source_p->username, USERLEN);
+		strlcpy(buf, source_p->username, USERLEN + 1);
 		source_p->flags2 |= FLAGS2_PING_COOKIE;
 		register_local_user(client_p, source_p, source_p->name, buf);
-	  } else
+	  }
+	  else
 	  {
-		sendto_one(source_p, form_str(ERR_WRONGPONG), me.name, source_p->name, source_p->localClient->random_ping);
+		sendto_one(source_p, form_str(ERR_WRONGPONG), me.name,
+			   source_p->name, source_p->localClient->random_ping);
 		return;
 	  }
 	}
       }
      
-    } else
-    	sendto_one(source_p, form_str(ERR_NOORIGIN), me.name, parv[0]);
+    }
+  else
+    sendto_one(source_p, form_str(ERR_NOORIGIN), me.name, parv[0]);
   
   source_p->flags &= ~FLAGS_PINGSENT;
 }

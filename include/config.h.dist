@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: config.h.dist,v 1.2 2002/08/13 14:45:10 fishwaldo Exp $
+ *  $Id: config.h.dist,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_config_h
@@ -296,7 +296,6 @@
  * If you have enabled efnet specific code these will be disabled automatically
  * else they are here for anyone else.
  */
-#define VCHANS
 #define ANONOPS
 #define HALFOPS
 

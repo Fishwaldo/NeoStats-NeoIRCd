@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_help.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_help.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -32,6 +32,7 @@
 #include "numeric.h"
 #include "send.h"
 #include "s_conf.h"
+#include "s_log.h"
 #include "parse.h"
 #include "modules.h"
 
@@ -66,13 +67,14 @@ _moddeinit(void)
   mod_del_cmd(&uhelp_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 /*
  * m_help - HELP message handler
  *      parv[0] = sender prefix
  */
-static void m_help(struct Client *client_p, struct Client *source_p,
+static void
+m_help(struct Client *client_p, struct Client *source_p,
                    int parc, char *parv[])
 {
   static time_t last_used = 0;
@@ -106,7 +108,8 @@ static void m_help(struct Client *client_p, struct Client *source_p,
  * mo_help - HELP message handler
  *      parv[0] = sender prefix
  */
-static void mo_help(struct Client *client_p, struct Client *source_p,
+static void
+mo_help(struct Client *client_p, struct Client *source_p,
                     int parc, char *parv[])
 {
   if(parc > 1)
@@ -121,8 +124,9 @@ static void mo_help(struct Client *client_p, struct Client *source_p,
  *      parv[0] = sender prefix
  */
 
-static void mo_uhelp(struct Client *client_p, struct Client *source_p,
-                     int parc, char *parv[])
+static void
+mo_uhelp(struct Client *client_p, struct Client *source_p,
+            int parc, char *parv[])
 {
   if(parc > 1)
     dohelp(source_p, UHPATH, parv[1], parv[0]);
@@ -130,14 +134,15 @@ static void mo_uhelp(struct Client *client_p, struct Client *source_p,
     dohelp(source_p, UHPATH, NULL, parv[0]);
 }
 
-static void dohelp(struct Client *source_p, char *hpath,
+static void
+dohelp(struct Client *source_p, char *hpath,
                    char *topic, char *nick)
 {
   char path[MAXPATHLEN + 1];
   struct stat sb;
   int i;
 
-  if (topic)
+  if (topic != NULL)
   {
     /* convert to lower case */
     for (i = 0; topic[i] != '\0'; i++)
@@ -164,12 +169,14 @@ static void dohelp(struct Client *source_p, char *hpath,
 
   if (stat(path, &sb) < 0)
   {
+    ilog(L_NOTICE, "help file %s not found", path);
     sendto_one(source_p, form_str(ERR_HELPNOTFOUND), me.name, nick, topic);
     return;
   }
 
   if (!S_ISREG(sb.st_mode))
   {
+    ilog(L_NOTICE, "help file %s not found", path);
     sendto_one(source_p, form_str(ERR_HELPNOTFOUND), me.name, nick, topic);
     return;
   }
@@ -178,19 +185,20 @@ static void dohelp(struct Client *source_p, char *hpath,
   return;
 }
 
-static void sendhelpfile(struct Client *source_p, char *path,
+static void 
+sendhelpfile(struct Client *source_p, char *path,
                          char *topic, char *nick)
 {
-  FILE *file;
+  FBFILE *file;
   char line[HELPLEN];
 
-  if ((file = fopen(path, "r")) == NULL)
+  if ((file = fbopen(path, "r")) == NULL)
   {
     sendto_one(source_p, form_str(ERR_HELPNOTFOUND), me.name, nick, topic);
     return;
   }
 
-  if (fgets(line, sizeof(line), file) == NULL)
+  if (fbgets(line, sizeof(line), file) == NULL)
   {
     sendto_one(source_p, form_str(ERR_HELPNOTFOUND), me.name, nick, topic);
     return;
@@ -198,7 +206,7 @@ static void sendhelpfile(struct Client *source_p, char *path,
 
   sendto_one(source_p, form_str(RPL_HELPSTART), me.name, nick, topic, line);
 
-  while (fgets(line, sizeof(line), file))
+  while (fbgets(line, sizeof(line), file))
   {
     sendto_one(source_p, form_str(RPL_HELPTXT), me.name, nick, topic, line);
   }

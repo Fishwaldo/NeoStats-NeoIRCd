@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: numeric.h,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: numeric.h,v 1.4 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_numeric_h
@@ -402,7 +402,7 @@ extern const char* form_str(int);
 /*	ERR_RESTRICTED	     484	   IRCnet extension */
 /*      ERR_UNIQOPRIVSNEEDED 485           IRCnet extension */
 /*	ERR_KILLDENY         485	   unreal */
-/*	ERR_CANTKICKADMIN    485	   PTlink */
+#define	ERR_CHANAPRIVSNEEDED 499	   
 /*	ERR_HTMDISABLED      486	   unreal */
 /*      ERR_CHANTOORECENT    487           IRCnet extension (?) */
 /*      ERR_TSLESSCHAN       488           IRCnet extension (?) */

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: parse.c,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
+ *  $Id: parse.c,v 1.4 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -39,7 +39,6 @@
 #include "ircd_handler.h"
 #include "msg.h"
 #include "s_conf.h"
-#include "vchannel.h"
 #include "memory.h"
 #include "s_serv.h"
 
@@ -842,7 +841,7 @@ do_numeric(char numeric[],
     sendto_channel_local(ALL_MEMBERS, chptr,
 			 ":%s %s %s %s",
 			 source_p->name,
-			 numeric, RootChan(chptr)->chname, buffer);
+			 numeric, chptr->chname, buffer);
 }
 
 

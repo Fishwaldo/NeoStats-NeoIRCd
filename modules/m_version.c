@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_version.c,v 1.3 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: m_version.c,v 1.4 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include <stdinc.h>
@@ -59,7 +59,7 @@ _moddeinit(void)
   mod_del_cmd(&version_msgtab);
 }
 
-const char *_version = "$Revision: 1.3 $";
+const char *_version = "$Revision: 1.4 $";
 #endif
 /*
  * m_version - VERSION command handler
@@ -165,14 +165,15 @@ static char* confopts(struct Client *source_p)
       *p++ = 'H';
     }
 
-    
   *p++ = 'M';
 
 #ifdef CRYPT_OPER_PASSWORD
   *p++ = 'p';
 #endif
 
+#ifdef IGNORE_BOGUS_TS
   *p++ = 'T';
+#endif
 
 #ifdef USE_SYSLOG
   *p++ = 'Y';

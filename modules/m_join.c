@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c,v 1.4 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: m_join.c,v 1.5 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -27,7 +27,6 @@
 #include "handlers.h"
 #include "channel.h"
 #include "channel_mode.h"
-#include "vchannel.h"
 #include "client.h"
 #include "common.h"   /* bleah */
 #include "resv.h"
@@ -65,7 +64,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&join_msgtab);
 }
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 
 #endif
 static void do_join_0(struct Client *client_p, struct Client *source_p);
@@ -93,11 +92,6 @@ m_join(struct Client *client_p,
   int   i, flags = 0;
   char  *p = NULL, *p2 = NULL, *p3 = NULL;
   int   successful_join_count = 0; /* Number of channels successfully joined */
-#ifdef VCHANS
-  struct Channel *vchan_chptr = NULL;
-  char *pvc = NULL;
-  int   vc_ts;
-#endif
   
   if (*parv[1] == '\0')
     {
@@ -106,14 +100,6 @@ m_join(struct Client *client_p,
       return;
     }
 
-#ifdef VCHANS
-  if (parc > 3)
-    {
-      key = strtoken(&p2, parv[3], ",");
-      vkey = strtoken(&p3, parv[2], ",");
-    }
-  else 
-#endif
   if (parc > 2)
     {
       key = strtoken(&p2, parv[2], ",");
@@ -198,21 +184,6 @@ m_join(struct Client *client_p,
 	    continue;
 	  }
 
-#ifdef VCHANS
-          /* Check if they want to join a subchan or something */
-	  vchan_chptr = select_vchan(chptr, source_p, vkey, name);
-          
-          if (!vchan_chptr)
-            continue;
-
-          if (vchan_chptr != chptr)
-          {
-            joining_vchan = 1;
-            root_chptr = chptr;
-            chptr = vchan_chptr;
-          }
-          else
-#endif
           {
             joining_vchan = 0;
             root_chptr = chptr;
@@ -299,12 +270,6 @@ m_join(struct Client *client_p,
       
       add_user_to_channel(chptr, source_p, flags);
 
-#ifdef VCHANS
-      if (joining_vchan)
-	{
-	  add_vchan_to_client_cache(source_p,root_chptr,chptr);
-	}
-#endif
 
       /*
       **  Set timestamp if appropriate, and propagate
@@ -314,36 +279,6 @@ m_join(struct Client *client_p,
 	{
 	  chptr->channelts = CurrentTime;
 
-          /*
-           * XXX - this is a rather ugly hack.
-           *
-           * Unfortunately, there's no way to pass
-           * the fact that it is a vchan through SJOIN...
-           */
-#ifdef VCHANS
-          /* Prevent users creating a fake vchan */
-          if (name[0] == '#' && name[1] == '#')
-            {
-              if ((pvc = strrchr(name+3, '_'))) 
-                {
-                  /*
-                   * OK, name matches possible vchan:
-                   * ##channel_blah
-                   */
-                  pvc++; /*  point pvc after last _ */
-                  vc_ts = atol(pvc);
-                  
-                  /*
-                   * if blah is the same as the TS, up the TS
-                   * by one, to prevent this channel being
-                   * seen as a vchan
-                   */
-                  if (vc_ts == CurrentTime)
-                    chptr->channelts++;
-                }
-            }
-#endif
-                  
 	  sendto_server(client_p, source_p, chptr, NOCAPS, NOCAPS,
                         LL_ICLIENT,
                         ":%s SJOIN %lu %s + :@%s",
@@ -494,7 +429,7 @@ static void do_join_0(struct Client *client_p, struct Client *source_p)
 			   source_p->name,
 			   source_p->username,
 			   source_p->vhost,
-			   RootChan(chptr)->chname);
+			   chptr->chname);
       remove_user_from_channel(chptr, source_p);
     }
 }

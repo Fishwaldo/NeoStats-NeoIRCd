@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_stats.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_stats.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -80,7 +80,7 @@ _moddeinit(void)
   mod_del_cmd(&stats_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 const char* Lformat = ":%s %d %s %s %u %u %u %u %u :%u %u %s";
@@ -867,7 +867,8 @@ static void ms_stats(struct Client *client_p, struct Client *source_p,
   if (hunt_server(client_p,source_p,":%s STATS %s :%s",2,parc,parv)!=HUNTED_ISME)
     return;
 
-  mo_stats(client_p, source_p, parc, parv);
+  if(IsClient(source_p))
+    mo_stats(client_p, source_p, parc, parv);
 }
 
 

@@ -1,4 +1,7 @@
-$Id: TODO,v 1.3 2002/08/14 16:52:02 fishwaldo Exp $
+$Id: TODO,v 1.4 2002/09/02 04:10:59 fishwaldo Exp $
 
 invites and exception list (and invite exception lists) should
 override a oper only channel :)
+
+
+server<->server channel modes... Do they work?

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.h,v 1.4 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: channel.h,v 1.5 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_channel_h
@@ -54,18 +54,11 @@ struct Channel
   char            *topic;
   char            *topic_info;
   time_t          topic_time;
-#ifdef VCHANS
-  char            vchan_id[NICKLEN*2];   /* use this for empty vchans */
-#endif
   int             users;      /* user count */
   int             locusers;   /* local user count */
   unsigned long   lazyLinkChannelExists;
   time_t          users_last;		/* when last user was in channel */
   time_t          last_knock;           /* don't allow knock to flood */
-#ifdef VCHANS
-  struct Channel  *root_chptr;		/* pointer back to root if vchan */
-  dlink_list	  vchan_list;	        /* vchan sublist */
-#endif
   dlink_list	  chanadmins;		/* list of Channel Admins */
   dlink_list      chanops;		/* lists of chanops etc. */
   dlink_list      halfops;
@@ -158,7 +151,7 @@ struct Ban          /* also used for exceptions -orabidoo */
 };
 
 #define CLEANUP_CHANNELS_TIME (30*60)
-#define MAX_VCHAN_TIME (60*60)
+//#undef MAX_VCHAN_TIME (60*60)
 /* Number of chanops, peon, voiced, halfops sublists */
 #ifdef REQUIRE_OANDV
 #define NUMLISTS 6

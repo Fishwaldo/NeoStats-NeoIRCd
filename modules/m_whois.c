@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whois.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ *  $Id: m_whois.c,v 1.3 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -30,7 +30,6 @@
 #include "hash.h"
 #include "channel.h"
 #include "channel_mode.h"
-#include "vchannel.h"
 #include "hash.h"
 #include "ircd.h"
 #include "numeric.h"
@@ -76,7 +75,7 @@ _moddeinit(void)
   mod_del_cmd(&whois_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 /*
 ** m_whois
@@ -182,8 +181,12 @@ static int do_whois(struct Client *client_p, struct Client *source_p,
     glob = 1;
 
   nick = parv[1];
-  if ( (p = strchr(parv[1],',')) )
+  while (*nick == ',')
+    nick++;
+  if ((p = strchr(nick,',')) != NULL)
     *p = '\0';
+  if (!*nick)
+    return 0;
 
   (void)collapse(nick);
   wilds = (strchr(nick, '?') || strchr(nick, '*'));
@@ -375,10 +378,7 @@ static void whois_person(struct Client *source_p,struct Client *target_p, int gl
   int tlen;
   int reply_to_send = NO;
   struct hook_mfunc_data hd;
-  char ubuf[12];
-#ifdef VCHANS
-  struct Channel *bchan;
-#endif
+  char ubuf[BUFSIZE];
   
   a2client_p = find_server(target_p->user->server);
           
@@ -398,15 +398,6 @@ static void whois_person(struct Client *source_p,struct Client *target_p, int gl
     {
       chptr = lp->data;
       chname = chptr->chname;
-
-#ifdef VCHANS
-      if (IsVchan(chptr))
-	{
-	  bchan = find_bchan (chptr);
-	  if (bchan != NULL)
-	    chname = bchan->chname;
-	}
-#endif
 
       if (ShowChannel(source_p, chptr))
 	{
@@ -521,6 +512,9 @@ static void ms_whois(struct Client *client_p,
                  me.name, parv[0]);
       return;
     }
+
+  if(!IsClient(source_p))
+    return;
 
   /* its a client doing a remote whois:
    * :parv[0] WHOIS parv[1] :parv[2]

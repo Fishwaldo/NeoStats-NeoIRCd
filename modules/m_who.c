@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_who.c,v 1.4 2002/08/16 12:05:36 fishwaldo Exp $
+ *  $Id: m_who.c,v 1.5 2002/09/02 04:10:59 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -28,7 +28,6 @@
 #include "client.h"
 #include "channel.h"
 #include "channel_mode.h"
-#include "vchannel.h"
 #include "hash.h"
 #include "ircd.h"
 #include "numeric.h"
@@ -61,7 +60,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&who_msgtab);
 }
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 static void do_who_on_channel(struct Client *source_p,
 			      struct Channel *chptr, char *real_name,
@@ -105,9 +104,6 @@ static void m_who(struct Client *client_p,
   char  flags[NUMLISTS][2];
   int   server_oper = parc > 2 ? (*parv[2] == 'o' ): 0; /* Show OPERS only */
   int   member;
-#ifdef VCHANS
-  struct Channel *vchan;
-#endif
 
   /* See if mask is there, collapse it or return if not there */
 
@@ -144,17 +140,6 @@ static void m_who(struct Client *client_p,
           return;
         }
 
-#ifdef VCHANS
-      if (HasVchans(mychannel))
-	{
-	  vchan = map_vchan(mychannel,source_p);
-	  if(vchan != 0) 
-	    do_who_on_channel(source_p,vchan,"*",NO,YES);
-	  else
-	    do_who_on_channel(source_p,mychannel,"*",NO,YES);
-	}
-      else
-#endif
 	do_who_on_channel(source_p, mychannel, "*", NO, YES);
 
       sendto_one(source_p, form_str(RPL_ENDOFWHO), me.name, parv[0], "*");
@@ -171,24 +156,6 @@ static void m_who(struct Client *client_p,
       chptr = hash_find_channel(mask);
       if (chptr != NULL)
 	{
-#ifdef VCHANS
-	  if (HasVchans(chptr))
-	    {
-	      vchan = map_vchan(chptr,source_p);
-
-	      /* If vchan not 0, that makes them a member automatically */
-	      if ( vchan != 0 )
-		do_who_on_channel(source_p, vchan, chptr->chname, NO, YES);
-	      else
-		{
-		  if ( IsMember(source_p, chptr) )
-		    do_who_on_channel(source_p, chptr, chptr->chname, NO, YES);
-		  else if(!SecretChannel(chptr))
-		    do_who_on_channel(source_p, chptr, chptr->chname, NO, NO);
-		}
-	    }
-	  else
-#endif
 	    {
 	      if ( IsMember(source_p, chptr) )
 		do_who_on_channel(source_p, chptr, chptr->chname, NO, YES);
@@ -207,9 +174,6 @@ static void m_who(struct Client *client_p,
     {
       char *chname=NULL;
       int isinvis = 0;
-#ifdef VCHANS
-      struct Channel *bchan;
-#endif
 
       if(IsServer(client_p))
 	client_burst_if_needed(client_p,target_p);
@@ -231,14 +195,6 @@ static void m_who(struct Client *client_p,
 
       if (chptr != NULL)
 	{
-#ifdef VCHANS
-	  if (IsVchan(chptr))
-	    {
-	      bchan = find_bchan (chptr);
-	      if (bchan != NULL)
-		chname = bchan->chname;
-	    }
-#endif
 
 	  /* XXX globalize this inside m_who.c ? */
 	  /* jdc -- Check is_any_op() for +o > +h > +v priorities */
@@ -474,7 +430,6 @@ static void do_who_list(struct Client *source_p, struct Channel *chptr,
         }
       else
         done++;
-ilog(1, "chanadmin1 %s", admins_flag);        
       if(chanadmins_ptr != NULL)
         {
           target_p = chanadmins_ptr->data;

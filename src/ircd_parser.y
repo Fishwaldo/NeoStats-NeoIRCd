@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.3 2002/08/16 12:05:37 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.4 2002/09/02 04:11:00 fishwaldo Exp $
  */
 
 %{
@@ -274,8 +274,6 @@ int   class_redirport_var;
 %token  USE_HELP
 %token  USE_INVEX
 %token  USE_KNOCK
-%token  USE_VCHANS
-%token  VCHANS_OPER_ONLY
 %token  VHOST
 %token  VHOST6
 %token  WARN
@@ -2525,8 +2523,7 @@ channel_entry:      CHANNEL
 channel_items:      channel_items channel_item |
                     channel_item;
 
-channel_item:       channel_vchans_oper_only |
-                    channel_max_bans |
+channel_item:       channel_max_bans |
                     channel_knock_delay |
 		    channel_knock_delay_channel |
                     channel_max_chans_per_user |
@@ -2537,13 +2534,6 @@ channel_item:       channel_vchans_oper_only |
 		    channel_no_create_on_split | 
 		    channel_no_join_on_split |
                     error;
-
-
-channel_vchans_oper_only: VCHANS_OPER_ONLY '=' TYES ';'
-  { ConfigChannel.vchans_oper_only = 1; }
-    |
-    VCHANS_OPER_ONLY '=' TNO ';'
-  { ConfigChannel.vchans_oper_only = 0; };
 
 
 channel_knock_delay: KNOCK_DELAY '=' timespec ';'

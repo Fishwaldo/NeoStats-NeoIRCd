@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_cryptlink.c,v 1.2 2002/08/13 14:45:11 fishwaldo Exp $
+ *  $Id: m_cryptlink.c,v 1.3 2002/09/02 04:10:59 fishwaldo Exp $
  */
 
 /*
@@ -68,7 +68,7 @@
 void _modinit(void) {}
 void _moddeinit(void) {}
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 #else
 
@@ -114,7 +114,7 @@ _moddeinit(void)
   mod_del_cmd(&cryptlink_msgtab);
 }
 
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 
@@ -412,9 +412,9 @@ static void cryptlink_serv(struct Client *client_p, struct Client *source_p,
 
   /*
    * if we are connecting (Handshake), we already have the name from the
-   * C:line in client_p->name
+   * connect {} block in client_p->name
    */
-  strlcpy(client_p->name, name, HOSTLEN);
+  strlcpy(client_p->name, name, HOSTLEN + 1);
 
   p = info;
 

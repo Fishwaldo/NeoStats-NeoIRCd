@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_parser.y,v 1.13 2002/11/04 08:14:00 fishwaldo Exp $
+ *  $Id: ircd_parser.y,v 1.14 2003/01/27 04:20:36 fishwaldo Exp $
  */
 
 %{
@@ -206,6 +206,8 @@ int   class_redirport_var;
 %token  PERSIST_TIME
 %token  PING_COOKIE
 %token  PING_TIME
+%token  PRIVATE_CERT_FILE
+%token  PUBLIC_CERT_FILE
 %token  PORT
 %token  QSTRING
 %token  QUIET_ON_BAN
@@ -404,7 +406,8 @@ serverinfo_item:        serverinfo_name | serverinfo_vhost |
                         serverinfo_network_name | serverinfo_network_desc |
                         serverinfo_max_clients | 
                         serverinfo_rsa_private_key_file | serverinfo_vhost6 |
-                        serverinfo_max_buffer | 
+ 	 		serverinfo_max_buffer | serverinfo_public_cert_file |
+			serverinfo_private_cert_file |
 			error;
 
 serverinfo_rsa_private_key_file: RSA_PRIVATE_KEY_FILE '=' QSTRING ';'
@@ -464,6 +467,100 @@ serverinfo_rsa_private_key_file: RSA_PRIVATE_KEY_FILE '=' QSTRING ';'
   BIO_free(file);
 #endif
   };
+
+serverinfo_public_cert_file: PUBLIC_CERT_FILE '=' QSTRING ';'
+  {
+#ifdef USE_SSL
+  int filen;
+
+  if (ServerInfo.public_cert_file)
+  {
+    MyFree(ServerInfo.public_cert_file);
+    ServerInfo.public_cert_file = NULL;
+  }
+  if ((filen = open(yylval.string, O_RDONLY)) < 0)
+  {
+    switch(errno) {
+	case ENOENT:
+	case ENOTDIR:
+		    sendto_realops_flags(FLAGS_ALL, L_ALL,
+		      "Ignoring config file entry public_cert_file -- file open failed"
+		      " (%s) (%d)", yylval.string, errno);
+		    ilog(L_ERROR, 
+		      "Ignoring config file entry public_cert_file -- file open failed"
+		      " (%s) (%d)", yylval.string, errno);
+		    break;
+	case EACCES:
+		    sendto_realops_flags(FLAGS_ALL, L_ALL,
+		      "Ignoring config file entry public_cert_file -- Permission Denied"
+		      " (%s) (%d)", yylval.string, errno);
+		    ilog(L_ERROR, 
+		      "Ignoring config file entry public_cert_file -- Permission Denied"
+		      " (%s) (%d)", yylval.string, errno);
+		    break;
+	default:
+		    sendto_realops_flags(FLAGS_ALL, L_ALL,
+		      "Ignoring config file entry public_cert_file -- Unknown Error"
+		      " (%s) (%d)", yylval.string, errno);
+		    ilog(L_ERROR, 
+		      "Ignoring config file entry public_cert_file -- Unknown Error"
+		      " (%s) (%d)", yylval.string, errno);
+
+		    break;
+    }
+  } else {
+	  DupString(ServerInfo.public_cert_file, yylval.string);
+	  close(filen);
+  }
+#endif
+};
+serverinfo_private_cert_file: PRIVATE_CERT_FILE '=' QSTRING ';'
+  {
+#ifdef USE_SSL
+  int filen;
+  if (ServerInfo.private_cert_file)
+  {
+    MyFree(ServerInfo.private_cert_file);
+    ServerInfo.private_cert_file = NULL;
+  }
+
+
+
+  if ((filen = open(yylval.string, O_RDONLY)) < 0)
+  {
+    switch(errno) {
+	case ENOENT:
+	case ENOTDIR:
+		    sendto_realops_flags(FLAGS_ALL, L_ALL,
+		      "Ignoring config file entry private_cert_file -- file open failed"
+		      " (%s) (%d)", yylval.string, errno);
+		    ilog(L_ERROR, 
+		      "Ignoring config file entry private_cert_file -- File open failed"
+		      " (%s) (%d)", yylval.string, errno);
+		    break;
+	case EACCES:
+		    sendto_realops_flags(FLAGS_ALL, L_ALL,
+		      "Ignoring config file entry private_cert_file -- Permission Denied"
+		      " (%s) (%d)", yylval.string, errno);
+		    ilog(L_ERROR, 
+		      "Ignoring config file entry private_cert_file -- Permission Denied"
+		      " (%s) (%d)", yylval.string, errno);
+		    break;
+	default:
+		    sendto_realops_flags(FLAGS_ALL, L_ALL,
+		      "Ignoring config file entry private_cert_file -- Unknown Error"
+		      " (%s) (%d)", yylval.string, errno);
+		    ilog(L_ERROR, 
+		      "Ignoring config file entry private_cert_file -- Unknown Error"
+		      " (%s) (%d)", yylval.string, errno);
+		    break;
+    }
+  } else {
+	  DupString(ServerInfo.private_cert_file, yylval.string);
+	  close(filen);
+  }
+#endif
+};
 
 serverinfo_name:        NAME '=' QSTRING ';' 
   {

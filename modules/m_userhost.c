@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_userhost.c,v 1.4 2002/09/21 06:26:12 fishwaldo Exp $
+ *  $Id: m_userhost.c,v 1.5 2003/01/27 04:20:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -57,7 +57,7 @@ _moddeinit(void)
   mod_del_cmd(&userhost_msgtab);
 }
 
-const char *_version = "$Revision: 1.4 $";
+const char *_version = "$Revision: 1.5 $";
 #endif
 /*
  * m_userhost added by Darren Reed 13/8/91 to aid clients and reduce
@@ -106,7 +106,7 @@ static void m_userhost(struct Client *client_p,
 			    IsOper(target_p) ? "*" : "",
 			    (target_p->user->away) ? '-' : '+',
 			    target_p->username,
-			    target_p->vhost);
+			    target_p->host);
 	  }
           else
 	  {

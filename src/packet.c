@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: packet.c,v 1.7 2002/11/04 08:50:46 fishwaldo Exp $
+ *  $Id: packet.c,v 1.8 2003/01/27 04:20:36 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -393,7 +393,6 @@ read_packet(int fd, void *data)
 #endif
 	length = recv(fd_r, readBuf, READBUF_SIZE, 0);
 
-printf("leng %d\n", length);
 /* THIS WAS <= 0, should it stay? */
   if (length <= 0)
   {

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h,v 1.7 2002/10/31 13:01:54 fishwaldo Exp $
+ *  $Id: s_conf.h,v 1.8 2003/01/27 04:20:36 fishwaldo Exp $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -277,6 +277,10 @@ struct server_info
 #ifdef HAVE_LIBCRYPTO
   char *      rsa_private_key_file;
   RSA *       rsa_private_key;
+#endif
+#ifdef USE_SSL
+  char *      public_cert_file;
+  char *      private_cert_file;
 #endif
   int         hub;
   struct      irc_inaddr ip;

@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ssl.c,v 1.2 2002/11/04 08:50:46 fishwaldo Exp $
+ *  $Id: ssl.c,v 1.3 2003/01/27 04:20:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -31,6 +31,7 @@
 #include "ssl.h"
 #include "client.h"
 #include "send.h"
+#include "s_conf.h"
 
 #ifdef USE_SSL
 #define IRCDSSL_CPATH "/home/fish/ircd/etc/ircd.crt"
@@ -58,14 +59,14 @@ initssl (void)
       return 0;
     }
   if (SSL_CTX_use_certificate_file (ircdssl_ctx,
-				    IRCDSSL_CPATH, SSL_FILETYPE_PEM) <= 0)
+				    ServerInfo.public_cert_file, SSL_FILETYPE_PEM) <= 0)
     {
       ilog(L_ERROR, "initssl(): Failed to initilize SSL Certificate File");
       SSL_CTX_free (ircdssl_ctx);
       return 0;
     }
   if (SSL_CTX_use_PrivateKey_file (ircdssl_ctx,
-				   IRCDSSL_KPATH, SSL_FILETYPE_PEM) <= 0)
+				   ServerInfo.private_cert_file, SSL_FILETYPE_PEM) <= 0)
     {
       ilog(L_ERROR, "initssl(): Failed to use Private Certificate");
       SSL_CTX_free (ircdssl_ctx);
@@ -90,34 +91,25 @@ safe_SSL_read (struct Client * client_p, void *buf, int sz)
 
   bzero(buf, sz);
   len = SSL_read(client_p->localClient->ssl, buf, sz);
-printf("ssl read %s\n\nlen %d (%d)", buf, len, sz);
 
   if (len <= 0)
     {
-    printf("len is less than 0 (%d)\n", len);
       switch (ssl_err = SSL_get_error (client_p->localClient->ssl, len))
 	{
 	case SSL_ERROR_SYSCALL:
-printf("SSL_ERROR_SYSCALL\n");
 	  if (errno == EWOULDBLOCK || errno == EAGAIN || errno == EINTR)
 	    {
-	case SSL_ERROR_WANT_READ:
-	      errno = EWOULDBLOCK;
-#ifdef DEBUG
-	      printf("SSL_ERROR_WANT_READ\n");
-	      fatal_ssl_error(ssl_err, SAFE_SSL_READ, client_p);
-#endif	      
-	      return -1;
+		case SSL_ERROR_WANT_READ:
+		      	errno = EWOULDBLOCK;
+	      		return -1;
 	    }
 	case SSL_ERROR_SSL:
 #ifdef DEBUG
-		printf("SSL_ERROR_SSL\n");
 	      fatal_ssl_error(ssl_err, SAFE_SSL_READ, client_p);
 #endif	      
 	  if (errno == EAGAIN)
 	    return -1;
 	default:
-	  printf("fatal error\n");
 	  return fatal_ssl_error (ssl_err, SAFE_SSL_READ, client_p);
 	}
     }
@@ -129,9 +121,7 @@ safe_SSL_write (struct Client *client_p, const void *buf, int sz)
 {
   int len, ssl_err;
 
-printf("ssl write %s %d(%d)\n", buf, strlen(buf), sz);
   len = SSL_write (client_p->localClient->ssl, buf, sz);
-printf("len %d\n", len);
   if (len <= 0)
     {
       switch (ssl_err = SSL_get_error (client_p->localClient->ssl, len))

@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ssl.h,v 1.1 2002/11/04 08:14:00 fishwaldo Exp $
+ *  $Id: ssl.h,v 1.2 2003/01/27 04:20:36 fishwaldo Exp $
  */
 
 #ifndef SSL_H
@@ -38,6 +38,8 @@
 #include <openssl/err.h>
 #include "client.h"
 
+extern char ssl_cpath[BUFSIZE+1];
+extern char ssl_kpath[BUFSIZE+1];
 
 int safe_SSL_read(struct Client *, void *, int);
 int safe_SSL_write(struct Client *, const void *, int);

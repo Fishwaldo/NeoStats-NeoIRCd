@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_lexer.l,v 1.8 2002/11/04 08:14:00 fishwaldo Exp $
+ *  $Id: ircd_lexer.l,v 1.9 2003/01/27 04:20:36 fishwaldo Exp $
  */
 
 %option case-insensitive
@@ -235,6 +235,8 @@ password	{ return PASSWORD; }
 persist_time    { return PERSIST_TIME; }
 ping_cookie	{ return PING_COOKIE; }
 ping_time	{ return PING_TIME; }
+public_cert_file  { return PUBLIC_CERT_FILE; }
+private_cert_file { return PRIVATE_CERT_FILE; }
 port		{ return PORT; }
 quiet_on_ban    { return QUIET_ON_BAN; }
 reason		{ return REASON; }

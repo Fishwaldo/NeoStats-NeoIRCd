@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c,v 1.8 2002/11/04 08:14:00 fishwaldo Exp $
+ *  $Id: ircd.c,v 1.9 2003/01/27 04:20:36 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -623,7 +623,6 @@ int main(int argc, char *argv[])
   /* Init the event subsystem */
   eventInit();
   init_sys();
-  initssl();
 
   if (!server_state.foreground)
   {
@@ -655,6 +654,10 @@ int main(int argc, char *argv[])
   init_auth();                  /* Initialise the auth code */
   init_resolver();      /* Needs to be setup before the io loop */
   read_conf_files(YES);         /* cold start init conf files */
+#ifdef USE_SSL
+  initssl();
+#endif
+
 #ifndef STATIC_MODULES
 
   mod_add_path(IRCD_PREFIX "/modules");

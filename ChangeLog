@@ -10,7 +10,8 @@ Symbols are:
 (F)	- Initial Support for SSL connections started (and now it works!)
 (F)	- Added Z umode to identify SSL clients, and added whois reply for SSL clients
 (F)	- Can invite non-Z clients into +S channels
-
+(F) 	- SSL conf file support and restart of neoircd coding :)
+ 
 * NeoIRCd Version 0.9.5 - 12th Oct, 2002 - Fish
 (S)     - Fixed up event.c for a possible serious bug reported by Dianora from hybrid team
 	  Also thanks for the reference and event code in question.

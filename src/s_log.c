@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_log.c,v 1.4 2002/09/19 05:41:11 fishwaldo Exp $
+ *  $Id: s_log.c,v 1.5 2002/11/01 01:32:37 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -122,10 +122,10 @@ ilog(int priority, const char* fmt, ...)
   assert(-1 < priority);
   if(fmt == NULL)
     return;
-
+#ifndef DEBUG
   if (priority > logLevel)
     return;
-
+#endif
   va_start(args, fmt);
   vsprintf(buf, fmt, args);
   va_end(args);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_debug.c,v 1.4 2002/09/13 06:50:08 fishwaldo Exp $
+ *  $Id: s_debug.c,v 1.5 2002/11/01 01:32:34 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -67,15 +67,18 @@ void debug(int level, char *format, ...)
   static char debugbuf[1024];
   va_list args;
   int err = errno;
-
+#ifndef DEBUG
   if ((debuglevel >= 0) && (level <= debuglevel)) {
+#endif
     va_start(args, format);
 
     vsprintf(debugbuf, format, args);
     va_end(args);
 
     ilog(L_DEBUG, "%s", debugbuf);
+#ifndef DEBUG
   }
+#endif
   errno = err;
 } /* debug() */
 

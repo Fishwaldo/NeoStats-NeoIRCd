@@ -17,16 +17,21 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: ircd_signal.c,v 1.3 2002/09/13 06:56:45 fishwaldo Exp $
+ * $Id: ircd_signal.c,v 1.4 2002/10/23 03:53:22 fishwaldo Exp $
  */
 
 #include "stdinc.h"
+#ifdef HAVE_BACKTRACE
+#include <execinfo.h>
+#endif
 #include "ircd_signal.h"
 #include "ircd.h"         /* dorehash */
 #include "restart.h"      /* server_reboot */
 #include "s_log.h"
 #include "memory.h"
 #include "s_bsd.h"
+#include "send.h"
+#include "client.h"
 
 /*
  * dummy_handler - don't know if this is really needed but if alarm is still
@@ -85,6 +90,36 @@ sigint_handler(int sig)
     }
 }
 
+static void
+sigsegv_handler(int sig)
+{
+#ifdef HAVE_BACKTRACE
+ 	void *array[50];
+     	size_t size;
+        char **strings;
+        size_t i;
+/* thanks to gnulibc libary for letting me find this usefull function */
+	size = backtrace (array, 10);
+	strings = backtrace_symbols (array, size);
+#endif
+	ilog(L_ERROR, "Damn It, Server is cracking a Woobly... Crashing... ");
+#ifdef HAVE_BACKTRACE
+		for (i = size; i == 0; i--) {
+			ilog(L_ERROR, "BackTrace(%d): %s", i-1, strings[i]);
+		}
+#endif 
+	ilog(L_ERROR, "Attempting To Restart");
+	sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Damn It, Server is Cracking a Woobly... Crashing...");
+#ifdef HAVE_BACKTRACE
+	sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Location *Could* be: %s", strings[size-1]);
+	sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Check LogFile for More Details");
+	MyFree(strings);
+#endif
+	server_reboot();
+
+}
+
+
 /*
  * setup_signals - initialize signal handlers for server
  */
@@ -123,6 +158,9 @@ setup_signals()
   sigaddset(&act.sa_mask, SIGTERM);
   sigaction(SIGTERM, &act, 0);
 
+  act.sa_handler = sigsegv_handler;
+  sigaddset(&act.sa_mask, SIGSEGV);
+  sigaction(SIGSEGV, &act, 0);
 }
 
 

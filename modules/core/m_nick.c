@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c,v 1.18 2002/09/26 12:34:45 fishwaldo Exp $
+ *  $Id: m_nick.c,v 1.19 2002/10/23 03:53:22 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -97,7 +97,7 @@ _moddeinit(void)
   mod_del_cmd(&client_msgtab);
 }
 
-const char *_version = "$Revision: 1.18 $";
+const char *_version = "$Revision: 1.19 $";
 #endif
 
 /*
@@ -731,8 +731,11 @@ nick_from_server(struct Client *client_p, struct Client *source_p, int parc,
 	 if(!(source_p->umodes & FLAGS_HIDDEN) && (flag & FLAGS_HIDDEN)) {
 		if (parv[7][0] != '*')
 			strncpy(source_p->vhost, parv[7], HOSTLEN +1);
-		else
-			make_virthost(source_p->host, source_p->vhost, 1);
+		else {
+			/* THIS SHOULD NEVER HAPPEN */	
+			sendto_realops_flags(FLAGS_DEBUG|FLAGS_REMOTE, L_ALL, "Warning, Server %s sent a Invalid Vhost in nick_from_server", source_p->from->name);
+			strncpy(source_p->vhost, source_p->host, HOSTLEN +1);
+		}
 	 }
 
 	 /* we only allow Ulined Servers to set +s */
@@ -829,8 +832,10 @@ client_from_server(struct Client *client_p, struct Client *source_p, int parc,
     if(!(source_p->umodes & FLAGS_HIDDEN) && (flag & FLAGS_HIDDEN)) {
 		if (parv[7][0] != '*')
 			strncpy(source_p->vhost, parv[7], HOSTLEN +1);
-		else
-			make_virthost(source_p->host, source_p->vhost, 1);
+		else {
+			sendto_realops_flags(FLAGS_DEBUG|FLAGS_REMOTE, L_ALL, "Warning %s sent a Invalid Hidden Host command in client_from_server", source_p->from->name);
+			strncpy(source_p->vhost, source_p->host, HOSTLEN +1);
+		}
 	 }
 
     /* we only allow Ulined Servers to set +s */

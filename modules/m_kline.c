@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c,v 1.11 2002/10/16 03:52:47 fishwaldo Exp $
+ *  $Id: m_kline.c,v 1.12 2002/10/23 03:53:21 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -86,7 +86,7 @@ _moddeinit(void)
   mod_del_cmd(&dline_msgtab[0]);
   mod_del_cmd(&dline_msgtab[1]);
 }
-const char *_version = "$Revision: 1.11 $";
+const char *_version = "$Revision: 1.12 $";
 #endif
 
 /* Local function prototypes */
@@ -1023,7 +1023,7 @@ static int remove_tkline_match(char *,char *);
 static void mo_unkline (struct Client *client_p,struct Client *source_p,
                        int parc,char *parv[])
 {
-  char *user, *host;
+  char *kuser, *khost;
   
   if (!IsOperUnkline(source_p))
     {
@@ -1037,19 +1037,19 @@ static void mo_unkline (struct Client *client_p,struct Client *source_p,
       return;
     }
 
-  if ((host = strchr(parv[1], '@')) || *parv[1] == '*')
+  if ((khost = strchr(parv[1], '@')) || *parv[1] == '*')
     {
       /* Explicit user@host mask given */
 
-      if(host)                  /* Found user@host */
+      if(khost)                  /* Found user@host */
         {
-          user = parv[1];       /* here is user part */
-          *(host++) = '\0';     /* and now here is host */
+          kuser = parv[1];       /* here is user part */
+          *(khost++) = '\0';     /* and now here is host */
         }
       else
         {
-          user = "*";           /* no @ found, assume its *@somehost */
-          host = parv[1];
+          kuser = "*";           /* no @ found, assume its *@somehost */
+          khost = parv[1];
         }
     }
   else
@@ -1059,22 +1059,22 @@ static void mo_unkline (struct Client *client_p,struct Client *source_p,
       return;
     }
 
-  if (remove_tkline_match(host, user))
+  if (remove_tkline_match(khost, kuser))
     {
       sendto_one(source_p,
 		 ":%s NOTICE %s :Un-klined [%s@%s] from temporary k-lines",
-		 me.name, parv[0],user, host);
+		 me.name, parv[0],kuser, khost);
       sendto_realops_flags(FLAGS_ALL, L_ALL,
 			   "%s has removed the temporary K-Line for: [%s@%s]",
-			   get_oper_name(source_p), user, host);
-      ilog(L_NOTICE, "%s removed temporary K-Line for [%s@%s]", parv[0], user,
-	   host);
+			   get_oper_name(source_p), kuser, khost);
+      ilog(L_NOTICE, "%s removed temporary K-Line for [%s@%s]", parv[0], kuser,
+	   khost);
       return;
     }
   else
     {
       sendto_one(source_p, ":%s NOTICE %s :No K-Line for %s@%s",
-                 me.name, source_p->name,user,host);
+                 me.name, source_p->name,kuser,khost);
       return;
     }
   return;
@@ -1086,21 +1086,21 @@ static void mo_unkline (struct Client *client_p,struct Client *source_p,
  * Side effects: Any matching tklines are removed.
  */
 static int
-remove_tkline_match(char *host, char *user)
+remove_tkline_match(char *khost, char *kuser)
 {
   struct ConfItem *tk_c;
   dlink_node *tk_n;
   struct irc_inaddr addr, caddr;
   int nm_t, cnm_t, bits, cbits;
-  nm_t = parse_netmask(host, &addr, &bits);
+  nm_t = parse_netmask(khost, &addr, &bits);
 
   for (tk_n=temporary_klines.head; tk_n; tk_n=tk_n->next)
     {
       tk_c = (struct ConfItem*)tk_n->data;
       cnm_t = parse_netmask(tk_c->host, &caddr, &cbits);
-      if (cnm_t != nm_t || irccmp(user, tk_c->user))
+      if (cnm_t != nm_t || irccmp(kuser, tk_c->user))
 	continue;
-      if ((nm_t==HM_HOST && !irccmp(tk_c->host, host)) ||
+      if ((nm_t==HM_HOST && !irccmp(tk_c->host, khost)) ||
 	  (nm_t==HM_IPV4 && bits==cbits && match_ipv4(&addr, &caddr, bits))
 #ifdef IPV6
 	  || (nm_t==HM_IPV6 && bits==cbits && match_ipv6(&addr, &caddr, bits))

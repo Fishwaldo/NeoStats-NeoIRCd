@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.5 2002/09/20 09:05:18 fishwaldo Exp $
+dnl $Id: configure.in,v 1.6 2002/10/23 03:53:21 fishwaldo Exp $
 dnl Process this file with autoconf to produce a configure script.
 dnl AC_INIT(include/class.h) <- what is this ? -TimeMr14C
 
@@ -181,7 +181,7 @@ dnl AC_CHECK_LIB(nsl, main)
 dnl AC_CHECK_LIB(bottle, beer, , AC_MSG_WARN(I have no more beer))
 
 AC_CHECK_FUNC(crypt,, AC_CHECK_LIB(descrypt, crypt,,AC_CHECK_LIB(crypt, crypt,,)))
-
+AC_CHECK_FUNC(backtrace, AC_DEFINE(HAVE_BACKTRACE, 1, 'backtrace function available'))
 dnl check for gettext in base system or /usr/[local/]lib/libintl.a
 AC_SEARCH_LIBS(gettext, intl,,,)
 if test "X$ac_cv_search_gettext" = "Xno"; then

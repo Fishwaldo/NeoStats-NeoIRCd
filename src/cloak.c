@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: cloak.c,v 1.7 2002/10/20 03:57:03 fishwaldo Exp $
+ *  $Id: cloak.c,v 1.8 2002/10/23 03:53:22 fishwaldo Exp $
  */
 /*
 **
@@ -231,11 +231,11 @@ make_virthost (char *curr, char *host, char *new)
   hash[1] >>= 2;
 
   /* Check if host could be IPv4 */
-  if (parc2 == 4)
+  if (parc2 == 4 || parc2 < 2)
     {
       len = strlen (parv2[3]);
       /* Check if its an IPv4 for sure */
-      if (strchr ("0123456789", parv2[3][len - 1]))
+      if (strchr ("0123456789", parv2[3][len - 1]) || parc2 < 2)
 	{
 	  hash[2] = ((crc32 (parv[1], strlen (parv[1])) + KEY2) ^ KEY) ^ KEY3;
 	  hash[3] = ((crc32 (parv[0], strlen (parv[0])) + KEY2) ^ KEY) ^ KEY3;

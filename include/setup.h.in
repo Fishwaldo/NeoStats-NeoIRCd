@@ -193,3 +193,6 @@
 
 /* Define if you have the z library (-lz).  */
 #undef HAVE_LIBZ
+
+/* Define if you have the backtrace call */
+#undef HAVE_BACKTRACE

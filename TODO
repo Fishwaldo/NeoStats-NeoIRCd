@@ -1,4 +1,4 @@
-$Id: TODO,v 1.16 2003/03/04 13:03:55 fishwaldo Exp $
+$Id: TODO,v 1.17 2003/03/04 13:05:30 fishwaldo Exp $
 
 put back "expire_channels" stuff
 
@@ -10,7 +10,7 @@ put back "expire_channels" stuff
 *add IsMyAdmin to replace IsAdmin (currently server admins have admin axs to all servers)
 *Channel mode +M (un-registered users can't talk)
 *there is a bug in usermode processing.. reported by static
-
+*Services name should be in config file
 
 POST 1.0
 *Umode +b (Bots) to identify bots (iEf2002)

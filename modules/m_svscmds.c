@@ -1,6 +1,6 @@
 /************************************************************************
- *   IRC - Internet Relay Chat, doc/example_module.c
- *   Copyright (C) 2001 Hybrid Development Team
+ *   IRC - Internet Relay Chat, m_svscmds.c
+ *   Copyright (C) 2002 NeoIRCd Development Team
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_svscmds.c,v 1.2 2002/09/12 05:45:20 fishwaldo Exp $
+ *   $Id: m_svscmds.c,v 1.3 2002/09/13 06:54:34 fishwaldo Exp $
  */
 
 /* List of ircd includes from ../include/ */
@@ -104,7 +104,7 @@ _moddeinit(void)
 
 /* When we last modified the file (shown in /modlist), this is usually:
  */
-const char *_version = "$Revision: 1.2 $";
+const char *_version = "$Revision: 1.3 $";
 #endif
 
 /*

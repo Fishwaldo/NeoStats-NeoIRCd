@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: ircd_signal.c,v 1.2 2002/08/13 14:45:12 fishwaldo Exp $
+ * $Id: ircd_signal.c,v 1.3 2002/09/13 06:56:45 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -27,6 +27,7 @@
 #include "s_log.h"
 #include "memory.h"
 #include "s_bsd.h"
+
 /*
  * dummy_handler - don't know if this is really needed but if alarm is still
  * being used we probably will

@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_clearchan.c,v 1.3 2002/09/23 10:47:30 fishwaldo Exp $
+ *   $Id: m_clearchan.c,v 1.4 2002/09/26 13:56:13 fishwaldo Exp $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -76,7 +76,7 @@ _moddeinit(void)
   mod_del_cmd(&clearchan_msgtab);
 }
 
-char *_version = "$Revision: 1.3 $";
+char *_version = "$Revision: 1.4 $";
 
 /*
 ** mo_clearchan
@@ -167,6 +167,14 @@ void kick_list(struct Client *client_p, struct Client *source_p, struct Channel 
   dlink_node *m;
   dlink_node *next_m;
 
+  sendto_one(source_p, ":%s!%s@%s JOIN %s",
+	     source_p->name,
+	     source_p->username,
+	     source_p->vhost,
+	     chname);
+
+  channel_member_names(source_p, chptr, chname, 1);
+
   for (m = list->head; m; m = next_m)
     {
       next_m = m->next;
@@ -180,15 +188,6 @@ void kick_list(struct Client *client_p, struct Client *source_p, struct Channel 
       remove_user_from_channel(chptr, who);
     }
 
-  /* Join the user themselves to the channel down here, so they dont see a nicklist 
-   * or people being kicked */
-  sendto_one(source_p, ":%s!%s@%s JOIN %s",
-	     source_p->name,
-	     source_p->username,
-	     source_p->host,
-	     chname);
-
-  channel_member_names(source_p, chptr, chname, 1);
 
 }
 

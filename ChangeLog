@@ -2,8 +2,9 @@ NeoIRCd ChangeLog.
 Anything we add/change/Delete is noted here.
 Symbols are:
 (F)	- Fish (fish@dynam.ac)
-(S)	- Shmad (shmad@#neostats.net)
+(S)	- Shmad (shmad@neostats.net)
 (HP)	- Hybrid Team Patches to Hybrid Source
+
 * NeoIRCd Version 0.9.4 - 24th Sept, 2002 - Fish
 (F)	- Changed HiddenHost System to Use Ultimates version instead... 
 (F)	- Changed NICK and Client Messages to include vhost, so we dont have to burst SETHOST
@@ -12,6 +13,9 @@ Symbols are:
 (F)	- Really allow services to send through +g this time
 (F)	- /aliases can not send to Nick@host/server... 
 (F)	- SVSMODES were not being propogated through the network. Fixed
+(F)	- Help file updates
+(F)	- if autojoin is not specified on conf file, don't join operator to a channel
+(F) 	- Redone user mode system completely... Should fix some stuff up 
 
 * NeoIRCd Version 0.9.3 - 19th Sept, 2002 - Fish
 (HP)	- Merged in Hybrid rc4 Patches (including Rc3 and Rc3 fixes)

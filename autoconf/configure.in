@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.4 2002/09/17 07:42:15 fishwaldo Exp $
+dnl $Id: configure.in,v 1.5 2002/09/20 09:05:18 fishwaldo Exp $
 dnl Process this file with autoconf to produce a configure script.
 dnl AC_INIT(include/class.h) <- what is this ? -TimeMr14C
 
@@ -9,7 +9,7 @@ AC_CONFIG_HEADER(include/setup.h servlink/setup.h)
 AC_PREFIX_DEFAULT(~/NeoIRCd)
 
 PACKAGE=NeoIRCd
-VERSION=0.9.1
+VERSION=0.9.3
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
@@ -156,6 +156,8 @@ AC_PATH_PROG(LN, ln)
 AC_PATH_PROG(SED, sed)
 AC_PATH_PROG(AR, ar)
 AC_PATH_PROG(LD, ld)
+AC_PATH_PROG(MSGFMT, msgfmt, no)
+
 AC_PROG_YACC
 AC_PROG_INSTALL
 AC_PROG_LEX
@@ -641,10 +643,16 @@ AC_DEFINE_UNQUOTED(SELECT_TYPE, "$SELECT_TYPE")
 AC_SUBST(SELECT_SRC)
 
 if test "$ac_cv_func_gettext" = "yes" -o "$ac_cv_lib_intl_gettext" = "yes"; then
-	echo "Building with gettext."
-	MSGFMT="msgfmt -o"
-	SUBDIR_MESSAGES="messages"
-        AC_DEFINE(HAVE_GETTEXT)
+	if test "$MSGFMT" = "no"; then
+		echo "Bulding without Gettext"
+		MSGFMT="echo"
+		SUBDIR_MESSGAES=""
+	else
+		echo "Building with gettext."
+		MSGFMT="msgfmt -o"
+		SUBDIR_MESSAGES="messages"
+        	AC_DEFINE(HAVE_GETTEXT)
+	fi
 else
 	MSGFMT="echo"
 	SUBDIR_MESSAGES=""

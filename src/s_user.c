@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.15 2002/09/17 07:42:16 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.16 2002/09/20 09:05:18 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -1419,7 +1419,7 @@ oper_up( struct Client *source_p, struct ConfItem *aconf )
   /* autojoin them to a channel if its defined */
   flags = 0;
   if (ConfigFileEntry.operautojoin) {
-	sendto_one(source_p, "%s NOTICE %s :Autojoining you to %s", me.name, source_p->name, ConfigFileEntry.operautojoin);
+	sendto_one(source_p, ":%s NOTICE %s :Autojoining you to %s", me.name, source_p->name, ConfigFileEntry.operautojoin);
 	if ((chptr = hash_find_channel(ConfigFileEntry.operautojoin)) != NULL) {
 		if (IsMember(source_p, chptr))
 			return(1);

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c,v 1.7 2002/09/19 05:41:11 fishwaldo Exp $
+ *  $Id: m_server.c,v 1.8 2002/09/20 09:05:18 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ _moddeinit(void)
 {
   mod_del_cmd(&server_msgtab);
 }
-const char *_version = "$Revision: 1.7 $";
+const char *_version = "$Revision: 1.8 $";
 #endif
 
 int bogus_host(char *host);
@@ -252,11 +252,11 @@ static void mr_server(struct Client *client_p, struct Client *source_p,
   /* clear the Ulined flag */
 
   client_p->flags &= ~FLAGS_ULINED;
-  if (srvopt && SERVER_HIDDEN) client_p->hidden_server = 1;
+  if (srvopt & SERVER_HIDDEN) client_p->hidden_server = 1;
   set_server_gecos(client_p, info);
   
   /* if this server is trying to set itself Ulined, its Not allowed, so exit it */
-  if (srvopt && SERVER_ULINED) {
+  if (srvopt & SERVER_ULINED) {
   	sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ALL, "Server %s trying to U line itself. No Way, Nadda, I dun think so", client_p->name);
   	exit_client(client_p, client_p, client_p, "Got a Gline Instead");
   	return;

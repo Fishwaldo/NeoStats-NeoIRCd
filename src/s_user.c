@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c,v 1.26 2002/09/25 08:21:48 fishwaldo Exp $
+ *  $Id: s_user.c,v 1.27 2002/09/26 11:26:20 fishwaldo Exp $
  */
 
 #include "stdinc.h"
@@ -952,23 +952,27 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
       return 0;
     }
 
-  /* Dont know why these were commented out..
-   * put them back using new sendto() funcs
-   */
 
-  if (IsServer(source_p) && !IsUlined(source_p))
+  /* if the prefix is from a server, and the server isn't ulined 
+  ** and the prefix isn't from the clients server, then its a error
+  */
+
+sendto_realops_flags(FLAGS_ALL, L_ALL, "source: %s client %s target %s", source_p->name, client_p->name, target_p->name);
+
+  if (IsServer(source_p) && (target_p->servptr != client_p) && !IsUlined(source_p))
     {
        sendto_realops_flags(FLAGS_ALL|FLAGS_REMOTE, L_ADMIN, "*** Mode for User %s from %s",
                             parv[1], source_p->name);
        return 0;
     }
-
-  if ((source_p != target_p || target_p->from != source_p->from) && !IsUlined(source_p))
+  /* if mode is for my client, and it didn't come from my client
+  ** or a U lined server, then its a error
+  */
+  else if (MyClient(target_p) && (source_p != target_p) && !IsUlined(source_p))
     {
        sendto_one(source_p, form_str(ERR_USERSDONTMATCH), me.name, parv[0]);
        return 0;
-    }
-
+    }              
   if (parc < 3)
     {
       m = buf;
@@ -1100,20 +1104,20 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, char *parv
                  me.name, parv[0]);
       target_p->umodes &= ~FLAGS_ADMIN;
     }
-  if (!IsUlined(target_p->servptr) && (setflags & FLAGS_SERVICES))
+  if (!IsUlined(target_p->servptr) && (target_p->umodes & FLAGS_SERVICES))
     { 
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +S", 
       		me.name, parv[0]);
       target_p->umodes &= ~FLAGS_SERVICES;
     }
-  if ((MyClient(source_p) || !IsUlined(source_p)) && (setflags & FLAGS_REGNICK))
+  /* if the +r isn't from a U lined server, or from the clients server
+  ** then its a error
+  */
+  if ((!IsUlined(source_p) && (source_p != target_p->servptr)) && (target_p->umodes & FLAGS_REGNICK))
     {
       sendto_one(source_p, ":%s NOTICE %s :*** Only Services can set +r",
       		me.name, parv[0]);
-      if (target_p->umodes & FLAGS_REGNICK)
       	target_p->umodes &= ~FLAGS_REGNICK;
-      else
-      	target_p->umodes |= FLAGS_REGNICK;
     }
 
   if (!(setflags & FLAGS_INVISIBLE) && IsInvisible(target_p))
@@ -1212,7 +1216,7 @@ send_umode_out(struct Client *source_p, struct Client *client_p,
              || (starget_p->localClient->serverMask &
                  target_p->lazyLinkClientExists))
             sendto_one(starget_p, ":%s MODE %s :%s",
-                       (IsUlined(source_p)) ? source_p->name : target_p->name, target_p->name, buf);
+                       (IsUlined(source_p)) ? source_p->name : target_p->servptr->name, target_p->name, buf);
         }
     }
 
